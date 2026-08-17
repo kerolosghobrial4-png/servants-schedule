@@ -173,49 +173,58 @@ footer {
 /* Duty bullet list — big, clear responsibilities */
 .duty-list {
   background: #f7fafc;
-  border-radius: 12px;
-  padding: 20px 24px;
+  border-radius: 14px;
+  padding: 24px;
   margin-bottom: 20px;
   border-left: 4px solid #4299e1;
   text-align: left;
 }
 
 .duty-list-label {
-  color: #718096;
-  font-size: 0.85rem;
+  color: #4a5568;
+  font-size: 1rem;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  margin-bottom: 12px;
+  font-weight: 700;
+  margin-bottom: 4px;
 }
 
 .duty-ul {
   list-style: none;
   padding: 0;
   margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
 }
 
 .duty-item {
-  font-size: 1.1rem;
-  color: #2d3748;
+  font-size: 1.25rem;
+  color: #1a202c;
   font-weight: 600;
   line-height: 1.5;
-  padding: 10px 0;
-  border-bottom: 1px solid #e2e8f0;
+  padding: 18px 22px;
+  background: #ffffff;
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
   display: flex;
   align-items: flex-start;
-  gap: 10px;
+  gap: 14px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
-.duty-item:last-child {
-  border-bottom: none;
+.duty-item:hover {
+  border-color: #4299e1;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.08);
 }
 
 .duty-item::before {
   content: "●";
   color: #4299e1;
-  font-size: 0.9rem;
+  font-size: 1.1rem;
   flex-shrink: 0;
-  margin-top: 2px;
+  margin-top: 3px;
 }
 
 .task-class {
