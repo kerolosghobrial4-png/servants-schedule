@@ -5,6 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Week of August 22, 2026 - Servants Lesson Plan</title>
   <link rel="stylesheet" href="style.css?v=fa7df3cc">
+  <style>
+    .lesson-link-btn{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;margin:6px 6px 0 0;background:#3b82f6;color:#fff !important;text-decoration:none;border-radius:8px;font-size:14px;font-weight:600;transition:background .15s;}
+    .lesson-link-btn:hover{background:#2563eb;}
+    .lesson-link-btn .link-icon{font-size:16px;line-height:1;}
+  </style>
 </head>
 <body>
   <div class="container" id="app">
@@ -137,6 +142,18 @@
       app.innerHTML = html;
     }
 
+    function linkIcon(url){
+      var u=(url||"").toLowerCase();
+      if(u.indexOf("youtube.com")>=0||u.indexOf("youtu.be")>=0) return "\u25b6\ufe0f";
+      if(u.indexOf(".pdf")>=0) return "\ud83d\udcc4";
+      if(u.indexOf("netlify.app")>=0||u.indexOf("game")>=0||u.indexOf("play")>=0) return "\ud83c\udfae";
+      return "\ud83d\udd17";
+    }
+    function startsWithEmoji(s){
+      if(!s||!s.length)return false;
+      var c=s.codePointAt(0);
+      return c>=0x2500;
+    }
     function renderTask(servantId) {
       const servant = SERVANTS[servantId];
       if (!servant) { renderNameList(); return; }
@@ -153,7 +170,7 @@
           </div>
           ${task.lessonLinks && task.lessonLinks.length > 0 ? `
             <div style="margin-top:8px;">
-              ${task.lessonLinks.map(function(l) { return `<a href="${l.url}" target="_blank" rel="noopener" class="lesson-link-btn" style="margin:6px 6px 0 0;">${l.label}</a>`; }).join('')}
+              ${task.lessonLinks.map(function(l) { var ic=linkIcon(l.url); var se=startsWithEmoji(l.label); return `<a href="${l.url}" target="_blank" rel="noopener" class="lesson-link-btn">${se?"":`<span class="link-icon">${ic}</span> `}${l.label}</a>`; }).join('')}
             </div>
           ` : ''}
           ${task.warning ? `
