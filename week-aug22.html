@@ -45,6 +45,7 @@
       },
       "kerolos-soliman": {
         classGroup: "5th & 6th Boys",
+        backup: true,
         duties: [
           "🪑 Sit with the kids and keep them in check",
           "📝 Take attendance",
@@ -70,17 +71,18 @@
       },
       "divid-romany": {
         classGroup: "5th & 6th Boys",
+        backup: true,
         duties: [
           "🪑 Sit with the kids",
           "🎮 Prepare the Ritual Lesson Review Game as backup (in case Abanoub is absent)"
         ],
         lessonLinks: [
           { label: "🎮 Backup: Play Review Game", url: "https://tourmaline-strudel-f6fd09.netlify.app" }
-        ],
-        warning: { type: "game", text: "Reminder: Send which games you plan to use so everyone is prepared." }
+        ]
       },
       "mark-william": {
         classGroup: "7th & 8th",
+        backup: true,
         duties: [
           "🪑 Sit with the kids",
           "📝 Take attendance",
@@ -116,14 +118,14 @@
       },
       "marsilio-nagi": {
         classGroup: "7th & 8th",
+        backup: true,
         duties: [
           "🪑 Sit with the kids",
           "🎮 Prepare the Ritual Lesson Review Game as backup (in case Abanoub is absent)"
         ],
         lessonLinks: [
           { label: "🎮 Backup: Play Review Game", url: "https://level9-intro.netlify.app" }
-        ],
-        warning: { type: "game", text: "Reminder: Send which games you plan to use so everyone is prepared." }
+        ]
       }
       // Add more tasks here as assignments are made:
       // "kerolos-soliman": { task: "...", classGroup: "...", lessonLink: "..." },
@@ -210,7 +212,7 @@
 
       app.innerHTML = `
         <div class="task-view">
-          <div class="task-date">${WEEK_DATE}</div>
+          ${task && task.backup ? '' : `<div class="task-date">${WEEK_DATE}</div>`}
           <div class="servant-name-display">${servant.name}</div>
           <div class="servant-group-label">${servant.group}</div>
           ${taskHtml}
