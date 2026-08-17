@@ -33,10 +33,9 @@
     // task: the description, classGroup: which class, lessonLink: URL to lesson materials
     const TASKS = {
       "abanoub-nagdy": {
-        task: "Ritual Lesson Review Game — Lesson 1: The Thanksgiving Prayer and Verses of Cymbals",
         classGroup: "5th & 6th Boys",
         duties: [
-          "🎮 Lead the Ritual Lesson Review Game (Lesson 1)",
+          "🎮 Lead the Ritual Lesson Review Game (Lesson 1: Thanksgiving Prayer & Verses of Cymbals)",
           "📖 Read ONLY pages 4 and 5 (Lesson 1) — the rest of the PDF is for other lessons"
         ],
         lessonLinks: [
@@ -44,7 +43,6 @@
         ]
       },
       "kerolos-soliman": {
-        task: "Be with the kids, take attendance, and keep up with points for the week (in class). Also prepare Jouvany's task (Amen Keryalaison) in case Jouvany can't make it.",
         classGroup: "5th & 6th Boys",
         duties: [
           "🪑 Sit with the kids and keep them in check",
@@ -58,20 +56,17 @@
         ]
       },
       "jouvany-ghobrial": {
-        task: "Finish Amen Keryalaison (Vespers) and handle the recordings for the class.",
         classGroup: "5th & 6th Boys",
         duties: [
-          "🎯 Finish the whole hymn — Amen Keryalaison (all parts)",
+          "🎯 Finish the whole hymn — Amen Keryalaison (Vespers), all parts",
           "🎤 Handle the class recordings"
         ],
         lessonLinks: [
           { label: "▶️ YouTube Video", url: "https://www.youtube.com/watch?v=qADr2AZ0Mis" },
           { label: "📄 PDF Sheet Music", url: "https://oplzcugljytvywvewdkj.supabase.co/storage/v1/object/public/deacons_school_hymns_files/amenKErie.pdf?t=2024-07-09T03%3A18%3A07.448Z" }
-        ],
-        note: "🎯 Finish the whole hymn — all parts. You have this week to complete it."
+        ]
       },
       "divid-romany": {
-        task: "Sit with the kids and prepare the ritual lesson review game (Lesson 1) as backup (in case Abanoub can't make it).",
         classGroup: "5th & 6th Boys",
         duties: [
           "🪑 Sit with the kids",
@@ -82,7 +77,6 @@
         ]
       },
       "mark-william": {
-        task: "Sit with the kids, take attendance, and keep up with points for the week (in class). Also prepare First Hoos Lobsh as backup (in case Poula can't make it).",
         classGroup: "7th & 8th",
         duties: [
           "🪑 Sit with the kids",
@@ -96,7 +90,6 @@
         ]
       },
       "abanoub-hanna": {
-        task: "Ritual Lesson Review Game — Lesson One: Liturgy of the Believers",
         classGroup: "7th & 8th",
         duties: [
           "🎮 Lead the Ritual Lesson Review Game (Lesson One: Liturgy of the Believers)"
@@ -106,20 +99,17 @@
         ]
       },
       "poula-khalil": {
-        task: "First Hoos Lobsh and handle the recordings for the class.",
         classGroup: "7th & 8th",
         duties: [
-          "🎯 Finish the whole hymn — First Hoos Lobsh (all parts)",
+          "🎯 Finish the whole hymn — First Hoos Lobsh, all parts",
           "🎤 Handle the class recordings"
         ],
         lessonLinks: [
           { label: "▶️ YouTube Video", url: "https://www.youtube.com/watch?v=K5n8nCnREr0" },
           { label: "🌐 Hymn Page", url: "https://www.stgeorgecocnashville.org/deaconsSchool/hymn?id=145&returnUrl=%2Fcalendar" }
-        ],
-        note: "🎯 Finish the whole hymn — all parts. You have this week to complete it."
+        ]
       },
       "marsilio-nagi": {
-        task: "Sit with the kids and prepare the ritual lesson review game (Lesson One: Liturgy of the Believers) as backup (in case Abanoub can't make it).",
         classGroup: "7th & 8th",
         duties: [
           "🪑 Sit with the kids",
@@ -180,24 +170,13 @@
       let taskHtml;
       if (task) {
         taskHtml = `
-          <div class="task-box">
-            <div class="task-label">Your Task</div>
-            <div class="task-name">${task.task}</div>
-            <div class="task-class">Class: ${task.classGroup}</div>
+          <div class="duty-list">
+            <div class="duty-list-label">Class: ${task.classGroup}</div>
+            <div class="duty-list-label" style="margin-top:4px;">Your Responsibilities This Week</div>
+            <ul class="duty-ul">
+              ${task.duties.map(function(d) { return `<li class="duty-item">${d}</li>`; }).join('')}
+            </ul>
           </div>
-          ${task.duties && task.duties.length > 0 ? `
-            <div class="duty-list">
-              <div class="duty-list-label">Your Responsibilities</div>
-              <ul class="duty-ul">
-                ${task.duties.map(function(d) { return `<li class="duty-item">${d}</li>`; }).join('')}
-              </ul>
-            </div>
-          ` : ''}
-          ${task.note ? `
-            <div style="margin-top:14px;background:#fffbeb;border-left:4px solid #f6ad55;color:#744210;padding:12px 16px;border-radius:8px;font-size:0.92rem;text-align:left;">
-              ${task.note}
-            </div>
-          ` : ''}
           ${task.lessonLinks && task.lessonLinks.length > 0 ? `
             <div style="margin-top:8px;">
               ${task.lessonLinks.map(function(l) { return `<a href="${l.url}" target="_blank" rel="noopener" class="lesson-link-btn" style="margin:6px 6px 0 0;">${l.label}</a>`; }).join('')}
