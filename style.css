@@ -227,6 +227,64 @@ footer {
   margin-top: 3px;
 }
 
+/* Warning boxes — big, bright, hard to miss */
+.warning-box {
+  margin-top: 22px;
+  padding: 22px 24px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  text-align: left;
+}
+
+.warning-icon {
+  font-size: 2rem;
+  flex-shrink: 0;
+}
+
+.warning-text {
+  font-size: 1.15rem;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+/* Hymn warning — big bright red */
+.warning-hymn {
+  background: #fff5f5;
+  border: 3px solid #e53e3e;
+  color: #c53030;
+  box-shadow: 0 2px 8px rgba(229, 62, 62, 0.15);
+}
+
+.warning-hymn .warning-text {
+  color: #c53030;
+}
+
+/* Game warning — amber/orange */
+.warning-game {
+  background: #fffaf0;
+  border: 3px solid #dd6b20;
+  color: #9c4221;
+  box-shadow: 0 2px 8px rgba(221, 107, 32, 0.12);
+}
+
+.warning-game .warning-text {
+  color: #9c4221;
+}
+
+/* Rituals reminder — blue info style */
+.warning-rituals {
+  background: #ebf8ff;
+  border: 3px solid #3182ce;
+  color: #2c5282;
+  box-shadow: 0 2px 8px rgba(49, 130, 206, 0.12);
+}
+
+.warning-rituals .warning-text {
+  color: #2c5282;
+}
+
 .task-class {
   color: #4a5568;
   font-size: 0.95rem;
