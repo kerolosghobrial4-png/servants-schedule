@@ -170,6 +170,54 @@ footer {
   margin-bottom: 4px;
 }
 
+/* Duty bullet list — big, clear responsibilities */
+.duty-list {
+  background: #f7fafc;
+  border-radius: 12px;
+  padding: 20px 24px;
+  margin-bottom: 20px;
+  border-left: 4px solid #4299e1;
+  text-align: left;
+}
+
+.duty-list-label {
+  color: #718096;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 12px;
+}
+
+.duty-ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.duty-item {
+  font-size: 1.1rem;
+  color: #2d3748;
+  font-weight: 600;
+  line-height: 1.5;
+  padding: 10px 0;
+  border-bottom: 1px solid #e2e8f0;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.duty-item:last-child {
+  border-bottom: none;
+}
+
+.duty-item::before {
+  content: "●";
+  color: #4299e1;
+  font-size: 0.9rem;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
 .task-class {
   color: #4a5568;
   font-size: 0.95rem;
