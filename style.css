@@ -261,28 +261,28 @@ footer {
   color: #ffffff;
 }
 
-/* Game warning — amber/orange */
+/* Game warning — same solid red as hymn */
 .warning-game {
-  background: #fffaf0;
-  border: 4px solid #dd6b20;
-  color: #9c4221;
-  box-shadow: 0 4px 14px rgba(221, 107, 32, 0.2);
+  background: #dc2626;
+  border: 4px solid #991b1b;
+  color: #ffffff;
+  box-shadow: 0 4px 14px rgba(220, 38, 38, 0.4);
 }
 
 .warning-game .warning-text {
-  color: #9c4221;
+  color: #ffffff;
 }
 
-/* Rituals reminder — blue info style */
+/* Rituals reminder — same solid red as hymn */
 .warning-rituals {
-  background: #ebf8ff;
-  border: 4px solid #3182ce;
-  color: #2c5282;
-  box-shadow: 0 4px 14px rgba(49, 130, 206, 0.2);
+  background: #dc2626;
+  border: 4px solid #991b1b;
+  color: #ffffff;
+  box-shadow: 0 4px 14px rgba(220, 38, 38, 0.4);
 }
 
 .warning-rituals .warning-text {
-  color: #2c5282;
+  color: #ffffff;
 }
 
 .task-class {
