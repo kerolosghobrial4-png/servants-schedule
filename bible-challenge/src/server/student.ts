@@ -264,7 +264,6 @@ export async function getPointHistory(database: Database, userId: string, limit 
       amount: true,
       category: true,
       description: true,
-      note: true,
       effectiveAt: true,
       createdAt: true,
     },

@@ -71,7 +71,6 @@ async function PointsTab({ userId, tz, today }: { userId: string; tz: string; to
                     <p className="leading-snug">{r.description}</p>
                     <p className="text-xs text-dim mt-0.5">
                       {CATEGORY_LABEL[r.category]}
-                      {r.note && r.category === "admin_adjustment" ? ` · ${r.note}` : ""}
                     </p>
                   </div>
                 </li>

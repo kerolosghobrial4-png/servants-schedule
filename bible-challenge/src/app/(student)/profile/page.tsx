@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { db } from "@/db";
 import { requireStudent } from "@/lib/auth/guards";
-import { formatDate } from "@/lib/time";
+import { dateInTz, formatDate } from "@/lib/time";
 import { getProfile } from "@/server/student";
 import { AchievementIcon } from "@/components/achievement-icon";
 import { SectionHeading, Stat, buttonClass, cx, formatPoints } from "@/components/ui";
@@ -20,7 +20,7 @@ export default async function ProfilePage() {
       <header className="mb-10">
         <p className="label mb-2">Profile · @{viewer.username}</p>
         <h1 className="display text-5xl sm:text-6xl">{viewer.displayName}</h1>
-        <p className="text-sm text-dim mt-2">Member since {formatDate(viewer.createdAt.toISOString().slice(0, 10), { month: "long", year: "numeric" })}</p>
+        <p className="text-sm text-dim mt-2">Member since {formatDate(dateInTz(viewer.createdAt, p.settings.timezone), { month: "long", year: "numeric" })}</p>
       </header>
 
       <dl className="grid grid-cols-2 sm:grid-cols-3 gap-x-6 gap-y-8 border-y border-line py-8 mb-12">
@@ -47,7 +47,7 @@ export default async function ProfilePage() {
                   <p className={cx("display text-lg", got ? "text-ink" : "text-muted")}>{a.name}</p>
                   <p className="text-sm text-dim">
                     {a.description}
-                    {when && ` · ${formatDate(when.awardedAt.toISOString().slice(0, 10))}`}
+                    {when && ` · ${formatDate(dateInTz(when.awardedAt, p.settings.timezone))}`}
                   </p>
                 </div>
               </li>

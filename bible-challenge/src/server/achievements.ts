@@ -1,8 +1,16 @@
 import "server-only";
-import { and, asc, eq, sql } from "drizzle-orm";
+import { and, asc, desc, eq, sql } from "drizzle-orm";
 import type { DbOrTx, Tx } from "@/db";
-import { achievements, submissions, userAchievements, type AchievementCriteria } from "@/db/schema";
-import { getBalance, hasSourceKey, recordPoints } from "./ledger";
+import {
+  achievements,
+  auditLog,
+  pointTransactions,
+  submissions,
+  userAchievements,
+  users,
+  type AchievementCriteria,
+} from "@/db/schema";
+import { getBalance, hasSourceKey, lockUserLedger, recordPoints, reverseTransaction } from "./ledger";
 import type { StreakResult } from "./streaks";
 
 /**
@@ -141,4 +149,102 @@ export async function evaluateAchievements(tx: Tx, userId: string, streak: Strea
     }
   }
   return earned;
+}
+
+/* ------------------------------ admin ------------------------------ */
+
+export class AchievementError extends Error {}
+
+export async function listAchievementsWithCounts(db: DbOrTx) {
+  const rows = await db.query.achievements.findMany({ orderBy: [asc(achievements.position), asc(achievements.name)] });
+  const counts = await db
+    .select({ id: userAchievements.achievementId, n: sql<string>`count(*)` })
+    .from(userAchievements)
+    .groupBy(userAchievements.achievementId);
+  const byId = new Map(counts.map((c) => [c.id, Number(c.n)]));
+  return rows.map((r) => ({ ...r, earnedCount: byId.get(r.id) ?? 0 }));
+}
+
+export async function saveAchievement(
+  tx: Tx,
+  opts: {
+    id?: string;
+    input: {
+      key: string;
+      name: string;
+      description: string;
+      icon: string;
+      criteria: AchievementCriteria;
+      pointsReward: number;
+      isActive: boolean;
+      position: number;
+    };
+    actorId: string;
+  },
+) {
+  const clash = await tx.query.achievements.findFirst({ where: eq(achievements.key, opts.input.key) });
+  if (clash && clash.id !== opts.id) throw new AchievementError("Another achievement already uses that key.");
+  let id = opts.id;
+  if (id) {
+    const updated = await tx
+      .update(achievements)
+      .set({ ...opts.input, updatedAt: new Date() })
+      .where(eq(achievements.id, id))
+      .returning({ id: achievements.id });
+    if (!updated.length) throw new AchievementError("Achievement not found.");
+  } else {
+    const [row] = await tx.insert(achievements).values(opts.input).returning({ id: achievements.id });
+    id = row.id;
+  }
+  await tx.insert(auditLog).values({
+    actorId: opts.actorId,
+    action: opts.id ? "achievement.updated" : "achievement.created",
+    targetType: "achievement",
+    targetId: id,
+    details: { ...opts.input },
+  });
+  return id;
+}
+
+/** Removes an awarded badge (e.g. given by mistake) and reverses any point reward. */
+export async function revokeAchievement(tx: Tx, opts: { userAchievementId: string; actorId: string; reason: string }) {
+  const ua = await tx.query.userAchievements.findFirst({ where: eq(userAchievements.id, opts.userAchievementId) });
+  if (!ua) throw new AchievementError("That badge award no longer exists.");
+  await lockUserLedger(tx, ua.userId);
+  const reward = await tx.query.pointTransactions.findFirst({
+    where: and(
+      eq(pointTransactions.userId, ua.userId),
+      eq(pointTransactions.sourceKey, `achievement:${ua.achievementId}:${ua.contextKey}`),
+    ),
+  });
+  if (reward) {
+    const already = await tx.query.pointTransactions.findFirst({ where: eq(pointTransactions.reversesId, reward.id) });
+    if (!already) await reverseTransaction(tx, { transactionId: reward.id, actorId: opts.actorId, reason: opts.reason });
+  }
+  await tx.delete(userAchievements).where(eq(userAchievements.id, ua.id));
+  await tx.insert(auditLog).values({
+    actorId: opts.actorId,
+    action: "achievement.revoked",
+    targetType: "user",
+    targetId: ua.userId,
+    details: { achievementId: ua.achievementId, contextKey: ua.contextKey, reason: opts.reason },
+  });
+}
+
+export async function recentAwards(db: DbOrTx, limit = 30) {
+  return db
+    .select({
+      id: userAchievements.id,
+      awardedAt: userAchievements.awardedAt,
+      note: userAchievements.note,
+      name: achievements.name,
+      icon: achievements.icon,
+      studentName: users.displayName,
+      userId: users.id,
+    })
+    .from(userAchievements)
+    .innerJoin(achievements, eq(achievements.id, userAchievements.achievementId))
+    .innerJoin(users, eq(users.id, userAchievements.userId))
+    .orderBy(desc(userAchievements.awardedAt))
+    .limit(limit);
 }
