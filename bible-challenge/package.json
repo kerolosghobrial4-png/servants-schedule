@@ -14,7 +14,8 @@
     "db:seed": "tsx --conditions=react-server scripts/seed.ts",
     "db:seed:demo": "tsx --conditions=react-server scripts/seed-demo.ts",
     "user:reset-admin": "tsx --conditions=react-server scripts/reset-admin.ts",
-    "start:prod": "node scripts/migrate.mjs && next start"
+    "start:prod": "node scripts/migrate.mjs && next start",
+    "db:check": "tsx --conditions=react-server scripts/check-integrity.ts"
   },
   "dependencies": {
     "dotenv": "^18.0.5",

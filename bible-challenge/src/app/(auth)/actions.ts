@@ -94,6 +94,17 @@ export async function logoutAction() {
   redirect("/login");
 }
 
+/** Ends every session for this account, including this one. */
+export async function signOutEverywhereAction() {
+  const session = await getCurrentSession();
+  if (session) {
+    await revokeUserSessions(session.user.id);
+    await audit(db, { actorId: session.user.id, action: "auth.signed_out_everywhere", targetType: "user", targetId: session.user.id });
+  }
+  await destroyCurrentSession();
+  redirect("/login");
+}
+
 export async function changePasswordAction(_prev: FormState, formData: FormData): Promise<FormState> {
   const viewer = await requireUser({ allowPasswordChange: true });
   const session = await getCurrentSession();

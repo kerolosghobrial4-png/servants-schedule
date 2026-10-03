@@ -8,7 +8,7 @@ import { listStaff } from "@/server/users-admin";
 import { ActionForm } from "@/components/action-form";
 import { SubmitButton } from "@/components/submit-button";
 import { Checkbox, Field, Input, PageTitle, SectionHeading, Select, Tag } from "@/components/ui";
-import { createStaffAction, saveSettingsAction, staffAction } from "./actions";
+import { createStaffAction, integrityCheckAction, saveSettingsAction, staffAction } from "./actions";
 
 export const metadata: Metadata = { title: "Settings" };
 
@@ -118,6 +118,23 @@ export default async function SettingsPage() {
           Save settings
         </SubmitButton>
       </ActionForm>
+
+      <section className="max-w-3xl">
+        <SectionHeading>Data health</SectionHeading>
+        <ActionForm action={integrityCheckAction}>
+          <p className="text-sm text-muted">
+            Re-checks every submission against the points ledger and reports anything that doesn&apos;t add up. Read-only —
+            nothing is changed.{" "}
+            <a href="/admin/export/ledger" download className="underline underline-offset-4">
+              Download the full ledger
+            </a>{" "}
+            for your own records.
+          </p>
+          <SubmitButton variant="secondary" size="sm" className="self-start" pendingText="Checking…">
+            Run integrity check
+          </SubmitButton>
+        </ActionForm>
+      </section>
 
       <section className="max-w-3xl">
         <SectionHeading>Staff accounts</SectionHeading>

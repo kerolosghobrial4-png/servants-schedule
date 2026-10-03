@@ -9,7 +9,7 @@ import { requireUser } from "@/lib/auth/guards";
 import { totpUri } from "@/lib/auth/totp";
 import { isStaff } from "@/lib/permissions";
 import { Notice, buttonClass } from "@/components/ui";
-import { startTotpSetupAction } from "../../actions";
+import { signOutEverywhereAction, startTotpSetupAction } from "../../actions";
 import { ConfirmTotpForm, DisableTotpForm } from "./totp-forms";
 
 export const metadata: Metadata = { title: "Account security" };
@@ -73,7 +73,15 @@ export default async function SecurityPage(props: PageProps<"/account/security">
         </form>
       )}
 
-      <Link href="/admin" className="inline-block mt-10 text-sm text-muted hover:text-ink">
+      <div className="mt-10 pt-6 border-t border-line flex flex-col gap-3 items-start">
+        <Link href="/change-password" className="text-sm text-muted underline underline-offset-4 hover:text-ink">
+          Change password
+        </Link>
+        <form action={signOutEverywhereAction}>
+          <button className="text-sm text-muted underline underline-offset-4 hover:text-ink">Sign out of all devices</button>
+        </form>
+      </div>
+      <Link href="/admin" className="inline-block mt-6 text-sm text-muted hover:text-ink">
         ← Back to admin
       </Link>
     </>

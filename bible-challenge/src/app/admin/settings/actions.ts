@@ -98,3 +98,20 @@ export async function staffAction(_prev: FormState, fd: FormData): Promise<FormS
     return fail(err);
   }
 }
+
+export async function integrityCheckAction(): Promise<FormState> {
+  try {
+    await authorize("settings.manage");
+    const { checkLedgerIntegrity } = await import("@/server/integrity");
+    const { checked, issues } = await checkLedgerIntegrity(db);
+    if (!issues.length) return { ok: true, message: `All good — ${checked} submissions match the points ledger.` };
+    return {
+      error: `${issues.length} issue${issues.length === 1 ? "" : "s"} found in ${checked} submissions. Open the affected quiz and use “Re-grade all” to repair:\n${issues
+        .slice(0, 10)
+        .map((i) => `• ${i.detail}`)
+        .join("\n")}`,
+    };
+  } catch (err) {
+    return fail(err);
+  }
+}

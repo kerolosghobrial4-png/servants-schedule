@@ -221,6 +221,29 @@ async function quizPointsForUser(tx: Tx, userId: string, quizId: string) {
   return total;
 }
 
+type StoredAnswer = {
+  selectedOptionIds: string[];
+  textAnswer: string | null;
+  reviewStatus: "auto" | "pending" | "approved" | "rejected";
+};
+
+/** Grades stored answers against the current answer key, honouring leader review decisions. */
+export function gradeStoredAnswers(
+  questions: LoadedQuiz["questions"],
+  storedByQ: Map<string, StoredAnswer>,
+): AnswerGrade[] {
+  return questions.map((q) => {
+    const s = storedByQ.get(q.id);
+    if (s && (s.reviewStatus === "approved" || s.reviewStatus === "rejected")) {
+      const ok = s.reviewStatus === "approved";
+      return { answered: true, isCorrect: ok, reviewStatus: "auto" as const, pointsAwarded: ok ? q.points : 0 };
+    }
+    return gradeAnswer(toGradable(q), s ? { selectedOptionIds: s.selectedOptionIds, textAnswer: s.textAnswer } : undefined);
+  });
+}
+
+export { loadQuizWithQuestions };
+
 const CATEGORY_TEXT = {
   quiz_participation: "Daily participation",
   quiz_correct: "Correct answers",
@@ -252,20 +275,10 @@ export async function gradeAndSync(
   });
   const storedByQ = new Map(stored.map((s) => [s.quizQuestionId, s]));
 
-  const grades: AnswerGrade[] = [];
-  for (const q of loaded.questions) {
+  const grades = gradeStoredAnswers(loaded.questions, storedByQ);
+  for (const [i, q] of loaded.questions.entries()) {
     const s = storedByQ.get(q.id);
-    let g: AnswerGrade;
-    if (s && (s.reviewStatus === "approved" || s.reviewStatus === "rejected")) {
-      const ok = s.reviewStatus === "approved";
-      g = { answered: true, isCorrect: ok, reviewStatus: "auto", pointsAwarded: ok ? q.points : 0 };
-    } else {
-      g = gradeAnswer(
-        toGradable(q),
-        s ? { selectedOptionIds: s.selectedOptionIds, textAnswer: s.textAnswer } : undefined,
-      );
-    }
-    grades.push(g);
+    const g = grades[i];
     if (s) {
       const keepReview = s.reviewStatus === "approved" || s.reviewStatus === "rejected";
       await tx

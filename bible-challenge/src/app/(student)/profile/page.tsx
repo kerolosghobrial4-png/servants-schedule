@@ -6,7 +6,7 @@ import { dateInTz, formatDate } from "@/lib/time";
 import { getProfile } from "@/server/student";
 import { AchievementIcon } from "@/components/achievement-icon";
 import { SectionHeading, Stat, buttonClass, cx, formatPoints } from "@/components/ui";
-import { logoutAction } from "../../(auth)/actions";
+import { logoutAction, signOutEverywhereAction } from "../../(auth)/actions";
 
 export const metadata: Metadata = { title: "Profile" };
 
@@ -69,6 +69,11 @@ export default async function ProfilePage() {
             <button className={buttonClass("ghost", "md", "w-full sm:w-auto")}>Sign out</button>
           </form>
         </div>
+        <form action={signOutEverywhereAction} className="mt-4">
+          <button className="text-sm text-muted underline underline-offset-4 hover:text-ink">
+            Signed in on a phone or computer you don&apos;t use anymore? Sign out everywhere
+          </button>
+        </form>
         <p className="text-xs text-dim mt-6 max-w-lg">
           Only your display name, points, rank and streak are shown to other students. Your username is private.
         </p>

@@ -33,7 +33,7 @@ export function ActionForm({
     <form ref={ref} action={formAction} className={cx("flex flex-col gap-4", className)}>
       {state.error && (
         <Notice tone="error">
-          {state.error}
+          <span className="whitespace-pre-line">{state.error}</span>
           {fieldErrors.length > 0 && (
             <ul className="mt-1 list-disc pl-4">
               {fieldErrors.map(([k, v]) => (
