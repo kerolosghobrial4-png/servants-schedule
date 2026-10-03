@@ -9,6 +9,9 @@ import { headers } from "next/headers";
 export async function clientIp(): Promise<string | null> {
   if (process.env.TRUST_PROXY !== "true") return null;
   const h = await headers();
+  // Netlify's edge sets this to the real client address.
+  const netlify = h.get("x-nf-client-connection-ip")?.trim();
+  if (netlify) return netlify.slice(0, 64);
   return ipFromHeaders(h.get("x-forwarded-for"), h.get("x-real-ip"));
 }
 

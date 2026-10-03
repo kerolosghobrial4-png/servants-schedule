@@ -7,7 +7,7 @@ export function checkEnvironment(env: NodeJS.ProcessEnv = process.env): { errors
   const warnings: string[] = [];
   const prod = env.NODE_ENV === "production";
 
-  const url = env.DATABASE_URL ?? "";
+  const url = env.DATABASE_URL || env.NETLIFY_DB_URL || "";
   if (!url) errors.push("DATABASE_URL is not set.");
   else if (!/^postgres(ql)?:\/\//.test(url)) errors.push("DATABASE_URL must start with postgres:// or postgresql://");
 

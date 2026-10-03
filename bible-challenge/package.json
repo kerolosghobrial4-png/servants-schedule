@@ -9,7 +9,7 @@
     "lint": "eslint",
     "typecheck": "next typegen && tsc --noEmit",
     "test": "vitest run",
-    "db:generate": "drizzle-kit generate",
+    "db:generate": "drizzle-kit generate && node scripts/sync-netlify-migrations.mjs",
     "db:migrate": "node scripts/migrate.mjs",
     "db:seed": "tsx --conditions=react-server scripts/seed.ts",
     "db:seed:demo": "tsx --conditions=react-server scripts/seed-demo.ts",
@@ -19,6 +19,7 @@
     "test:e2e": "playwright test"
   },
   "dependencies": {
+    "@netlify/database": "^2.0.1",
     "dotenv": "^18.0.5",
     "drizzle-orm": "^0.45.3",
     "lucide-react": "^1.50.0",

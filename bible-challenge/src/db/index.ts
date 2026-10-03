@@ -10,7 +10,8 @@ export type DbOrTx = Database | Tx;
 const globalForDb = globalThis as unknown as { __pgPool?: Pool };
 
 function createPool() {
-  const connectionString = process.env.DATABASE_URL;
+  // NETLIFY_DB_URL is provided automatically when the site uses Netlify Database.
+  const connectionString = process.env.DATABASE_URL || process.env.NETLIFY_DB_URL;
   if (!connectionString) {
     throw new Error("DATABASE_URL is not set");
   }
