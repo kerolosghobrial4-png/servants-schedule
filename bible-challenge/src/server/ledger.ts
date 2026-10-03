@@ -88,7 +88,7 @@ export async function overriddenSourceKeys(db: DbOrTx, userId: string, prefix: s
       and(
         eq(pointTransactions.userId, userId),
         like(pointTransactions.sourceKey, `${prefix}%`),
-        sql`exists (select 1 from ${pointTransactions} r where r.reverses_id = ${pointTransactions.id})`,
+        sql`exists (select 1 from point_transactions r where r.reverses_id = "point_transactions"."id")`,
       ),
     );
   return new Set(reversed.map((r) => r.sourceKey!).filter(Boolean));

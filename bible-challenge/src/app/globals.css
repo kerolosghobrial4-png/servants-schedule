@@ -1,26 +1,149 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/*
+ * Design tokens. Dark, warm, high-contrast: a scoreboard more than a SaaS app.
+ * Hierarchy comes from type scale and hairline rules, not boxes and shadows.
+ */
+@theme {
+  --color-bg: #0e0e0f;
+  --color-raised: #161618;
+  --color-raised-2: #1d1d20;
+  --color-line: #2a2a2e;
+  --color-line-strong: #3a3a40;
+  --color-ink: #f2ede4;
+  --color-muted: #a7a196;
+  --color-dim: #6e6a63;
+  --color-red: #b3261e;
+  --color-red-bright: #d2392e;
+  --color-red-deep: #3a1210;
+  --color-gold: #c9a34e;
+  --color-silver: #b9bcc2;
+  --color-bronze: #b37a4c;
+  --color-green: #6aa577;
+  --color-green-deep: #15261a;
+
+  --font-display: var(--font-barlow-condensed), "Arial Narrow", sans-serif;
+  --font-sans: var(--font-barlow), system-ui, sans-serif;
+  --font-serif: var(--font-source-serif), Georgia, serif;
+
+  --tracking-label: 0.14em;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@layer base {
+  html {
+    color-scheme: dark;
+    -webkit-tap-highlight-color: transparent;
+  }
+  body {
+    background: var(--color-bg);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    font-size: 16px;
+    line-height: 1.5;
+    font-feature-settings: "tnum" 1;
+  }
+  ::selection {
+    background: var(--color-red);
+    color: var(--color-ink);
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-gold);
+    outline-offset: 2px;
+  }
+  input,
+  textarea,
+  select {
+    font-size: 16px; /* prevents iOS zoom on focus */
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@layer components {
+  .label {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 0.78rem;
+    letter-spacing: var(--tracking-label);
+    text-transform: uppercase;
+    color: var(--color-muted);
+  }
+  .display {
+    font-family: var(--font-display);
+    font-weight: 700;
+    text-transform: uppercase;
+    line-height: 0.95;
+    letter-spacing: 0.01em;
+  }
+  .numeral {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    line-height: 0.9;
+  }
+  .scripture {
+    font-family: var(--font-serif);
+    font-style: italic;
+  }
+  .rule {
+    border-top: 1px solid var(--color-line);
+  }
+  .field {
+    width: 100%;
+    background: var(--color-raised);
+    border: 1px solid var(--color-line-strong);
+    border-radius: 4px;
+    padding: 0.7rem 0.85rem;
+    color: var(--color-ink);
+    min-height: 48px;
+  }
+  .field:focus {
+    outline: none;
+    border-color: var(--color-gold);
+  }
+  .field::placeholder {
+    color: var(--color-dim);
+  }
+  .field:disabled {
+    opacity: 0.55;
+  }
+  .prose-notes p + p {
+    margin-top: 0.75rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* Progress bars without inline styles (keeps the CSP strict). */
+@layer components {
+  progress.bar {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 100%;
+    height: 6px;
+    border: 0;
+    border-radius: 0;
+    background: var(--color-line);
+    overflow: hidden;
+  }
+  progress.bar::-webkit-progress-bar {
+    background: var(--color-line);
+  }
+  progress.bar::-webkit-progress-value {
+    background: var(--color-red);
+  }
+  progress.bar::-moz-progress-bar {
+    background: var(--color-red);
+  }
+  progress.bar.gold::-webkit-progress-value {
+    background: var(--color-gold);
+  }
+  progress.bar.gold::-moz-progress-bar {
+    background: var(--color-gold);
+  }
 }

@@ -160,6 +160,11 @@ describe("quiz submission", () => {
     await db.transaction((tx) => reverseTransaction(tx, { transactionId: perfectRow.id, actorId: admin.id, reason: "dup" }));
     await regradeQuiz(db, quiz.id, admin.id);
     expect(await getBalance(db, s.id)).toBe(25);
+
+    // If the key flips back, the already-reversed perfect bonus must not be removed twice.
+    await db.execute(sql`update quiz_question_options set is_correct = (position = 0) where quiz_question_id = ${questions[0].id}`);
+    await regradeQuiz(db, quiz.id, admin.id);
+    expect(await getBalance(db, s.id)).toBe(5 + 10);
     await expect(
       db.transaction((tx) => reverseTransaction(tx, { transactionId: perfectRow.id, actorId: admin.id, reason: "again" })),
     ).rejects.toThrow(/already been reversed/);
