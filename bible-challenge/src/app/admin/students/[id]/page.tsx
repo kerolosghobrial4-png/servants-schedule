@@ -15,6 +15,7 @@ import { SubmitButton } from "@/components/submit-button";
 import { Checkbox, Field, Input, SectionHeading, Stat, Tag, formatPoints } from "@/components/ui";
 import {
   adjustPointsAction,
+  removePersonalDataAction,
   resetPasswordAction,
   setActiveAction,
   setSeasonsAction,
@@ -169,6 +170,20 @@ export default async function StudentDetailPage(props: PageProps<"/admin/student
                   {user.isActive ? "Deactivate account" : "Reactivate account"}
                 </SubmitButton>
               </ActionForm>
+              {!user.isActive && (
+                <ActionForm action={removePersonalDataAction}>
+                  <input type="hidden" name="id" value={user.id} />
+                  <p className="text-sm text-muted">
+                    <strong className="text-ink">Remove personal data.</strong> Wipes their name, username and password
+                    permanently. Points and quiz history stay (as “Former student”) so totals and past standings remain
+                    correct. This can&apos;t be undone.
+                  </p>
+                  <Input name="confirm" placeholder="Type REMOVE" aria-label="Type REMOVE to confirm" className="max-w-48" autoComplete="off" />
+                  <SubmitButton variant="danger" className="self-start">
+                    Remove personal data
+                  </SubmitButton>
+                </ActionForm>
+              )}
             </div>
           </section>
         )}

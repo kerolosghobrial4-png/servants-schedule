@@ -7,7 +7,7 @@ import { formatDateTime } from "@/lib/time";
 import { getSettings } from "@/server/settings";
 import { listStudents } from "@/server/users-admin";
 import { Tabs } from "@/components/period-tabs";
-import { ButtonLink, EmptyState, PageTitle, Tag, formatPoints } from "@/components/ui";
+import { ButtonLink, EmptyState, PageTitle, Tag, buttonClass, formatPoints } from "@/components/ui";
 
 export const metadata: Metadata = { title: "Students" };
 
@@ -22,11 +22,19 @@ export default async function StudentsPage(props: PageProps<"/admin/students">) 
     <>
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-6">
         <PageTitle eyebrow="Manage" title="Students" />
-        {can(viewer.role, "students.manage") && (
-          <ButtonLink href="/admin/students/new" className="mb-8">
-            Add student
-          </ButtonLink>
-        )}
+        <div className="flex flex-wrap gap-2 mb-8">
+          <a href="/admin/export/students" download className={buttonClass("secondary")}>
+            Export CSV
+          </a>
+          {can(viewer.role, "students.manage") && (
+            <>
+              <ButtonLink href="/admin/students/import" variant="secondary">
+                Import list
+              </ButtonLink>
+              <ButtonLink href="/admin/students/new">Add student</ButtonLink>
+            </>
+          )}
+        </div>
       </div>
       <Tabs
         active={status}

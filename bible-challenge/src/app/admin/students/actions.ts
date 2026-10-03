@@ -9,7 +9,10 @@ import { displayNameSchema, formString, lineText, usernameSchema, uuidSchema, zo
 import {
   UserAdminError,
   adjustPoints,
+  bulkCreateStudents,
   createUser,
+  parseImportText,
+  removePersonalData,
   resetUserPassword,
   reversePoints,
   setStudentSeasons,
@@ -137,6 +140,36 @@ export async function reversePointsAction(_prev: FormState, fd: FormData): Promi
     await reversePoints(db, { ...parsed.data, actorId: actor.id });
     revalidatePath("/admin", "layout");
     return { ok: true, message: "Entry reversed." };
+  } catch (err) {
+    return fail(err);
+  }
+}
+
+export type ImportState = FormState & { created?: { displayName: string; username: string; temporaryPassword: string }[] };
+
+export async function importStudentsAction(_prev: ImportState, fd: FormData): Promise<ImportState> {
+  try {
+    const actor = await authorize("students.manage");
+    const text = formString(fd, "names").slice(0, 20_000);
+    const seasonIds = z.array(uuidSchema).max(20).parse(fd.getAll("seasonIds"));
+    const created = await bulkCreateStudents(db, { lines: parseImportText(text), seasonIds, actorId: actor.id });
+    revalidatePath("/admin", "layout");
+    return { ok: true, message: `Created ${created.length} account${created.length === 1 ? "" : "s"}.`, created };
+  } catch (err) {
+    return fail(err);
+  }
+}
+
+export async function removePersonalDataAction(_prev: FormState, fd: FormData): Promise<FormState> {
+  try {
+    const actor = await authorize("students.manage");
+    const id = uuidSchema.parse(fd.get("id"));
+    if (formString(fd, "confirm").trim().toUpperCase() !== "REMOVE") {
+      return { error: "Type REMOVE to confirm." };
+    }
+    await removePersonalData(db, { id, actorId: actor.id });
+    revalidatePath("/admin", "layout");
+    return { ok: true, message: "Personal data removed. Their past points remain as “Former student”." };
   } catch (err) {
     return fail(err);
   }

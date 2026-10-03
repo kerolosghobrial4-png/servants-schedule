@@ -76,7 +76,15 @@ export default async function PointsPage(props: PageProps<"/admin/points">) {
       </section>
 
       <section>
-        <SectionHeading>History</SectionHeading>
+        <SectionHeading
+          action={
+            <a href="/admin/export/ledger" download className="label hover:text-ink">
+              Export CSV ↓
+            </a>
+          }
+        >
+          History
+        </SectionHeading>
         <Tabs
           active={manualOnly ? "manual" : "all"}
           items={[

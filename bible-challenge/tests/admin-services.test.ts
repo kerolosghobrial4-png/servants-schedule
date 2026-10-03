@@ -221,3 +221,47 @@ describe("achievements and seasons", () => {
     await db.update(achievements).set({ isActive: false }).where(eq(achievements.id, top.id));
   });
 });
+
+describe("bulk import", () => {
+  it("generates unique usernames and is all-or-nothing", async () => {
+    const { bulkCreateStudents, parseImportText, suggestUsername } = await import("@/server/users-admin");
+    expect(suggestUsername("José M.")).toBe("josem");
+    expect(suggestUsername("Al")).toBe("studental");
+    const admin = await makeStaff();
+    const tag = Date.now().toString(36);
+    const lines = parseImportText(`Zed${tag}\n\nZed${tag}\nYan${tag}, yan${tag}`);
+    expect(lines).toHaveLength(3);
+    const created = await bulkCreateStudents(db, { lines, seasonIds: [], actorId: admin.id });
+    expect(created.map((c) => c.username)).toEqual([`zed${tag}`, `zed${tag}2`, `yan${tag}`]);
+
+    const before = (await db.select().from(users)).length;
+    await expect(
+      bulkCreateStudents(db, { lines: parseImportText(`Okay${tag}\nBad<name>`), seasonIds: [], actorId: admin.id }),
+    ).rejects.toThrow(/Line 2/);
+    expect((await db.select().from(users)).length).toBe(before);
+  });
+});
+
+describe("personal data removal", () => {
+  it("wipes identity, redacts audit details, keeps the ledger", async () => {
+    const { removePersonalData } = await import("@/server/users-admin");
+    const admin = await makeStaff();
+    const { id } = await createUser(db, { username: `priv${Date.now()}`, displayName: "Private", role: "student", actorId: admin.id });
+    await adjustPoints(db, { userId: id, amount: 40, reason: "Verse", actorId: admin.id });
+    await expect(removePersonalData(db, { id, actorId: admin.id })).rejects.toThrow(/Deactivate/);
+    await setUserActive(db, { id, active: false, actorId: admin.id });
+    await removePersonalData(db, { id, actorId: admin.id });
+
+    const u = await db.query.users.findFirst({ where: eq(users.id, id) });
+    expect(u?.displayName).toBe("Former student");
+    expect(u?.username).toMatch(/^removed-/);
+    expect(await verifyPassword("anything", u!.passwordHash)).toBe(false);
+    expect(await getBalance(db, id)).toBe(40);
+    const logs = await db.query.auditLog.findMany({ where: eq(auditLog.targetId, id) });
+    const created = logs.find((l) => l.action === "user.created");
+    expect(created?.details).toEqual({ redacted: true });
+
+    // Without the explicit flag, the audit log is still immutable.
+    await expect(db.update(auditLog).set({ details: { redacted: true } }).where(eq(auditLog.id, logs[0].id))).rejects.toThrow();
+  });
+});

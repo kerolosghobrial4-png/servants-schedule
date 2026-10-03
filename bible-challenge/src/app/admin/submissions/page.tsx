@@ -71,11 +71,18 @@ export default async function SubmissionsPage(props: PageProps<"/admin/submissio
           { key: "pending_review", label: "Needs review", href: base({ status: "pending_review" }) },
         ]}
       />
-      <form className="mb-6 flex gap-2" role="search">
+      <form className="mb-6 flex flex-wrap gap-2" role="search">
         {quizId && <input type="hidden" name="quiz" value={quizId} />}
         {status !== "all" && <input type="hidden" name="status" value={status} />}
         <input name="q" defaultValue={q} placeholder="Student name" aria-label="Student name" className="field max-w-xs" />
         <button className="label px-4 border border-line-strong hover:text-ink">Search</button>
+        <a
+          href={`/admin/export/submissions${quizId ? `?quiz=${quizId}` : ""}`}
+          download
+          className="label px-4 flex items-center hover:text-ink ml-auto"
+        >
+          Export CSV ↓
+        </a>
       </form>
       {rows.length === 0 ? (
         <EmptyState title={status === "pending_review" ? "Nothing waiting for review" : "No submissions"} />

@@ -4,6 +4,7 @@ import { alias } from "drizzle-orm/pg-core";
 import type { Database, DbOrTx } from "@/db";
 import { pointTransactions, seasonParticipants, seasons, sessions, submissions, users, type Role } from "@/db/schema";
 import { STAFF_MIN_PASSWORD, generateTemporaryPassword, hashPassword } from "@/lib/auth/password";
+import { displayNameSchema, usernameSchema } from "@/lib/validation";
 import { audit } from "./audit";
 import { recordPoints, reverseTransaction, lockUserLedger, LedgerError } from "./ledger";
 import { evaluateAchievements } from "./achievements";
@@ -347,4 +348,147 @@ export async function ledgerWithActors(database: Database, opts: { userId?: stri
     .orderBy(desc(pointTransactions.createdAt))
     .limit(opts.limit ?? 100)
     .offset(opts.offset ?? 0);
+}
+
+/* ---------------------------- bulk import ---------------------------- */
+
+export type ImportLine = { line: number; displayName: string; username?: string };
+
+/** "Mark W." → "markw", "José" → "jose" */
+export function suggestUsername(displayName: string): string {
+  const base = displayName
+    .normalize("NFKD")
+    .replace(/[̀-ͯ]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "")
+    .slice(0, 20);
+  return base.length >= 3 ? base : `student${base}`;
+}
+
+/** Parses "Display name" or "Display name, username" per line. Blank lines are ignored. */
+export function parseImportText(text: string): ImportLine[] {
+  return text
+    .split(/\r?\n/)
+    .map((raw, i) => ({ raw: raw.trim(), line: i + 1 }))
+    .filter((l) => l.raw)
+    .map(({ raw, line }) => {
+      const [name, user] = raw.split(/[,\t]/).map((s) => s.trim());
+      return { line, displayName: name, username: user || undefined };
+    });
+}
+
+/**
+ * Creates many student accounts at once, all-or-nothing. Usernames are
+ * generated from display names when not given and made unique. Returns each
+ * account's one-time temporary password for the leader to hand out.
+ */
+export async function bulkCreateStudents(
+  database: Database,
+  opts: { lines: ImportLine[]; seasonIds: string[]; actorId: string },
+): Promise<{ displayName: string; username: string; temporaryPassword: string }[]> {
+  if (opts.lines.length === 0) throw new UserAdminError("Paste at least one name.");
+  if (opts.lines.length > 100) throw new UserAdminError("Import at most 100 students at a time.");
+
+  const problems: string[] = [];
+  const taken = new Set(
+    (await database.select({ u: sql<string>`lower(${users.username})` }).from(users)).map((r) => r.u),
+  );
+  const planned: { displayName: string; username: string }[] = [];
+  for (const l of opts.lines) {
+    const name = displayNameSchema.safeParse(l.displayName);
+    if (!name.success) {
+      problems.push(`Line ${l.line}: name — ${name.error.issues[0].message}`);
+      continue;
+    }
+    let username: string;
+    if (l.username) {
+      const u = usernameSchema.safeParse(l.username);
+      if (!u.success) {
+        problems.push(`Line ${l.line}: username — ${u.error.issues[0].message}`);
+        continue;
+      }
+      if (taken.has(u.data)) {
+        problems.push(`Line ${l.line}: username "${u.data}" is already taken`);
+        continue;
+      }
+      username = u.data;
+    } else {
+      const base = suggestUsername(name.data);
+      username = base;
+      for (let n = 2; taken.has(username); n++) username = `${base}${n}`;
+    }
+    taken.add(username);
+    planned.push({ displayName: name.data, username });
+  }
+  if (problems.length) throw new UserAdminError(problems.slice(0, 10).join("\n"));
+
+  const withPasswords: { displayName: string; username: string; temporaryPassword: string; passwordHash: string }[] = [];
+  for (const p of planned) {
+    const temporaryPassword = generateTemporaryPassword();
+    withPasswords.push({ ...p, temporaryPassword, passwordHash: await hashPassword(temporaryPassword) });
+  }
+
+  await database.transaction(async (tx) => {
+    const inserted = await tx
+      .insert(users)
+      .values(
+        withPasswords.map((p) => ({
+          username: p.username,
+          displayName: p.displayName,
+          passwordHash: p.passwordHash,
+          role: "student" as const,
+          mustChangePassword: true,
+        })),
+      )
+      .returning({ id: users.id });
+    if (opts.seasonIds.length) {
+      const valid = await tx.select({ id: seasons.id }).from(seasons).where(inArray(seasons.id, opts.seasonIds));
+      const rows = valid.flatMap((s) => inserted.map((u) => ({ seasonId: s.id, userId: u.id })));
+      if (rows.length) await tx.insert(seasonParticipants).values(rows);
+    }
+    await audit(tx, {
+      actorId: opts.actorId,
+      action: "user.bulk_created",
+      targetType: "user",
+      details: { count: inserted.length, userIds: inserted.map((u) => u.id) },
+    });
+  });
+  return withPasswords.map(({ displayName, username, temporaryPassword }) => ({ displayName, username, temporaryPassword }));
+}
+
+/* --------------------------- personal data --------------------------- */
+
+/**
+ * Removes a former student's personal data while keeping the competition
+ * history consistent: the account keeps its id (so the ledger and past
+ * leaderboards still add up) but its name, username and credentials are
+ * wiped, and audit entries about it are redacted. Irreversible.
+ */
+export async function removePersonalData(database: Database, opts: { id: string; actorId: string }) {
+  await database.transaction(async (tx) => {
+    const user = await tx.query.users.findFirst({ where: eq(users.id, opts.id) });
+    if (!user || user.role !== "student") throw new UserAdminError("Student not found.");
+    if (user.isActive) throw new UserAdminError("Deactivate the account first.");
+    const short = user.id.slice(0, 8);
+    await tx
+      .update(users)
+      .set({
+        displayName: "Former student",
+        username: `removed-${short}`,
+        passwordHash: "disabled",
+        totpSecret: null,
+        totpEnabled: false,
+        mustChangePassword: false,
+        lastLoginAt: null,
+        updatedAt: new Date(),
+      })
+      .where(eq(users.id, user.id));
+    await tx.delete(sessions).where(eq(sessions.userId, user.id));
+    await tx.execute(sql`delete from login_attempts where key in (${`user:${user.username.toLowerCase()}`}, ${`password:${user.id}`})`);
+    await tx.execute(sql`update user_achievements set note = null where user_id = ${user.id}`);
+    await tx.execute(sql`select set_config('app.redact_audit', 'on', true)`);
+    await tx.execute(sql`update audit_log set details = '{"redacted": true}'::jsonb where target_id = ${user.id} and details <> '{"redacted": true}'::jsonb`);
+    await tx.execute(sql`select set_config('app.redact_audit', 'off', true)`);
+    await audit(tx, { actorId: opts.actorId, action: "user.personal_data_removed", targetType: "user", targetId: user.id });
+  });
 }
