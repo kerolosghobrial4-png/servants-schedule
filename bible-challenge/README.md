@@ -102,6 +102,18 @@ npm run typecheck
 npm run lint
 ```
 
+Browser end-to-end tests (Playwright) run against a running app with demo data:
+
+```bash
+npm run db:seed && npm run db:seed:demo && npm run build
+COOKIE_SECURE=false NODE_ENV=production npm start &
+npm run test:e2e
+```
+
+`npm run db:check` re-checks every submission against the points ledger (read-only), and `tests/perf/` holds a load benchmark (`LOAD_DATABASE_URL=… npx vitest run --config vitest.perf.mts`). With 150 students and a full year of daily quizzes, every page's data loads in about 100 ms.
+
+CI (`.github/workflows/bible-challenge.yml`) runs typecheck, lint, unit tests and a build, then the end-to-end suite against a production server.
+
 The tests run against a real Postgres database. They cover grading, short-answer matching, duplicate and concurrent submissions, ledger immutability, review and re-grade flows, reversals, streaks and streak bonuses, time zones, TOTP, password hashing, permissions and rate limiting.
 
 ## Deploying
