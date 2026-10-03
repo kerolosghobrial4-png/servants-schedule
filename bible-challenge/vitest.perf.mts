@@ -9,13 +9,8 @@ export default defineConfig({
     },
   },
   test: {
-    environment: "node",
-    globalSetup: ["tests/global-setup.ts"],
-    exclude: ["**/node_modules/**", "tests/perf/**"],
-    fileParallelism: false,
-    env: {
-      DATABASE_URL: process.env.TEST_DATABASE_URL ?? "postgres://bible:bible@localhost:5432/bible_test",
-    },
-    testTimeout: 20_000,
+    include: ["tests/perf/**/*.bench.ts"],
+    env: { DATABASE_URL: process.env.LOAD_DATABASE_URL ?? "" },
+    testTimeout: 300_000,
   },
 });

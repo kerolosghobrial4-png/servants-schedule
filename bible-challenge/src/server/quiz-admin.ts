@@ -66,10 +66,12 @@ export async function saveQuiz(
     let quizId = opts.quizId;
     let existingStatus: "draft" | "published" | "archived" = "draft";
     let hasSubs = false;
+    let bonusChanged = false;
     if (quizId) {
       const existing = await tx.query.quizzes.findFirst({ where: eq(quizzes.id, quizId) });
       if (!existing) throw new QuizAdminError("Quiz not found.");
       existingStatus = existing.status;
+      bonusChanged = existing.bonusPoints !== input.bonusPoints || existing.bonusCondition !== input.bonusCondition;
       hasSubs = !!(await tx.query.submissions.findFirst({ columns: { id: true }, where: eq(submissions.quizId, quizId) }));
     }
 
@@ -116,7 +118,8 @@ export async function saveQuiz(
     const keyChanged = await syncQuizQuestions(tx, quizId, input.questions, { hasSubs, actorId: opts.actorId });
 
     let regraded = 0;
-    if (hasSubs && keyChanged) {
+    // Bonus rules live on the quiz, so changing them also changes what submissions are worth.
+    if (hasSubs && (keyChanged || bonusChanged)) {
       const subs = await tx.select({ id: submissions.id }).from(submissions).where(eq(submissions.quizId, quizId));
       for (const s of subs) await gradeAndSync(tx, s.id);
       regraded = subs.length;

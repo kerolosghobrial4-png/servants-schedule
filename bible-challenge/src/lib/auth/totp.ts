@@ -55,16 +55,27 @@ export function hotp(secret: string, counter: number): string {
   return String(code % 1_000_000).padStart(6, "0");
 }
 
-/** Accepts the current code and one step either side for clock drift. */
-export function verifyTotp(secret: string, token: string, now = Date.now()): boolean {
+/**
+ * Accepts the current code and one step either side for clock drift.
+ * Returns the matched time step, or null. Pass `lastUsedStep` to reject a
+ * code that was already used (replay protection).
+ */
+export function matchTotp(secret: string, token: string, now = Date.now(), lastUsedStep: number | null = null): number | null {
   const clean = token.replace(/\s+/g, "");
-  if (!/^\d{6}$/.test(clean)) return false;
+  if (!/^\d{6}$/.test(clean)) return null;
   const counter = Math.floor(now / 1000 / 30);
   for (const drift of [-1, 0, 1]) {
-    const expected = Buffer.from(hotp(secret, counter + drift));
-    if (timingSafeEqual(expected, Buffer.from(clean))) return true;
+    const step = counter + drift;
+    const expected = Buffer.from(hotp(secret, step));
+    if (timingSafeEqual(expected, Buffer.from(clean))) {
+      return lastUsedStep !== null && step <= lastUsedStep ? null : step;
+    }
   }
-  return false;
+  return null;
+}
+
+export function verifyTotp(secret: string, token: string, now = Date.now()): boolean {
+  return matchTotp(secret, token, now) !== null;
 }
 
 export function totpUri(secret: string, account: string, issuer = "Bible Challenge"): string {

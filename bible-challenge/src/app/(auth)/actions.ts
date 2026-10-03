@@ -1,6 +1,6 @@
 "use server";
 
-import { eq, sql } from "drizzle-orm";
+import { and, eq, isNull, lt, or, sql } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { db } from "@/db";
@@ -16,7 +16,7 @@ import {
   verifyPassword,
 } from "@/lib/auth/password";
 import { createSession, destroyCurrentSession, getCurrentSession, revokeUserSessions } from "@/lib/auth/session";
-import { generateTotpSecret, verifyTotp } from "@/lib/auth/totp";
+import { generateTotpSecret, matchTotp } from "@/lib/auth/totp";
 import { isStaff } from "@/lib/permissions";
 import { clientIp } from "@/lib/request";
 import { formString } from "@/lib/validation";
@@ -79,9 +79,17 @@ export async function verifyTotpAction(_prev: FormState, formData: FormData): Pr
     await destroyCurrentSession();
     return { error: "Too many incorrect codes. Sign in again in 15 minutes." };
   }
-  const ok = verifyTotp(user.totpSecret, formString(formData, "code"));
+  const step = matchTotp(user.totpSecret, formString(formData, "code"), Date.now(), user.totpLastStep);
+  const ok = step !== null;
   await recordAttempt(db, key, ok);
   if (!ok) return { error: "That code didn't match. Use the current code from your authenticator app." };
+  // Mark the step used; the conditional update makes concurrent replays lose.
+  const claimed = await db
+    .update(users)
+    .set({ totpLastStep: step })
+    .where(and(eq(users.id, user.id), or(isNull(users.totpLastStep), lt(users.totpLastStep, step))))
+    .returning({ id: users.id });
+  if (!claimed.length) return { error: "That code was already used. Wait for the next one." };
 
   await destroyCurrentSession();
   await createSession(user);
@@ -158,10 +166,11 @@ export async function confirmTotpSetupAction(_prev: FormState, formData: FormDat
   if (!user?.totpSecret || user.totpEnabled) return { error: "Start setup again." };
   const key = `totp:${user.id}`;
   if (await isLimited(db, key, LIMITS.totp)) return { error: "Too many attempts. Try again in 15 minutes." };
-  const ok = verifyTotp(user.totpSecret, formString(formData, "code"));
+  const step = matchTotp(user.totpSecret, formString(formData, "code"));
+  const ok = step !== null;
   await recordAttempt(db, key, ok);
   if (!ok) return { error: "That code didn't match. Check your phone's clock and try the newest code." };
-  await db.update(users).set({ totpEnabled: true }).where(eq(users.id, user.id));
+  await db.update(users).set({ totpEnabled: true, totpLastStep: step }).where(eq(users.id, user.id));
   const session = await getCurrentSession();
   await revokeUserSessions(user.id, session?.sessionId);
   await audit(db, { actorId: user.id, action: "auth.2fa_enabled", targetType: "user", targetId: user.id });
@@ -179,10 +188,10 @@ export async function disableTotpAction(_prev: FormState, formData: FormData): P
   if (await isLimited(db, key, LIMITS.password)) return { error: "Too many attempts. Try again in 15 minutes." };
   const ok =
     (await verifyPassword(formString(formData, "password"), user.passwordHash)) &&
-    verifyTotp(user.totpSecret, formString(formData, "code"));
+    matchTotp(user.totpSecret, formString(formData, "code"), Date.now(), user.totpLastStep) !== null;
   await recordAttempt(db, key, ok);
   if (!ok) return { error: "Password or code is incorrect." };
-  await db.update(users).set({ totpEnabled: false, totpSecret: null }).where(eq(users.id, user.id));
+  await db.update(users).set({ totpEnabled: false, totpSecret: null, totpLastStep: null }).where(eq(users.id, user.id));
   await audit(db, { actorId: user.id, action: "auth.2fa_disabled", targetType: "user", targetId: user.id });
   redirect("/account/security?disabled=1");
 }

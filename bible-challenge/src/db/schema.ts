@@ -70,6 +70,8 @@ export const users = pgTable(
     mustChangePassword: boolean("must_change_password").notNull().default(false),
     totpSecret: text("totp_secret"),
     totpEnabled: boolean("totp_enabled").notNull().default(false),
+    /** Last accepted TOTP time step; codes at or before it are rejected (no replay). */
+    totpLastStep: integer("totp_last_step"),
     lastLoginAt: timestamp("last_login_at", { withTimezone: true }),
     deactivatedAt: timestamp("deactivated_at", { withTimezone: true }),
     ...timestamps,

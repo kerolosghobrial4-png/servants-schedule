@@ -265,3 +265,35 @@ describe("personal data removal", () => {
     await expect(db.update(auditLog).set({ details: { redacted: true } }).where(eq(auditLog.id, logs[0].id))).rejects.toThrow();
   });
 });
+
+describe("quiz bonus edits", () => {
+  it("re-grades submissions when the quiz bonus changes", async () => {
+    const admin = await makeStaff();
+    const { quizId } = await saveQuiz(db, { input: quizInputSchema.parse(baseQuiz()), actorId: admin.id, intent: "publish" });
+    const quiz = await db.query.quizzes.findFirst({
+      where: (q, { eq }) => eq(q.id, quizId),
+      with: { questions: { with: { options: true } } },
+    });
+    const q = quiz!.questions[0];
+    const s = await makeStudent();
+    await submitQuiz(db, {
+      userId: s.id,
+      quizId,
+      answers: [{ questionId: q.id, selectedOptionIds: [q.options.find((o) => o.isCorrect)!.id], textAnswer: null }],
+      now: new Date(quiz!.opensAt.getTime() + 60_000),
+    });
+    const before = await getBalance(db, s.id);
+
+    const withBonus = baseQuiz({ bonusPoints: 15, bonusCondition: "perfect" });
+    withBonus.questions[0] = {
+      ...withBonus.questions[0],
+      id: q.id,
+      sourceQuestionId: q.sourceQuestionId,
+      saveToBank: false,
+      options: q.options.map((o) => ({ id: o.id, label: o.label, isCorrect: o.isCorrect })),
+    };
+    const res = await saveQuiz(db, { quizId, input: quizInputSchema.parse(withBonus), actorId: admin.id, intent: "keep" });
+    expect(res.regraded).toBe(1);
+    expect(await getBalance(db, s.id)).toBe(before + 15);
+  });
+});

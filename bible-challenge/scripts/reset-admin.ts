@@ -24,7 +24,7 @@ async function main() {
   if (!user || user.role !== "admin") throw new Error(`No admin account named "${username}".`);
   await db
     .update(users)
-    .set({ passwordHash: await hashPassword(password), totpEnabled: false, totpSecret: null, isActive: true, deactivatedAt: null, mustChangePassword: false })
+    .set({ passwordHash: await hashPassword(password), totpEnabled: false, totpSecret: null, totpLastStep: null, isActive: true, deactivatedAt: null, mustChangePassword: false })
     .where(eq(users.id, user.id));
   await db.delete(sessions).where(eq(sessions.userId, user.id));
   await audit(db, { actorId: null, action: "auth.admin_reset_from_cli", targetType: "user", targetId: user.id });
