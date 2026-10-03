@@ -19,7 +19,8 @@ This app is separate from the servants schedule site in the rest of this reposit
 
 **Leaders and admins** (`/admin`)
 - Dashboard: active students, today's completion rate, who has and hasn't finished, average score, leaderboard, recent submissions and point changes
-- Students: create (temporary password shown once), edit, deactivate (soft), reset password, assign seasons, quiz and point history, adjust points
+- Students: create one at a time or import a pasted list (temporary passwords shown once, printable), edit, deactivate (soft), reset password, assign seasons, quiz and point history, adjust points, and remove personal data when a student leaves
+- CSV exports of students, the points ledger and submissions
 - Quizzes: draft or publish, schedule, passage, study notes, answer-reveal timing, bonus points, streak eligibility, duplicate. Fixing an answer key after students have submitted re-grades every submission and corrects the ledger.
 - Question bank: search and filter by book, chapter, topic, type and difficulty. Reuse, duplicate, archive. Quizzes keep their own copy of each question, so editing the bank never changes past quizzes.
 - Submissions: approve or reject short answers, and allow a student one revision
@@ -69,6 +70,8 @@ The permission matrix is in `src/lib/permissions.ts`. Every page calls `requireP
 - **No duplicate points:** there's a unique `(quiz, student)` index, and all of a student's point work runs in one transaction under a per-student advisory lock. Replayed or double-tapped submissions are rejected.
 - **Headers:** a per-request nonce-based Content Security Policy, HSTS, `X-Frame-Options: DENY`, `nosniff`, a strict referrer policy and a permissions policy.
 - **Input** is validated with Zod on the server. All queries are parameterised through Drizzle ORM.
+- **Exports** neutralise spreadsheet formula injection, and are only available to the roles that can already see that data.
+- **Leaving the group:** after deactivating a student, an admin can remove their personal data. The name, username and password are wiped and audit entries about them are redacted, while their points stay in the totals as "Former student".
 
 ## Tech
 
@@ -103,16 +106,34 @@ The tests run against a real Postgres database. They cover grading, short-answer
 
 ## Deploying
 
-Any host that runs a Node server plus a managed PostgreSQL database will work, for example Render, Railway, Fly.io, or Vercel with Neon or Supabase.
+Any host that runs a Node server plus a managed PostgreSQL database will work. Three ready-made paths:
 
-1. Create a PostgreSQL database and set `DATABASE_URL`. Set `DATABASE_SSL=true` if the provider requires TLS.
+**Render (simplest).** The repository root has a `render.yaml` Blueprint. In Render choose **New → Blueprint**, pick this repository, and it creates the database and the web service, generates the encryption key, runs migrations on every start, and uses `/api/health` as the health check. Then open the web service's **Shell** and run `ADMIN_USERNAME=admin ADMIN_PASSWORD='a long password' npm run db:seed` once.
+
+**Docker (any host).** `bible-challenge/Dockerfile` builds a production image that runs migrations on start and has a built-in health check:
+
+```bash
+cd bible-challenge
+docker build -t bible-challenge .
+docker run -p 3000:3000 --env-file .env bible-challenge
+docker exec -it <container> sh -c "ADMIN_USERNAME=admin ADMIN_PASSWORD='…' npm run db:seed"
+```
+
+**Any Node host by hand.**
+
+1. Create a PostgreSQL database and set `DATABASE_URL`. Set `DATABASE_SSL=true` if the provider requires TLS (and `DATABASE_SSL_REJECT_UNAUTHORIZED=false` only if it uses a self-signed certificate).
 2. Set `NEXT_SERVER_ACTIONS_ENCRYPTION_KEY` (generate it with `openssl rand -base64 32`) so it stays the same across deploys and instances.
 3. Set `TRUST_PROXY=true` if the platform puts a proxy in front of the app (most do). This enables per-IP rate limits.
-4. Build and start with `npm ci && npm run build`, then `npm run db:migrate && npm start`.
+4. Build with `npm ci && npm run build`, start with `npm run start:prod` (applies pending migrations, then starts).
 5. Run `ADMIN_USERNAME=… ADMIN_PASSWORD=… npm run db:seed` once to create the first admin.
-6. Sign in, open **Account security** and turn on two-step verification. Then go to **Settings** and set your time zone and point values.
+
+On startup the server checks its configuration and prints `[config]` warnings, or refuses to start if something required is missing or malformed.
+
+**After the first sign-in:** open **Account security** and turn on two-step verification, then go to **Settings** and set your time zone and point values.
 
 Serve the app over HTTPS only. Production cookies are `Secure`.
+
+**Backups.** The ledger is the source of truth for every point. Use your provider's automatic backups, or run `pg_dump "$DATABASE_URL" > backup.sql` on a schedule.
 
 **Locked out?** Anyone with shell access to the server can run `ADMIN_USERNAME=admin ADMIN_PASSWORD='new long password' npm run user:reset-admin`. This resets that admin's password, turns off their two-step verification and signs them out everywhere. The reset is recorded in the audit log.
 
