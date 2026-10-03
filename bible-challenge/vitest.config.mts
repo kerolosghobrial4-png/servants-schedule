@@ -11,7 +11,7 @@ export default defineConfig({
   test: {
     environment: "node",
     globalSetup: ["tests/global-setup.ts"],
-    exclude: ["**/node_modules/**", "tests/perf/**"],
+    exclude: ["**/node_modules/**", "tests/perf/**", "e2e/**"],
     fileParallelism: false,
     env: {
       DATABASE_URL: process.env.TEST_DATABASE_URL ?? "postgres://bible:bible@localhost:5432/bible_test",
