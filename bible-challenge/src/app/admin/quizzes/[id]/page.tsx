@@ -51,6 +51,9 @@ export default async function EditQuizPage(props: PageProps<"/admin/quizzes/[id]
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
+          <Link href={`/admin/quizzes/${quiz.id}/preview`} className={buttonClass("secondary", "sm")}>
+            Preview
+          </Link>
           <Link href={`/admin/quizzes/new?from=${quiz.id}`} className={buttonClass("secondary", "sm")}>
             Duplicate
           </Link>

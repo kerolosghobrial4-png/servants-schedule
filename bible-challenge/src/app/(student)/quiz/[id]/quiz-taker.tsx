@@ -34,21 +34,25 @@ export function QuizTaker({
   storageKey,
   questions,
   isRevision,
+  preview = false,
 }: {
   quizId: string;
   storageKey: string;
   questions: TakerQuestion[];
   isRevision: boolean;
+  /** Leader preview: nothing is saved or submitted. */
+  preview?: boolean;
 }) {
   const [answers, setAnswers] = useState<Record<string, Answer>>({});
   const [index, setIndex] = useState(0);
   const [reviewing, setReviewing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
-  const [restored, setRestored] = useState(false);
+  const [restored, setRestored] = useState(preview);
 
   // Keep in-progress answers on this device only, so a refresh doesn't lose work.
   useEffect(() => {
+    if (preview) return;
     try {
       const saved = localStorage.getItem(storageKey);
       if (saved) {
@@ -61,16 +65,16 @@ export function QuizTaker({
       /* ignore */
     }
     setRestored(true);
-  }, [storageKey, questions]);
+  }, [storageKey, questions, preview]);
 
   useEffect(() => {
-    if (!restored) return;
+    if (!restored || preview) return;
     try {
       localStorage.setItem(storageKey, JSON.stringify(answers));
     } catch {
       /* ignore */
     }
-  }, [answers, restored, storageKey]);
+  }, [answers, restored, storageKey, preview]);
 
   const answeredCount = useMemo(
     () => questions.filter((q) => isAnswered(q, answers[q.id])).length,
@@ -100,6 +104,10 @@ export function QuizTaker({
 
   function submit() {
     setError(null);
+    if (preview) {
+      setError("Preview only — answers aren't submitted. Students will see their score here.");
+      return;
+    }
     const payload = questions.map((question) => {
       const ans = answers[question.id];
       return {
