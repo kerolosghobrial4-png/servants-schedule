@@ -20,6 +20,15 @@ export default async function AdminDashboard(props: PageProps<"/admin">) {
   return (
     <div className="flex flex-col gap-12">
       {sp.denied === "1" && <Notice tone="error">Your role doesn&apos;t have access to that page.</Notice>}
+      {d.seasonsToFinalize.map((s) => (
+        <Notice key={s.id}>
+          <strong className="text-ink">{s.name}</strong> has ended.{" "}
+          <Link href={`/admin/seasons/${s.id}`} className="underline underline-offset-4 text-ink">
+            Finalize it
+          </Link>{" "}
+          to lock the standings and award season badges.
+        </Notice>
+      ))}
       <header className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
         <div>
           <p className="label mb-2">{formatLongDate(d.today)}</p>

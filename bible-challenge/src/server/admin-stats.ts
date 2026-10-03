@@ -1,7 +1,7 @@
 import "server-only";
-import { and, count, desc, eq, inArray } from "drizzle-orm";
+import { and, count, desc, eq, inArray, isNull, lt } from "drizzle-orm";
 import type { Database } from "@/db";
-import { pointTransactions, quizzes, submissions, users } from "@/db/schema";
+import { pointTransactions, quizzes, seasons, submissions, users } from "@/db/schema";
 import { dateInTz } from "@/lib/time";
 import { getLeaderboard } from "./leaderboard";
 import { getSettings } from "./settings";
@@ -85,9 +85,15 @@ export async function getAdminDashboard(database: Database, now = new Date()) {
     getLeaderboard(database, { kind: "period", period: "month" }, settings, now),
   ]);
 
+  const seasonsToFinalize = await database
+    .select({ id: seasons.id, name: seasons.name })
+    .from(seasons)
+    .where(and(isNull(seasons.finalizedAt), lt(seasons.endsOn, today)));
+
   return {
     settings,
     today,
+    seasonsToFinalize,
     activeStudentCount: activeStudents.length,
     todayQuizStats,
     recentSubmissions,
