@@ -17,7 +17,10 @@ function createPool() {
   return new Pool({
     connectionString,
     max: Number(process.env.DATABASE_POOL_MAX ?? 10),
-    ssl: process.env.DATABASE_SSL === "true" ? { rejectUnauthorized: true } : undefined,
+    ssl:
+      process.env.DATABASE_SSL === "true"
+        ? { rejectUnauthorized: process.env.DATABASE_SSL_REJECT_UNAUTHORIZED !== "false" }
+        : undefined,
   });
 }
 

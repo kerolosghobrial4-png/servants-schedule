@@ -10,12 +10,14 @@
     "typecheck": "next typegen && tsc --noEmit",
     "test": "vitest run",
     "db:generate": "drizzle-kit generate",
-    "db:migrate": "tsx scripts/migrate.ts",
+    "db:migrate": "node scripts/migrate.mjs",
     "db:seed": "tsx --conditions=react-server scripts/seed.ts",
     "db:seed:demo": "tsx --conditions=react-server scripts/seed-demo.ts",
-    "user:reset-admin": "tsx --conditions=react-server scripts/reset-admin.ts"
+    "user:reset-admin": "tsx --conditions=react-server scripts/reset-admin.ts",
+    "start:prod": "node scripts/migrate.mjs && next start"
   },
   "dependencies": {
+    "dotenv": "^18.0.5",
     "drizzle-orm": "^0.45.3",
     "lucide-react": "^1.50.0",
     "next": "16.3.8",
@@ -24,6 +26,7 @@
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "server-only": "^0.0.1",
+    "tsx": "^4.23.15",
     "zod": "^4.6.5"
   },
   "devDependencies": {
@@ -33,12 +36,10 @@
     "@types/qrcode": "^1.5.6",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "dotenv": "^18.0.5",
     "drizzle-kit": "^0.31.11",
     "eslint": "^9",
     "eslint-config-next": "16.3.8",
     "tailwindcss": "^4",
-    "tsx": "^4.23.15",
     "typescript": "^5",
     "vitest": "^5.0.3"
   },
