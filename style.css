@@ -337,3 +337,57 @@ footer {
   .task-name { font-size: 1.1rem; }
   .container { padding: 20px 16px; }
 }
+/* Home page: 5/6 on the left, announcements in the middle, 7/8 on the right */
+.container-wide {
+  max-width: 1100px;
+}
+
+.home-columns {
+  display: grid;
+  grid-template-columns: 1fr 1.2fr 1fr;
+  grid-template-areas: "left middle right";
+  gap: 24px;
+  align-items: start;
+}
+
+.home-columns .group { margin-bottom: 0; }
+.group-left { grid-area: left; }
+.group-right { grid-area: right; }
+
+.announcements {
+  grid-area: middle;
+  background: #fffbeb;
+  border: 2px solid #f6e05e;
+  border-radius: 12px;
+  padding: 18px 20px;
+}
+
+.announcements h2 {
+  color: #975a16;
+  border-bottom-color: #f6e05e;
+}
+
+.announcement-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.announcement-list li {
+  background: #ffffff;
+  border-radius: 8px;
+  padding: 12px 14px;
+  color: #2d3748;
+  font-size: 1rem;
+  line-height: 1.5;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+/* Phones and narrow screens: announcements first, then each group stacked */
+@media (max-width: 800px) {
+  .home-columns {
+    grid-template-columns: 1fr;
+    grid-template-areas: "middle" "left" "right";
+  }
+}
