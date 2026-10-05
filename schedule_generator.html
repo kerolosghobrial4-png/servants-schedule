@@ -1,0 +1,1342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Schedule Generator — St. Stephen Servants</title>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Marcellus&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#1a1a1a;--line:#e2e2e2;--brass:#C9963F;--ok:#7A9A6E;--no:#C1272D;--bg:#faf8f3}
+*{box-sizing:border-box;margin:0;padding:0;font-family:'Archivo',system-ui,sans-serif}
+body{background:var(--bg);color:var(--ink);padding:clamp(16px,4vw,48px) clamp(14px,4vw,32px);display:flex;justify-content:center;min-height:100vh}
+.wrap{width:100%;max-width:880px;display:flex;flex-direction:column;gap:22px}
+h1{font-family:'Marcellus',serif;font-weight:400;font-size:clamp(24px,5vw,34px);line-height:1.1}
+.sub{font-size:14px;color:#666;line-height:1.5}
+hr{border:none;border-top:1px solid var(--line)}
+.section{display:flex;flex-direction:column;gap:10px}
+label{font-size:12px;letter-spacing:.12em;text-transform:uppercase;font-weight:700;color:#666}
+input[type=text],input[type=number]{width:100%;padding:12px 14px;border:1px solid var(--line);border-radius:4px;font-size:16px;font-weight:600;background:#fff}
+.hint{font-size:13px;color:#777;line-height:1.6;background:#fff;border:1px dashed var(--line);padding:12px 14px;border-radius:4px}
+.hint code{background:#f0ede4;padding:1px 5px;border-radius:3px;font-size:12px}
+.deadline-line{font-size:15px;font-weight:700;color:var(--brass);background:#fff;border:1px solid var(--line);padding:12px 14px;border-radius:4px}
+.deadline-line .file{color:#888;font-weight:600;font-size:13px;margin-left:10px}
+
+/* Servant cards */
+.servant-card{background:#fff;border:1px solid var(--line);border-radius:8px;padding:16px 18px;display:flex;flex-direction:column;gap:12px}
+.servant-head{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.servant-name{font-size:17px;font-weight:800}
+.servant-group{font-size:12px;color:#888;font-weight:600;letter-spacing:.06em;text-transform:uppercase}
+.role-toggle{display:flex;gap:0;border:1px solid var(--line);border-radius:4px;overflow:hidden}
+.role-toggle button{padding:8px 16px;border:none;background:#fff;font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;color:#999}
+.role-toggle button.active.primary{background:#3182ce;color:#fff}
+.role-toggle button.active.backup{background:#a0aec0;color:#fff}
+.servant-body{display:flex;flex-direction:column;gap:10px}
+.field-label{font-size:11px;letter-spacing:.1em;text-transform:uppercase;font-weight:700;color:#999;margin-bottom:2px}
+textarea{width:100%;padding:12px;border:1px solid var(--line);border-radius:4px;font-family:'Courier New',monospace;font-size:13px;line-height:1.5;background:#fff;resize:vertical}
+textarea.links{min-height:64px}
+textarea.note{min-height:60px;font-family:Georgia,serif;font-size:14px}
+select{width:100%;padding:11px 14px;border:1px solid var(--line);border-radius:4px;font-size:15px;font-weight:600;background:#fff}
+select:disabled{background:#f4f2ec;color:#aaa}
+.group-heading{font-family:'Marcellus',serif;font-size:20px;color:#1a365d;margin-top:8px;padding-bottom:6px;border-bottom:2px solid #e2e8f0}
+
+/* Assignment rows (dropdown picker) */
+.assign-rows{display:flex;flex-direction:column;gap:6px}
+.assign-row{display:flex;gap:6px;align-items:center}
+.assign-row select{flex:1;padding:9px 12px;font-size:14px}
+.assign-remove{flex:0 0 auto;width:30px;height:34px;border:1px solid var(--line);border-radius:4px;background:#fff;color:var(--no);font-size:16px;font-weight:700;cursor:pointer;line-height:1}
+.assign-remove:hover{background:#fbecec;border-color:#f3c4c4}
+.preset-bar{display:flex;flex-wrap:wrap;gap:4px;align-items:center;padding:6px 0 2px}
+.preset-label{font-size:10px;letter-spacing:.1em;text-transform:uppercase;font-weight:700;color:#999;margin-right:2px}
+.preset-btn{padding:4px 8px;border:1px solid var(--line);border-radius:4px;background:#f7f5ef;font-size:11px;font-weight:700;cursor:pointer;color:#4a5568;white-space:nowrap}
+.preset-btn:hover{background:#edf2f7;border-color:#cbd5e0}
+.preset-btn.is-primary{border-left:3px solid #3182ce}
+.preset-btn.is-backup{border-left:3px solid #a0aec0;color:#718096}
+.assign-add{align-self:flex-start;padding:7px 14px;border:1px dashed var(--line);border-radius:4px;background:#fff;color:var(--brass);font-size:12px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;cursor:pointer}
+.assign-add:hover{background:#fbf6ec;border-color:var(--brass)}
+.assign-empty{font-size:12px;color:#bbb;font-style:italic;padding:4px 2px}
+
+/* Assignment library editor */
+.lib-section{background:#fff;border:1px solid var(--line);border-radius:6px;padding:14px 16px;display:flex;flex-direction:column;gap:8px}
+.lib-row{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.lib-row input{padding:9px 12px;border:1px solid var(--line);border-radius:4px;font-size:14px;font-weight:600}
+.lib-row input.emoji{width:50px;text-align:center;font-size:16px}
+.lib-row input.label{flex:1;min-width:160px}
+.lib-list{display:flex;flex-wrap:wrap;gap:6px}
+.lib-chip{display:inline-flex;align-items:center;gap:6px;padding:5px 10px;border:1px solid var(--line);border-radius:20px;background:#faf8f3;font-size:13px;font-weight:600}
+.lib-chip .x{color:var(--no);cursor:pointer;font-weight:800;border:none;background:none;font-size:14px;line-height:1}
+
+.btn{padding:15px 24px;border:none;border-radius:4px;font-size:15px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;transition:background .15s;width:100%}
+.btn.go{background:var(--brass);color:#fff}
+.btn.go:hover{background:#b8862e}
+.btn.go:disabled{background:#ccc;cursor:not-allowed}
+.btn.ghost{background:#fff;color:#666;border:1px solid var(--line)}
+.btn.ghost:hover{background:#f4f2ec}
+
+.err{display:none;color:var(--no);font-weight:600;font-size:14px;line-height:1.5;background:#fbecec;border:1px solid #f3c4c4;padding:12px 14px;border-radius:4px;white-space:pre-wrap}
+.result{display:none;flex-direction:column;gap:14px}
+.result.show{display:flex}
+.linkbox{background:#eef5ec;border:1px solid #c4dab9;border-radius:6px;padding:18px 20px;display:flex;flex-direction:column;gap:10px}
+.linkbox .lbl{font-size:11px;letter-spacing:.12em;text-transform:uppercase;font-weight:700;color:var(--ok)}
+.linkbox .url{font-size:17px;font-weight:700;color:var(--ink);word-break:break-all;line-height:1.4}
+.linkbox .url a{color:#3a6b32;text-decoration:underline}
+.copybtn{align-self:flex-start;padding:10px 18px;border:1px solid #c4dab9;border-radius:4px;background:#fff;color:var(--ok);font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;cursor:pointer}
+.copybtn:hover{background:#eef5ec}
+.loading{display:none;align-items:center;gap:10px;color:#666;font-size:14px;font-weight:600}
+.loading.show{display:flex}
+.spinner{width:18px;height:18px;border:3px solid var(--line);border-top-color:var(--brass);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* Token section */
+.token-section{background:#fff;border:1px solid var(--line);border-radius:6px;padding:16px 18px;display:flex;flex-direction:column;gap:10px}
+.token-header{display:flex;justify-content:space-between;align-items:center;cursor:pointer}
+.token-header span{font-size:13px;font-weight:700;color:#666}
+.token-status{font-size:11px;font-weight:700;padding:3px 10px;border-radius:3px}
+.token-status.set{background:#eef5ec;color:var(--ok)}
+.token-status.unset{background:#fbecec;color:var(--no)}
+.token-body{display:none;flex-direction:column;gap:8px}
+.token-body.show{display:flex}
+.token-body input{font-family:'Courier New',monospace;font-size:14px}
+.token-help{font-size:12px;color:#888;line-height:1.5}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Servants Schedule Generator</h1>
+  <p class="sub">Assign each servant a role for the week. Primary servants get a red warning with the Thursday deadline. Backups get no warning and no date. Publishes straight to your GitHub Pages site.</p>
+  <hr>
+
+  <!-- Week settings -->
+  <div class="section">
+    <label for="weekdate">Week date (the Saturday)</label>
+    <input type="text" id="weekdate" placeholder="August 22, 2026" value="August 22, 2026">
+    <div class="deadline-line" id="deadlinePreview">Thursday deadline: <b id="thuDate">August 20, 2026</b><span class="file" id="filePreview">→ week-aug22.html</span></div>
+    <div id="restoreHint" style="font-size:12px;color:#7A9A6E;font-weight:700;letter-spacing:.04em;display:none;">✓ Restored your last session — edit anything to update it.</div>
+
+    <!-- Load a past published week back into the form -->
+    <div class="past-week-section" style="background:#fff;border:1px solid var(--line);border-radius:6px;padding:12px 14px;display:flex;flex-direction:column;gap:8px">
+      <label for="pastWeeks" style="color:#666">Load a past week into the form (then tweak &amp; republish for a new week)</label>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
+        <select id="pastWeeks" style="flex:1;min-width:200px;padding:10px 12px"><option value="">— pick a past week —</option></select>
+        <button type="button" class="btn ghost" id="loadPastWeek" style="width:auto;padding:9px 16px;font-size:13px;">Load into form</button>
+      </div>
+      <div id="pastWeekStatus" class="hint" style="font-size:12px;display:none"></div>
+    </div>
+
+    <div class="hint">CSS cache-busting is automatic — the version is derived from the live <code>style.css</code> contents on each publish, so it only changes when the stylesheet actually changes.</div>
+  </div>
+  <hr>
+
+  <!-- Assignment library (the master list you pick from) -->
+  <div class="section">
+    <label>Assignment library (the list you pick from for each servant)</label>
+    <div class="lib-section">
+      <div class="lib-list" id="libChips"></div>
+      <div class="lib-row">
+        <input type="text" class="emoji" id="newEmoji" placeholder="🎮" maxlength="3">
+        <input type="text" class="label" id="newLabel" placeholder="Assignment name (e.g. Lead the review game)">
+        <button class="btn ghost" id="addLib" style="width:auto;padding:9px 16px;font-size:13px;">+ Add</button>
+      </div>
+      <div class="hint" style="font-size:12px;">Type an emoji (optional) + the assignment name, then Add. It shows up in every servant's dropdown. Saved in your browser so it's here next time.</div>
+    </div>
+  </div>
+  <hr>
+
+  <!-- Servant assignments -->
+  <div class="section" id="servantsContainer">
+    <!-- Filled by JS -->
+  </div>
+  <hr>
+
+  <!-- Publish -->
+  <button class="btn go" id="gen">Generate &amp; Publish</button>
+  <button type="button" class="btn ghost" id="wipeAll" style="margin-top:10px;width:auto;align-self:flex-start;padding:10px 20px;">🧹 Wipe all selections</button>
+  <div class="loading" id="loading"><div class="spinner"></div><span id="loadingText">Publishing schedule…</span></div>
+  <div class="err" id="err"></div>
+  <div class="result" id="result">
+    <div class="linkbox">
+      <span class="lbl">Live schedule page</span>
+      <span class="url" id="liveurl"></span>
+      <button class="copybtn" id="copylink">Copy link</button>
+      <span class="lbl" style="margin-top:6px;">Index page (lists all weeks)</span>
+      <span class="url" id="indexurl" style="font-size:14px;"></span>
+    </div>
+    <button class="btn ghost" id="again">Generate another week</button>
+  </div>
+
+  <!-- Token setup -->
+  <div class="token-section">
+    <div class="token-header" id="tokenHeader">
+      <span>⚙ GitHub publishing setup (one-time)</span>
+      <span class="token-status unset" id="tokenStatus">Not set</span>
+    </div>
+    <div class="token-body" id="tokenBody">
+      <input type="text" id="ghToken" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx">
+      <div class="token-help">Create a token at github.com/settings/tokens (classic) with the <b>repo</b> scope. Paste it above and save. It stays in this browser only.</div>
+      <button class="btn ghost" id="saveToken" style="width:auto;align-self:flex-start;">Save token</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===== EMERGENCY ERROR DISPLAY — shows any JS error on the page instead of blank =====
+window.addEventListener('error', function(e){
+  var d = document.createElement('div');
+  d.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:99999;background:#C1272D;color:#fff;padding:16px 20px;font:14px/1.6 monospace;white-space:pre-wrap;word-break:break-all';
+  d.textContent = 'JS ERROR: ' + (e.message||'unknown') + '\nFile: ' + (e.filename||'?') + '\nLine: ' + (e.lineno||'?') + ':' + (e.colno||'?') + '\nStack: ' + (e.error && e.error.stack || e.stack || '(no stack)');
+  document.body.appendChild(d);
+});
+window.addEventListener('unhandledrejection', function(e){
+  var d = document.createElement('div');
+  d.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:99999;background:#C1272D;color:#fff;padding:16px 20px;font:14px/1.6 monospace;white-space:pre-wrap;word-break:break-all';
+  d.textContent = 'UNHANDLED PROMISE REJECTION: ' + (e.reason && e.reason.message || e.reason || 'unknown') + '\nStack: ' + (e.reason && e.reason.stack || '(no stack)');
+  document.body.appendChild(d);
+});
+// ===== END EMERGENCY ERROR DISPLAY =====
+
+// ============================================
+// Fixed roster — matches your site exactly
+// ============================================
+const REPO_OWNER = "kerolosghobrial4-png";
+const REPO_NAME  = "servants-schedule";
+const PAGES_URL  = "https://" + REPO_OWNER + ".github.io/" + REPO_NAME + "/";
+
+const ROSTER = [
+  { id:"abanoub-nagdy",    name:"Abanoub Nagdy",    group:"5th & 6th Boys", section:"5-6" },
+  { id:"kerolos-soliman",  name:"Kerolos Soliman",  group:"5th & 6th Boys", section:"5-6" },
+  { id:"jouvany-ghobrial", name:"Jouvany Ghobrial", group:"5th & 6th Boys", section:"5-6" },
+  { id:"divid-romany",     name:"Divid Romany",     group:"5th & 6th Boys", section:"5-6" },
+  { id:"marsilio-nagi",    name:"Marsilio Nagi",    group:"7th & 8th",      section:"7-8" },
+  { id:"abanoub-hanna",    name:"Abanoub Hanna",    group:"7th & 8th",      section:"7-8" },
+  { id:"mark-william",     name:"Mark William",     group:"7th & 8th",      section:"7-8" },
+  { id:"poula-khalil",     name:"Poula Khalil",     group:"7th & 8th",      section:"7-8" }
+];
+
+const WARNING_TEMPLATES = {
+  hymn:    "DO NOT FORGET to send hazzat and recording by Thursday, {THU}.",
+  game:    "DO NOT FORGET to send which games you plan to use by Thursday, {THU}.",
+  rituals: "DO NOT FORGET to send your rituals lesson prep by Thursday, {THU}."
+};
+
+// ============================================
+// Quick-fill presets — one click sets role + warning + assignments.
+// Derived from the 3 patterns you described plus past published weeks.
+// ============================================
+const PRESETS = [
+  {
+    id: "hymn-primary", label: "Hymn", emoji: "🎵", role: "primary", warning: "hymn",
+    duties: [
+      { emoji: "🎵", label: "Lead the hymn / hazzat" },
+      { emoji: "🎤", label: "Handle the class recordings" }
+    ]
+  },
+  {
+    id: "hymn-backup", label: "Hymn B", emoji: "🎵", role: "backup", warning: "none",
+    duties: [
+      { emoji: "🪑", label: "Sit with the kids and keep them in check" },
+      { emoji: "📝", label: "Take attendance" },
+      { emoji: "🎙️", label: "Prepare the hymn as backup (in case the primary is absent)" }
+    ]
+  },
+  {
+    id: "rituals-primary", label: "Rituals", emoji: "✝️", role: "primary", warning: "rituals",
+    duties: [
+      { emoji: "✝️", label: "Lead the rituals lesson" },
+      { emoji: "📋", label: "Input grades into Class Dojo" }
+    ]
+  },
+  {
+    id: "rituals-backup", label: "Rituals B", emoji: "✝️", role: "backup", warning: "none",
+    duties: [
+      { emoji: "🪑", label: "Sit with the kids and keep them in check" },
+      { emoji: "📝", label: "Take attendance" },
+      { emoji: "📖", label: "Prepare the rituals lesson as backup (in case the primary is absent)" }
+    ]
+  },
+  {
+    id: "game-primary", label: "Game", emoji: "🎮", role: "primary", warning: "game",
+    duties: [
+      { emoji: "🎮", label: "Lead the review game" },
+      { emoji: "📖", label: "Read the lesson pages" }
+    ]
+  },
+  {
+    id: "game-backup", label: "Game B", emoji: "🎮", role: "backup", warning: "none",
+    duties: [
+      { emoji: "🪑", label: "Sit with the class" },
+      { emoji: "🎮", label: "Prepare the review game as backup (in case the primary is absent)" }
+    ]
+  }
+];
+
+// ============================================
+// Assignment library — the master list of past assignments you pick from.
+// Stored in localStorage so your custom additions persist between sessions.
+// ============================================
+const DEFAULT_ASSIGNMENTS = [
+  { emoji:"🎮", label:"Lead the review game" },
+  { emoji:"📖", label:"Read pages 4–5" },
+  { emoji:"🎵", label:"Lead the hymn / hazzat" },
+  { emoji:"🙏", label:"Lead the opening prayer" },
+  { emoji:"🕯️", label:"Lead the closing prayer" },
+  { emoji:"📚", label:"Lead the Bible story reading" },
+  { emoji:"✝️", label:"Lead the rituals lesson" },
+  { emoji:"📝", label:"Take attendance" },
+  { emoji:"🪑", label:"Sit with the class" },
+  { emoji:"🎤", label:"Lead the memory verse" },
+  { emoji:"⛪", label:"Lead the doxology" },
+  { emoji:"🧹", label:"Clean up the classroom" }
+];
+
+function loadAssignments(){
+  try {
+    const s = localStorage.getItem("assignmentLibrary");
+    if(s) return JSON.parse(s);
+  } catch(e){}
+  return JSON.parse(JSON.stringify(DEFAULT_ASSIGNMENTS));
+}
+function saveAssignments(lib){
+  localStorage.setItem("assignmentLibrary", JSON.stringify(lib));
+}
+let ASSIGNMENTS = loadAssignments();
+
+// ============================================
+// Date helpers
+// ============================================
+const MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+const MONTH_ABBR = ["jan","feb","mar","apr","may","jun","jul","aug","sep","oct","nov","dec"];
+
+function parseWeekDate(s){
+  // Accept "Month D, YYYY" (e.g. "August 22, 2026"). Parse as LOCAL time explicitly
+  // so the day never shifts by one across timezones.
+  const m = String(s).trim().match(/^([A-Za-z]+)\s+(\d{1,2}),?\s+(\d{4})$/);
+  if(m){
+    const mi = MONTHS.findIndex(x => x.toLowerCase() === m[1].toLowerCase());
+    if(mi >= 0) return new Date(Number(m[3]), mi, Number(m[2]));
+  }
+  // Fallback: try native parse (local for non-ISO strings)
+  const d = new Date(s);
+  return isNaN(d.getTime()) ? null : d;
+}
+function thursdayOf(weekDate){
+  // week date is a Saturday → Thursday = -2 days
+  const t = new Date(weekDate);
+  t.setDate(t.getDate() - 2);
+  return t;
+}
+function fmtDate(d){
+  return MONTHS[d.getMonth()] + " " + d.getDate() + ", " + d.getFullYear();
+}
+function fileSlug(d){
+  return MONTH_ABBR[d.getMonth()] + d.getDate(); // aug22
+}
+
+// ============================================
+// Build servant input cards (each servant always shown; pick assignments from dropdowns)
+// ============================================
+const container = document.getElementById("servantsContainer");
+
+function assignmentOptions(selected){
+  const opts = ['<option value="">— pick an assignment —</option>'];
+  let found = false;
+  ASSIGNMENTS.forEach((a,i) => {
+    const val = a.emoji + " " + a.label;
+    if(val === selected) found = true;
+    opts.push('<option value="'+escAttr(val)+'"'+(val===selected?' selected':'')+'>'+escHTML(a.emoji+" "+a.label)+'</option>');
+  });
+  // Preserve a restored value that's no longer in the library so it still shows.
+  if(selected && !found){
+    opts.push('<option value="'+escAttr(selected)+'" selected>'+escHTML(selected)+'</option>');
+  }
+  return opts.join("");
+}
+function escAttr(s){ return String(s).replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+function escHTML(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+
+function makeAssignRow(selected){
+  const div = document.createElement("div");
+  div.className = "assign-row";
+  div.innerHTML = '<select data-field="assignment">'+assignmentOptions(selected)+'</select><button type="button" class="assign-remove" title="Remove">×</button>';
+  div.querySelector(".assign-remove").onclick = () => div.remove();
+  return div;
+}
+
+function applyPreset(card, presetId){
+  const p = PRESETS.find(x => x.id === presetId);
+  if(!p) return;
+
+  // 1. Auto-add preset duties to ASSIGNMENTS library if they don't exist
+  let libChanged = false;
+  p.duties.forEach(d => {
+    const val = d.emoji + " " + d.label;
+    if(!ASSIGNMENTS.some(a => (a.emoji + " " + a.label) === val)){
+      ASSIGNMENTS.push({ emoji: d.emoji, label: d.label });
+      libChanged = true;
+    }
+  });
+  if(libChanged){
+    saveAssignments(ASSIGNMENTS);
+    renderLibChips();
+  }
+
+  // 2. Set role toggle
+  const tg = card.querySelector(".role-toggle");
+  const roleBtn = tg.querySelector('button[data-role="'+p.role+'"]');
+  if(roleBtn) roleBtn.click();
+
+  // 3. Clear existing assignment rows and add preset rows
+  const rowsContainer = card.querySelector(".assign-rows");
+  rowsContainer.innerHTML = "";
+  p.duties.forEach(d => {
+    rowsContainer.appendChild(makeAssignRow(d.emoji + " " + d.label));
+  });
+
+  // 4. Set warning type (dropdown may have been disabled by role toggle)
+  const warnSelect = card.querySelector('[data-field="warning"]');
+  if(warnSelect){
+    warnSelect.value = p.warning;
+  }
+
+  // 5. Refresh all dropdowns so new library entries appear
+  refreshAllAssignmentDropdowns();
+}
+
+function buildCards(){
+  container.innerHTML = "";
+  let lastSection = "";
+  ROSTER.forEach(s => {
+    if(s.section !== lastSection){
+      const h = document.createElement("div");
+      h.className = "group-heading";
+      h.textContent = s.section === "5-6" ? "👦 5th & 6th Boys" : "👦 7th & 8th";
+      container.appendChild(h);
+      lastSection = s.section;
+    }
+    const card = document.createElement("div");
+    card.className = "servant-card";
+    card.dataset.servant = s.id;
+    card.innerHTML = `
+      <div class="servant-head">
+        <div>
+          <div class="servant-name">${s.name}</div>
+          <div class="servant-group">${s.group}</div>
+        </div>
+        <div class="role-toggle" data-servant="${s.id}">
+          <button type="button" class="active primary" data-role="primary">Primary</button>
+          <button type="button" data-role="backup">Backup</button>
+        </div>
+      </div>
+      <div class="preset-bar">
+        <span class="preset-label">Quick fill:</span>
+        ${PRESETS.map(p => '<button type="button" class="preset-btn '+(p.role==="primary"?"is-primary":"is-backup")+'" data-preset="'+p.id+'" title="'+(p.role==="primary"?"Primary":"Backup")+' — '+p.duties.map(d=>d.emoji+" "+d.label).join("; ")+'">'+p.emoji+" "+p.label+'</button>').join("")}
+      </div>
+      <div class="servant-body">
+        <div>
+          <div class="field-label">Assignments (add as many as you want)</div>
+          <div class="assign-rows"></div>
+          <button type="button" class="assign-add">+ Add assignment</button>
+        </div>
+        <div>
+          <div class="field-label">Lesson links (Label | URL — one per line, optional)</div>
+          <textarea class="links" data-field="links" placeholder="▶️ YouTube Video | https://youtube.com/watch?v=...&#10;📄 PDF Sheet Music | https://..."></textarea>
+        </div>
+        <div>
+          <div class="field-label">Warning type (primaries only)</div>
+          <select data-field="warning">
+            <option value="none">No warning</option>
+            <option value="hymn">Hymn — send hazzat &amp; recording</option>
+            <option value="game">Game — send game choices</option>
+            <option value="rituals">Rituals — send lesson prep</option>
+          </select>
+        </div>
+        <div>
+          <div class="field-label">Custom note for this servant (optional &mdash; shows on their page)</div>
+          <textarea class="note" data-field="note" rows="3" placeholder="e.g. Please review the hymn links before Thursday. Arrive 10 min early."></textarea>
+        </div>
+      </div>
+    `;
+    // Start with one empty assignment row
+    card.querySelector(".assign-rows").appendChild(makeAssignRow(""));
+    // "+ Add assignment" button
+    card.querySelector(".assign-add").onclick = () => {
+      card.querySelector(".assign-rows").appendChild(makeAssignRow(""));
+    };
+    // Role toggle behavior → disable warning for backups
+    const tg = card.querySelector(".role-toggle");
+    const warnSelect = card.querySelector('[data-field="warning"]');
+    tg.querySelectorAll("button").forEach(b => b.onclick = () => {
+      tg.querySelectorAll("button").forEach(x => x.classList.remove("active","primary","backup"));
+      b.classList.add("active", b.dataset.role);
+      if(warnSelect){
+        warnSelect.disabled = (b.dataset.role === "backup");
+        if(b.dataset.role === "backup") warnSelect.value = "none";
+      }
+    });
+    // Preset buttons → one-click fill
+    card.querySelectorAll(".preset-btn").forEach(btn => {
+      btn.onclick = () => applyPreset(card, btn.dataset.preset);
+    });
+    container.appendChild(card);
+  });
+}
+buildCards();
+
+// ============================================
+// Auto-save & restore the whole form (so it reopens filled with your last session)
+// ============================================
+const FORM_STATE_KEY = "scheduleFormState";
+
+function saveFormState(){
+  try {
+    const servants = {};
+    ROSTER.forEach(s => {
+      const card = container.querySelector('.servant-card[data-servant="'+s.id+'"]');
+      if(!card) return;
+      const roleBtn = card.querySelector('.role-toggle button.active');
+      const role = roleBtn ? roleBtn.dataset.role : "primary";
+      const duties = [];
+      card.querySelectorAll('.assign-row select').forEach(sel => {
+        const v = sel.value.trim();
+        if(v) duties.push(v);
+      });
+      const links = (card.querySelector('[data-field="links"]').value || "");
+      const warning = card.querySelector('[data-field="warning"]').value;
+      const note = (card.querySelector('[data-field="note"]').value || "");
+      servants[s.id] = { role, duties, links, warning, note };
+    });
+    const state = { v: 1, weekDate: weekInput.value, servants };
+    localStorage.setItem(FORM_STATE_KEY, JSON.stringify(state));
+  } catch(e){ /* ignore quota / serialization errors */ }
+}
+
+// Apply a form-state object { v, weekDate, servants:{id:{role,duties,links,warning,note}} }
+// to the live form. Shared by auto-restore (on page load) and "load a past week".
+// Returns true if any servant was filled in.
+function applyFormState(state){
+  if(!state || !state.servants) return false;
+
+  // Week date
+  if(state.weekDate){ weekInput.value = state.weekDate; updatePreview(); }
+
+  let any = false;
+  ROSTER.forEach(s => {
+    const sv = state.servants[s.id];
+    if(!sv) return;
+    const card = container.querySelector('.servant-card[data-servant="'+s.id+'"]');
+    if(!card) return;
+
+    // Role toggle (click so warning-disable logic fires)
+    const tg = card.querySelector(".role-toggle");
+    const wantRole = sv.role || "primary";
+    const roleBtn = tg.querySelector('button[data-role="'+wantRole+'"]');
+    if(roleBtn) roleBtn.click();
+
+    // Assignment rows: clear the default empty row, then re-add saved duties
+    const rowsContainer = card.querySelector(".assign-rows");
+    rowsContainer.innerHTML = "";
+    (sv.duties || []).forEach(d => rowsContainer.appendChild(makeAssignRow(d)));
+    if((sv.duties || []).length === 0) rowsContainer.appendChild(makeAssignRow(""));
+
+    // Links, warning, note
+    card.querySelector('[data-field="links"]').value = sv.links || "";
+    const warnSelect = card.querySelector('[data-field="warning"]');
+    if(warnSelect){
+      warnSelect.value = sv.warning || "none";
+      // ensure consistency: backups can't have a warning
+      if(wantRole === "backup"){ warnSelect.disabled = true; warnSelect.value = "none"; }
+    }
+    card.querySelector('[data-field="note"]').value = sv.note || "";
+    any = true;
+  });
+  return any;
+}
+
+function restoreFormState(){
+  let state;
+  try { state = JSON.parse(localStorage.getItem(FORM_STATE_KEY)); } catch(e){ return; }
+  if(!state || !state.servants) return;
+
+  if(applyFormState(state)){
+    const hint = document.getElementById("restoreHint");
+    if(hint){ hint.style.display = "block"; }
+  }
+}
+
+// Auto-save on any edit. Delegated listeners catch textarea typing, select changes,
+// role-toggle clicks, preset clicks, and add/remove-row clicks (handlers run first
+// during bubbling, so we always save the post-change state).
+// NOTE: restoreFormState() + the addEventListener calls are wired below, AFTER `weekInput` exists.
+function hideRestoreHint(){ const h = document.getElementById("restoreHint"); if(h) h.style.display = "none"; }
+
+// ============================================
+// Wipe ALL selections (every servant back to blank defaults)
+// ============================================
+// Resets each card to: Primary role, one empty assignment row, empty links,
+// "none" warning, empty note. Reuses the existing role-toggle click handler so
+// the warning-disable logic fires identically to a manual click.
+function wipeAllSelections(){
+  ROSTER.forEach(s => {
+    const card = container.querySelector('.servant-card[data-servant="'+s.id+'"]');
+    if(!card) return;
+    // Role → Primary (click so the existing handler disables warning for backups correctly)
+    const tg = card.querySelector(".role-toggle");
+    const primaryBtn = tg.querySelector('button[data-role="primary"]');
+    if(primaryBtn && !primaryBtn.classList.contains("active")) primaryBtn.click();
+    // Assignment rows → one empty row
+    const rowsContainer = card.querySelector(".assign-rows");
+    rowsContainer.innerHTML = "";
+    rowsContainer.appendChild(makeAssignRow(""));
+    // Links, warning, note → blank
+    card.querySelector('[data-field="links"]').value = "";
+    const warnSelect = card.querySelector('[data-field="warning"]');
+    if(warnSelect){ warnSelect.disabled = false; warnSelect.value = "none"; }
+    card.querySelector('[data-field="note"]').value = "";
+  });
+  saveFormState();
+  hideRestoreHint();
+}
+
+document.getElementById("wipeAll").onclick = () => {
+  if(confirm("Clear EVERY servant's assignments, links, warnings, and notes for this week? (The week date and your assignment library are kept.)")){
+    wipeAllSelections();
+  }
+};
+
+// ============================================
+// Assignment library UI (add/remove chips; persists to localStorage)
+// ============================================
+const libChips = document.getElementById("libChips");
+function renderLibChips(){
+  libChips.innerHTML = "";
+  if(ASSIGNMENTS.length === 0){
+    libChips.innerHTML = '<span class="assign-empty">No assignments yet — add one below.</span>';
+    return;
+  }
+  ASSIGNMENTS.forEach((a,i) => {
+    const chip = document.createElement("span");
+    chip.className = "lib-chip";
+    chip.innerHTML = escHTML(a.emoji+" "+a.label) + ' <button type="button" class="x" data-i="'+i+'" title="Remove">×</button>';
+    libChips.appendChild(chip);
+  });
+  libChips.querySelectorAll(".x").forEach(x => x.onclick = () => {
+    ASSIGNMENTS.splice(Number(x.dataset.i),1);
+    saveAssignments(ASSIGNMENTS);
+    renderLibChips();
+    refreshAllAssignmentDropdowns();
+  });
+}
+function refreshAllAssignmentDropdowns(){
+  // Preserve each row's current selection when rebuilding options
+  container.querySelectorAll(".assign-row").forEach(row => {
+    const sel = row.querySelector("select");
+    const cur = sel.value;
+    sel.innerHTML = assignmentOptions(cur);
+  });
+}
+renderLibChips();
+document.getElementById("addLib").onclick = () => {
+  const emoji = document.getElementById("newEmoji").value.trim();
+  const label = document.getElementById("newLabel").value.trim();
+  if(!label){ alert("Type an assignment name first."); return; }
+  ASSIGNMENTS.push({ emoji: emoji || "•", label });
+  saveAssignments(ASSIGNMENTS);
+  document.getElementById("newEmoji").value = "";
+  document.getElementById("newLabel").value = "";
+  renderLibChips();
+  refreshAllAssignmentDropdowns();
+  document.getElementById("newLabel").focus();
+};
+// Enter key in the label field adds the assignment
+document.getElementById("newLabel").addEventListener("keydown", e => {
+  if(e.key === "Enter"){ e.preventDefault(); document.getElementById("addLib").click(); }
+});
+
+// ============================================
+// Live deadline preview
+// ============================================
+const weekInput = document.getElementById("weekdate");
+const thuSpan = document.getElementById("thuDate");
+const fileSpan = document.getElementById("filePreview");
+
+function updatePreview(){
+  const wd = parseWeekDate(weekInput.value);
+  if(!wd){ thuSpan.textContent = "—"; fileSpan.textContent = ""; return; }
+  const thu = thursdayOf(wd);
+  thuSpan.textContent = fmtDate(thu);
+  fileSpan.textContent = "→ week-" + fileSlug(wd) + ".html";
+}
+weekInput.addEventListener("input", updatePreview);
+updatePreview();
+
+// Restore the saved form state now that `weekInput` exists, then wire auto-save.
+restoreFormState();
+container.addEventListener("input", saveFormState);
+container.addEventListener("change", saveFormState);
+container.addEventListener("click", saveFormState);
+weekInput.addEventListener("input", saveFormState);
+container.addEventListener("input", hideRestoreHint, { once: true });
+container.addEventListener("click", hideRestoreHint, { once: true });
+weekInput.addEventListener("input", hideRestoreHint, { once: true });
+
+// ============================================
+// Load a past published week back into the form
+// (fetches the live week-*.html from GitHub Pages — public, no token needed —
+//  parses the embedded TASKS object, and fills the form so you can tweak & republish)
+// ============================================
+const pastWeeksSelect = document.getElementById("pastWeeks");
+const loadPastBtn = document.getElementById("loadPastWeek");
+const pastWeekStatus = document.getElementById("pastWeekStatus");
+
+function setPastStatus(msg, isErr){
+  pastWeekStatus.style.display = "block";
+  pastWeekStatus.style.color = isErr ? "var(--no)" : "var(--ok)";
+  pastWeekStatus.textContent = msg;
+}
+
+// Decode a few common HTML entities found in the index.html link labels
+function decodeEntities(s){
+  return String(s)
+    .replace(/&rarr;/g, "→").replace(/&amp;/g, "&").replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&#39;/g, "'");
+}
+
+// Parse the <a href="week-*.html" class="week-link">Date</a> links out of index.html
+function parseWeekLinks(html){
+  const weeks = [];
+  const re = /<a\s+href="(week-[a-z]+\d+\.html)"\s+class="week-link"[^>]*>([^<]+)<\/a>/g;
+  let m;
+  while((m = re.exec(html))){
+    const label = decodeEntities(m[2]).replace(/\s*→\s*$/, "").trim();
+    weeks.push({ file: m[1], label });
+  }
+  const seen = new Set(); const uniq = [];
+  weeks.forEach(w => { if(!seen.has(w.file)){ seen.add(w.file); uniq.push(w); } });
+  return uniq;
+}
+
+// Populate the past-weeks dropdown from the live index.html (public fetch, no token)
+function loadPastWeeksList(){
+  setPastStatus("Fetching list of published weeks…");
+  fetch(PAGES_URL + "index.html", { cache: "no-store" })
+    .then(r => { if(!r.ok) throw new Error("HTTP " + r.status); return r.text(); })
+    .then(html => {
+      const weeks = parseWeekLinks(html);
+      if(weeks.length === 0){
+        pastWeeksSelect.innerHTML = '<option value="">— no published weeks found yet —</option>';
+        setPastStatus("No published weeks found on the live site yet. Publish one first.", true);
+        return;
+      }
+      pastWeeksSelect.innerHTML = '<option value="">— pick a past week —</option>' +
+        weeks.map(w => '<option value="'+escAttr(w.file)+'">'+escHTML(w.label)+' ('+escHTML(w.file)+')</option>').join("");
+      pastWeekStatus.style.display = "none";
+    })
+    .catch(err => {
+      const token = localStorage.getItem("ghToken");
+      if(token){
+        setPastStatus("Public fetch failed ("+err.message+"); trying GitHub API…");
+        ghAPI("/repos/"+REPO_OWNER+"/"+REPO_NAME+"/contents/index.html?ref=main", "GET", token)
+          .then(d => fromB64(d.content))
+          .then(html => {
+            const weeks = parseWeekLinks(html);
+            if(weeks.length === 0){ pastWeeksSelect.innerHTML = '<option value="">— no published weeks found —</option>'; setPastStatus("No published weeks found in the repo yet.", true); return; }
+            pastWeeksSelect.innerHTML = '<option value="">— pick a past week —</option>' +
+              weeks.map(w => '<option value="'+escAttr(w.file)+'">'+escHTML(w.label)+' ('+escHTML(w.file)+')</option>').join("");
+            pastWeekStatus.style.display = "none";
+          })
+          .catch(e2 => { pastWeeksSelect.innerHTML = '<option value="">— could not load list —</option>'; setPastStatus("Could not fetch the weeks list: "+e2.message, true); });
+      } else {
+        pastWeeksSelect.innerHTML = '<option value="">— could not load list —</option>';
+        setPastStatus("Could not fetch the published weeks list: "+err.message+". (If you haven't published anything yet, that's expected.)", true);
+      }
+    });
+}
+
+// Parse a published week-*.html: extract the embedded TASKS object + WEEK_DATE,
+// and convert back into a form-state object { v, weekDate, servants:{...} }.
+function parseWeekFile(html){
+  const start = html.indexOf("const TASKS = {");
+  if(start < 0) return null;
+  const endMarker = "\n    };\n";
+  const end = html.indexOf(endMarker, start);
+  if(end < 0) return null;
+  // The marker line is "\n    };\n" — the closing } of TASKS sits at end+5 (after \n + 4 spaces).
+  const closeBrace = end + 5; // index of the '}' in '    };'
+  const block = html.slice(start + "const TASKS = ".length, closeBrace + 1); // includes { ... }
+
+  let tasks;
+  try { tasks = (new Function("return (" + block + ")"))(); }
+  catch(e){ return null; }
+  if(!tasks || typeof tasks !== "object") return null;
+
+  const wdMatch = html.match(/const WEEK_DATE = "([^"]+)"/);
+  const weekDate = wdMatch ? wdMatch[1] : "";
+
+  const servants = {};
+  ROSTER.forEach(s => {
+    const t = tasks[s.id]; if(!t) return;
+    const role = t.backup ? "backup" : "primary";
+    const duties = (t.duties || []).filter(d => d && d !== "—");
+    const links = (t.lessonLinks || []).map(l => (l.label || "") + " | " + (l.url || "")).join("\n");
+    const warning = t.warning ? (t.warning.type || "none") : "none";
+    const note = t.note || "";
+    servants[s.id] = { role, duties, links, warning, note };
+  });
+  return { v: 1, weekDate, servants };
+}
+
+// Fetch a week file (public first, token-API fallback), parse, and fill the form
+function fetchAndApplyWeek(file){
+  setPastStatus("Loading " + file + "…");
+  const apply = (html) => {
+    const state = parseWeekFile(html);
+    if(!state){ setPastStatus("Could not read the assignments from " + file + " (unrecognized format).", true); return; }
+    applyFormState(state);
+    saveFormState(); // make the loaded week the current session state
+    hideRestoreHint();
+    setPastStatus("✓ Loaded week of " + (state.weekDate || file) + ". Change the date above for your new week, then tweak & publish.");
+  };
+  fetch(PAGES_URL + file, { cache: "no-store" })
+    .then(r => { if(!r.ok) throw new Error("HTTP " + r.status); return r.text(); })
+    .then(apply)
+    .catch(err => {
+      const token = localStorage.getItem("ghToken");
+      if(token){
+        ghAPI("/repos/"+REPO_OWNER+"/"+REPO_NAME+"/contents/"+file+"?ref=main", "GET", token)
+          .then(d => fromB64(d.content))
+          .then(apply)
+          .catch(e2 => setPastStatus("Could not load " + file + ": " + e2.message, true));
+      } else {
+        setPastStatus("Could not load " + file + ": " + err.message, true);
+      }
+    });
+}
+
+loadPastBtn.onclick = () => {
+  const file = pastWeeksSelect.value;
+  if(!file){ alert("Pick a past week first."); return; }
+  fetchAndApplyWeek(file);
+};
+
+// Populate the dropdown on load (non-blocking; failures show in the status hint)
+loadPastWeeksList();
+
+// ============================================
+// Read the form → JS data objects
+// ============================================
+function collectAssignments(){
+  const tasks = {};
+  ROSTER.forEach(s => {
+    const card = container.querySelector('.servant-card[data-servant="'+s.id+'"]');
+    const roleBtn = card.querySelector('.role-toggle button.active');
+    const role = roleBtn ? roleBtn.dataset.role : "primary";
+    const linksRaw = card.querySelector('[data-field="links"]').value;
+    const warnType = card.querySelector('[data-field="warning"]').value;
+    const noteText = (card.querySelector('[data-field="note"]').value || "").trim();
+
+    // Gather duties from all assignment dropdown rows (skip empty selections)
+    const duties = [];
+    card.querySelectorAll('.assign-row select').forEach(sel => {
+      const v = sel.value.trim();
+      if(v) duties.push(v);
+    });
+
+    const links = linksRaw.split("\n").map(x=>x.trim()).filter(Boolean).map(line => {
+      // 1) "Label | URL"  (preferred, matches the placeholder format)
+      const idx = line.indexOf("|");
+      if(idx !== -1){
+        const label = line.slice(0,idx).trim();
+        const url   = line.slice(idx+1).trim();
+        if(url) return { label: label || url, url };
+        return null;
+      }
+      // 2) "Label URL" — last whitespace token is a http(s) link
+      const m = line.match(/^(.*?)\s+(https?:\/\/\S+)$/);
+      if(m){ return { label: (m[1].trim() || m[2]), url: m[2] }; }
+      // 3) Bare URL only → auto-label so it still shows up as a button
+      if(/^https?:\/\/\S+$/.test(line)){ return { label: line, url: line }; }
+      return null;
+    }).filter(Boolean);
+
+    const task = { classGroup: s.group };
+    if(role === "backup") task.backup = true;
+    task.duties = duties.length ? duties : ["—"];
+    if(links.length) task.lessonLinks = links;
+    if(role === "primary" && warnType !== "none"){
+      task.warning = { type: warnType, text: WARNING_TEMPLATES[warnType] };
+    }
+    if(noteText){
+      task.note = noteText;
+    }
+    tasks[s.id] = task;
+  });
+  return tasks;
+}
+
+// ============================================
+// Build the week HTML (matches your existing week-*.html structure)
+// ============================================
+function escJs(s){ return String(s).replace(/\\/g,"\\\\").replace(/"/g,"\\\"").replace(/`/g,"\\`").replace(/\$/g,"\\$").replace(/\r\n/g,"\\n").replace(/\r/g,"\\n").replace(/\n/g,"\\n"); }
+
+function buildWeekHTML(weekDate, thuDate, cssV, tasks){
+  const weekDateStr = fmtDate(weekDate);
+  const thuDateStr  = fmtDate(thuDate);
+
+  // Substitute Thursday date into warning texts
+  const TASKS_OUT = {};
+  ROSTER.forEach(s => {
+    const t = JSON.parse(JSON.stringify(tasks[s.id]));
+    if(t.warning){ t.warning.text = t.warning.text.replace("{THU}", thuDateStr); }
+    TASKS_OUT[s.id] = t;
+  });
+
+  const SERVANTS_BLOCK = ROSTER.map(s =>
+    '      "'+s.id+'": { name: "'+s.name+'", group: "'+s.group+'" }'
+  ).join(",\n");
+
+  const TASKS_BLOCK = ROSTER.map(s => {
+    const t = TASKS_OUT[s.id];
+    let parts = ['        classGroup: "'+t.classGroup+'"'];
+    if(t.backup) parts.push('        backup: true');
+    const duties = t.duties.map(d => '          "'+escJs(d)+'"').join(",\n");
+    parts.push('        duties: [\n'+duties+'\n        ]');
+    if(t.lessonLinks && t.lessonLinks.length){
+      const ll = t.lessonLinks.map(l => '          { label: "'+escJs(l.label)+'", url: "'+escJs(l.url)+'" }').join(",\n");
+      parts.push('        lessonLinks: [\n'+ll+'\n        ]');
+    }
+    if(t.warning){
+      parts.push('        warning: { type: "'+t.warning.type+'", text: "'+escJs(t.warning.text)+'" }');
+    }
+    if(t.note){
+      parts.push('        note: "'+escJs(t.note)+'"');
+    }
+    return '      "'+s.id+'": {\n' + parts.join(",\n") + '\n      }';
+  }).join(",\n");
+
+  const html = '<!DOCTYPE html>\n'+
+'<html lang="en">\n'+
+'<head>\n'+
+'  <meta charset="UTF-8">\n'+
+'  <meta name="viewport" content="width=device-width, initial-scale=1.0">\n'+
+'  <title>Week of '+weekDateStr+' - Servants Lesson Plan</title>\n'+
+'  <link rel="stylesheet" href="style.css?v='+cssV+'">\n'+
+'  <style>\n'+
+'    .lesson-link-btn{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;margin:6px 6px 0 0;background:#3b82f6;color:#fff !important;text-decoration:none;border-radius:8px;font-size:14px;font-weight:600;transition:background .15s;}\n'+
+'    .lesson-link-btn:hover{background:#2563eb;}\n'+
+'    .lesson-link-btn .link-icon{font-size:16px;line-height:1;}\n'+
+'  </style>\n'+
+'</head>\n'+
+'<body>\n'+
+'  <div class="container" id="app">\n'+
+'    <!-- Content rendered by JavaScript based on which servant is selected -->\n'+
+'  </div>\n'+
+'\n'+
+'  <script>\n'+
+'    // ============================================\n'+
+'    // WEEK DATA - Generated by schedule_generator.html\n'+
+'    // ============================================\n'+
+'    const WEEK_DATE = "'+weekDateStr+'";\n'+
+'\n'+
+'    const SERVANTS = {\n'+
+SERVANTS_BLOCK+'\n'+
+'    };\n'+
+'\n'+
+'    const TASKS = {\n'+
+TASKS_BLOCK+'\n'+
+'    };\n'+
+'\n'+
+'    const params = new URLSearchParams(window.location.search);\n'+
+'    const servantId = params.get("servant");\n'+
+'    const app = document.getElementById("app");\n'+
+'\n'+
+'    function renderNameList() {\n'+
+'      let html = `\n'+
+'        <header>\n'+
+'          <h1>🛡️ Servants Lesson Plan</h1>\n'+
+'          <div class="task-date">${WEEK_DATE}</div>\n'+
+'          <p class="subtitle">Select your name to view your task</p>\n'+
+'        </header>\n'+
+'      `;\n'+
+'\n'+
+'      html += `<div class="group"><h2>👦 5th &amp; 6th Boys</h2><div class="name-grid">`;\n'+
+'      ["abanoub-nagdy", "kerolos-soliman", "jouvany-ghobrial", "divid-romany"].forEach(id => {\n'+
+'        const s = SERVANTS[id];\n'+
+'        html += `<a href="?servant=${id}" class="name-card">${s.name}</a>`;\n'+
+'      });\n'+
+'      html += `</div></div>`;\n'+
+'\n'+
+'      html += `<div class="group"><h2>👦 7th &amp; 8th</h2><div class="name-grid">`;\n'+
+'      ["marsilio-nagi", "abanoub-hanna", "mark-william", "poula-khalil"].forEach(id => {\n'+
+'        const s = SERVANTS[id];\n'+
+'        html += `<a href="?servant=${id}" class="name-card">${s.name}</a>`;\n'+
+'      });\n'+
+'      html += `</div></div>`;\n'+
+'\n'+
+'      html += `<footer><p>For questions, contact your coordinator.</p></footer>`;\n'+
+'      app.innerHTML = html;\n'+
+'    }\n'+
+'\n'+
+'    function linkIcon(url){\n'+
+'      var u=(url||\"\").toLowerCase();\n'+
+'      if(u.indexOf(\"youtube.com\")>=0||u.indexOf(\"youtu.be\")>=0) return \"\\u25b6\\ufe0f\";\n'+
+'      if(u.indexOf(\".pdf\")>=0) return \"\\ud83d\\udcc4\";\n'+
+'      if(u.indexOf(\"netlify.app\")>=0||u.indexOf(\"game\")>=0||u.indexOf(\"play\")>=0) return \"\\ud83c\\udfae\";\n'+
+'      return \"\\ud83d\\udd17\";\n'+
+'    }\n'+
+'    function startsWithEmoji(s){\n'+
+'      if(!s||!s.length)return false;\n'+
+'      var c=s.codePointAt(0);\n'+
+'      return c>=0x2500;\n'+
+'    }\n'+
+'    function renderTask(servantId) {\n'+
+'      const servant = SERVANTS[servantId];\n'+
+'      if (!servant) { renderNameList(); return; }\n'+
+'      const task = TASKS[servantId];\n'+
+'      let taskHtml;\n'+
+'      if (task) {\n'+
+'        taskHtml = `\n'+
+'          <div class="duty-list">\n'+
+'            <div class="duty-list-label">Class: ${task.classGroup}</div>\n'+
+'            <div class="duty-list-label" style="margin-top:4px;">Your Responsibilities This Week</div>\n'+
+'            <ul class="duty-ul">\n'+
+'              ${task.duties.map(function(d) { return `<li class="duty-item">${d}</li>`; }).join(\'\')}\n'+
+'            </ul>\n'+
+'          </div>\n'+
+'          ${task.lessonLinks && task.lessonLinks.length > 0 ? `\n'+
+'            <div style="margin-top:8px;">\n'+
+'              ${task.lessonLinks.map(function(l) { var ic=linkIcon(l.url); var se=startsWithEmoji(l.label); return `<a href="${l.url}" target="_blank" rel="noopener" class="lesson-link-btn">${se?\"\":\`<span class=\"link-icon\">${ic}</span> \`}${l.label}</a>`; }).join(\'\')}\n'+
+'            </div>\n'+
+'          ` : \'\'}\n'+
+'          ${task.warning ? `\n'+
+'            <div class="warning-box warning-${task.warning.type}">\n'+
+'              <div class="warning-icon">${task.warning.type === \'hymn\' ? \'⚠️\' : (task.warning.type === \'game\' ? \'🎮\' : \'📖\')}</div>\n'+
+'              <div class="warning-text">${task.warning.text}</div>\n'+
+'            </div>\n'+
+'          ` : \'\'}\n'+
+'        `;\n'+
+'      } else {\n'+
+'        taskHtml = `<div class="no-task">No task has been assigned to you for this week yet. 🙏</div>`;\n'+
+'      }\n'+
+'      app.innerHTML = `\n'+
+'        <div class="task-view">\n'+
+'          ${task && task.backup ? \'\' : `<div class="task-date">${WEEK_DATE}</div>`}\n'+
+'          <div class="servant-name-display">${servant.name}</div>\n'+
+'          <div class="servant-group-label">${servant.group}</div>\n'+
+'          ${taskHtml}\n'+
+'          <br>\n'+
+'          ${task && task.note ? `\n'+
+'            <div style="margin:18px 0 14px;padding:14px 16px;border:1px solid #c3dafe;border-left:4px solid #3b82f6;background:#ebf4ff;border-radius:8px;">\n'+
+'              <div style="font-size:13px;font-weight:700;color:#1e40af;letter-spacing:.02em;margin-bottom:6px;">📋 Note from coordinator</div>\n'+
+'              <div style="font-size:15px;line-height:1.5;color:#1e3a5f;white-space:pre-wrap;">${task.note}</div>\n'+
+'            </div>\n'+
+'          ` : \'\'}\n'+
+'          <a href="index.html" class="back-link">&larr; Back to all weeks</a>\n'+
+'        </div>\n'+
+'      `;\n'+
+'    }\n'+
+'\n'+
+'    if (servantId && SERVANTS[servantId]) { renderTask(servantId); }\n'+
+'    else { renderNameList(); }\n'+
+'  <\/script>\n'+
+'</body>\n'+
+'</html>';
+  return html;
+}
+
+// ============================================
+// Build the updated index.html
+// ============================================
+function buildIndexHTML(weekDate, cssV, weekFile, oldIndexHtml){
+  const weekDateStr = fmtDate(weekDate);
+
+  // Parse past weeks out of the old index.html if present
+  let pastWeeksLinks = "";
+  if(oldIndexHtml){
+    // Current week link in old file
+    const curMatch = oldIndexHtml.match(/<a href="(week-[a-z]+\d+\.html)" class="week-link"[^>]*>([^<]+)<\/a>/);
+    if(curMatch){
+      const oldFile = curMatch[1];
+      const oldDate = curMatch[2];
+      // Don't duplicate if re-generating same week
+      if(oldFile !== weekFile){
+        const oldPastBlock = (oldIndexHtml.match(/Past Weeks<\/h2>\s*<div class="week-link-list">([\s\S]*?)<\/div>/) || [])[1] || "";
+        pastWeeksLinks = '        <a href="'+oldFile+'" class="week-link" style="opacity:.75;border-left-color:#a0aec0;background:#f7fafc;color:#4a5568;">'+oldDate+'</a>\n' + oldPastBlock.trim();
+      } else {
+        // Re-generating same week: keep existing past weeks
+        pastWeeksLinks = ((oldIndexHtml.match(/Past Weeks<\/h2>\s*<div class="week-link-list">([\s\S]*?)<\/div>/) || [])[1] || "").trim();
+      }
+    }
+  }
+
+  const html = '<!DOCTYPE html>\n'+
+'<html lang="en">\n'+
+'<head>\n'+
+'  <meta charset="UTF-8">\n'+
+'  <meta name="viewport" content="width=device-width, initial-scale=1.0">\n'+
+'  <title>Servants Lesson Plan</title>\n'+
+'  <link rel="stylesheet" href="style.css?v='+cssV+'">\n'+
+'</head>\n'+
+'<body>\n'+
+'  <div class="container">\n'+
+'    <header>\n'+
+'      <h1>🛡️ Servants Lesson Plan</h1>\n'+
+'      <p class="subtitle">Select your name to view your assigned task</p>\n'+
+'    </header>\n'+
+'\n'+
+'    <div class="week-links">\n'+
+'      <h2>📅 Current Week</h2>\n'+
+'      <div class="week-link-list">\n'+
+'        <a href="'+weekFile+'" class="week-link">'+weekDateStr+' &rarr;</a>\n'+
+'      </div>\n'+
+'      <h2 style="margin-top:20px;font-size:1rem;color:#718096;border-bottom:none;padding-bottom:0;">Past Weeks</h2>\n'+
+'      <div class="week-link-list">\n'+
+(pastWeeksLinks ? pastWeeksLinks.split("\n").map(l=>l.trim()).filter(Boolean).map(l=>"        "+l).join("\n") : "        ")+'\n'+
+'      </div>\n'+
+'    </div>\n'+
+'\n'+
+'    <div class="group">\n'+
+'      <h2>👦 5th &amp; 6th Boys</h2>\n'+
+'      <div class="name-grid">\n'+
+'        <a href="'+weekFile+'?servant=abanoub-nagdy" class="name-card">Abanoub Nagdy</a>\n'+
+'        <a href="'+weekFile+'?servant=kerolos-soliman" class="name-card">Kerolos Soliman</a>\n'+
+'        <a href="'+weekFile+'?servant=jouvany-ghobrial" class="name-card">Jouvany Ghobrial</a>\n'+
+'        <a href="'+weekFile+'?servant=divid-romany" class="name-card">Divid Romany</a>\n'+
+'      </div>\n'+
+'    </div>\n'+
+'\n'+
+'    <div class="group">\n'+
+'      <h2>👦 7th &amp; 8th</h2>\n'+
+'      <div class="name-grid">\n'+
+'        <a href="'+weekFile+'?servant=marsilio-nagi" class="name-card">Marsilio Nagi</a>\n'+
+'        <a href="'+weekFile+'?servant=abanoub-hanna" class="name-card">Abanoub Hanna</a>\n'+
+'        <a href="'+weekFile+'?servant=mark-william" class="name-card">Mark William</a>\n'+
+'        <a href="'+weekFile+'?servant=poula-khalil" class="name-card">Poula Khalil</a>\n'+
+'      </div>\n'+
+'    </div>\n'+
+'\n'+
+'    <footer>\n'+
+'      <p>For questions, contact your coordinator.</p>\n'+
+'    </footer>\n'+
+'  </div>\n'+
+'</body>\n'+
+'</html>';
+  return html;
+}
+
+// ============================================
+// GitHub API helper (same pattern as quiz generator)
+// ============================================
+function ghAPI(path, method, token, body){
+  return fetch("https://api.github.com" + path, {
+    method: method,
+    headers: {
+      "Authorization": "token " + token,
+      "Accept": "application/vnd.github.v3+json",
+      "Content-Type": "application/json"
+    },
+    body: body ? JSON.stringify(body) : undefined
+  }).then(r => {
+    if(r.status === 404) throw new Error("Not Found");
+    if(!r.ok) return r.json().then(j => { throw new Error(j.message || ("HTTP " + r.status)); });
+    if(r.status === 204) return null;
+    return r.json();
+  });
+}
+function wait(ms){ return new Promise(r => setTimeout(r, ms)); }
+function b64(s){ return btoa(unescape(encodeURIComponent(s))); }
+function fromB64(s){ return decodeURIComponent(escape(atob(s.replace(/\n/g,"")))); }
+
+// ============================================
+// Ensure the target repo exists (auto-create if missing) + Pages enabled.
+// Mirrors the quiz generator's deploy step 2 + 5. This is what was missing —
+// without it, publishing 404s because the repo doesn't exist yet.
+// ============================================
+function ensureRepo(token){
+  let isFirstDeploy = false;
+  // 1. Verify the token and confirm it belongs to the configured owner
+  return ghAPI("/user", "GET", token)
+    .then(user => {
+      if(user.login.toLowerCase() !== REPO_OWNER.toLowerCase()){
+        throw new Error("This GitHub token belongs to \"" + user.login + "\", but the schedule is configured to publish to \"" + REPO_OWNER + "\"'s repo. Use a token from the \"" + REPO_OWNER + "\" account, or change REPO_OWNER in the code.");
+      }
+    })
+    // 2. Check if the repo exists; create it if not
+    .then(() => ghAPI("/repos/" + REPO_OWNER + "/" + REPO_NAME, "GET", token)
+      .then(() => { isFirstDeploy = false; })
+      .catch(() => {
+        isFirstDeploy = true;
+        return ghAPI("/user/repos", "POST", token, {
+          name: REPO_NAME,
+          description: "Sunday School Servants Schedule",
+          private: false,
+          auto_init: true   // creates an initial commit so the 'main' branch exists
+        }).then(() => wait(4000));  // wait 4s for the branch to initialize
+      })
+    )
+    // 3. Ensure GitHub Pages is enabled (from the main branch root)
+    .then(() => ghAPI("/repos/" + REPO_OWNER + "/" + REPO_NAME + "/pages", "GET", token)
+      .catch(() => ghAPI("/repos/" + REPO_OWNER + "/" + REPO_NAME + "/pages", "POST", token, {
+        source: { branch: "main", path: "/" }
+      }))
+    )
+    .then(() => isFirstDeploy);
+}
+
+// Simple string hash → 8-char hex. (djb2 variant; good enough for cache-busting.)
+function shortHash(str){
+  let h = 5381;
+  for(let i=0;i<str.length;i++){ h = ((h<<5) + h + str.charCodeAt(i)) >>> 0; }
+  return h.toString(16).padStart(8,"0").slice(0,8);
+}
+
+// Fetch the live style.css from the repo and derive a cache-buster version from its contents.
+// Falls back to a timestamp if the fetch fails (so a publish never blocks on this).
+function computeCssVersion(token){
+  return ghAPI("/repos/"+REPO_OWNER+"/"+REPO_NAME+"/contents/style.css?ref=main", "GET", token)
+    .then(d => shortHash(fromB64(d.content)))
+    .catch(() => "t" + Date.now().toString(36));
+}
+
+// Get SHA of a file (or null if it doesn't exist)
+function getFileSha(path, token){
+  return ghAPI("/repos/"+REPO_OWNER+"/"+REPO_NAME+"/contents/"+path+"?ref=main", "GET", token)
+    .then(d => d.sha)
+    .catch(() => null);
+}
+
+// Put a file (with retry for race conditions)
+function putFile(path, content, token, sha){
+  const body = { message: "Update " + path + " — " + new Date().toLocaleString(), content: b64(content), branch: "main" };
+  if(sha) body.sha = sha;
+  function tryPut(attempt){
+    return ghAPI("/repos/"+REPO_OWNER+"/"+REPO_NAME+"/contents/"+path, "PUT", token, body)
+      .catch(err => {
+        if(attempt < 4 && (err.message.includes("404") || err.message.includes("Not Found"))){
+          return wait(2500).then(() => tryPut(attempt+1));
+        }
+        throw err;
+      });
+  }
+  return tryPut(1);
+}
+
+// ============================================
+// Generate & Publish
+// ============================================
+const genBtn = document.getElementById("gen");
+const errBox = document.getElementById("err");
+const resultBox = document.getElementById("result");
+const loadingEl = document.getElementById("loading");
+
+function showError(msg){
+  errBox.textContent = msg;
+  errBox.style.display = "block";
+  loadingEl.classList.remove("show");
+  genBtn.disabled = false;
+  genBtn.style.opacity = "1";
+}
+
+genBtn.onclick = () => {
+  errBox.style.display = "none";
+  errBox.textContent = "";
+  resultBox.classList.remove("show");
+
+  const wd = parseWeekDate(weekInput.value);
+  if(!wd){ showError("Enter a valid week date, e.g. \"August 22, 2026\"."); return; }
+  const thu = thursdayOf(wd);
+  const weekFile = "week-" + fileSlug(wd) + ".html";
+
+  const token = localStorage.getItem("ghToken");
+  if(!token){
+    showError("Set up GitHub publishing first. Open the \"GitHub publishing setup\" section below, paste your token (ghp_…), and save.");
+    document.getElementById("tokenBody").classList.add("show");
+    document.getElementById("tokenHeader").scrollIntoView({behavior:"smooth", block:"center"});
+    return;
+  }
+
+  const tasks = collectAssignments();
+  saveFormState(); // persist the published state so it's restored next time
+
+  loadingEl.classList.add("show");
+  document.getElementById("loadingText").textContent = "Checking repository…";
+  genBtn.disabled = true;
+  genBtn.style.opacity = "0.6";
+
+  // 0. Ensure the repo exists (auto-create + enable Pages) BEFORE anything else.
+  //    This is the fix for the "404 / Not Found" error — the repo didn't exist yet.
+  ensureRepo(token)
+    .then(() => {
+      document.getElementById("loadingText").textContent = "Reading live style.css…";
+      return computeCssVersion(token);
+    })
+    .then(cssV => {
+    const weekHtml = buildWeekHTML(wd, thu, cssV, tasks);
+    document.getElementById("loadingText").textContent = "Publishing " + weekFile + "…";
+
+    // 1. Push the week file
+    let weekSha;
+    getFileSha(weekFile, token)
+      .then(sha => { weekSha = sha; return putFile(weekFile, weekHtml, token, weekSha); })
+      // 2. Fetch current index.html to preserve past weeks
+      .then(() => {
+        document.getElementById("loadingText").textContent = "Updating index.html…";
+        return ghAPI("/repos/"+REPO_OWNER+"/"+REPO_NAME+"/contents/index.html?ref=main", "GET", token)
+          .then(d => fromB64(d.content))
+          .catch(() => ""); // no existing index → empty
+      })
+      // 3. Build + push new index.html
+      .then(oldIndex => {
+        const newIndex = buildIndexHTML(wd, cssV, weekFile, oldIndex);
+        return getFileSha("index.html", token).then(sha => putFile("index.html", newIndex, token, sha));
+      })
+      // 4. Show result
+      .then(() => {
+        loadingEl.classList.remove("show");
+        genBtn.disabled = false;
+        genBtn.style.opacity = "1";
+        const liveUrl = PAGES_URL + weekFile;
+        document.getElementById("liveurl").innerHTML = '<a href="'+liveUrl+'" target="_blank">'+liveUrl+'</a>';
+        document.getElementById("indexurl").innerHTML = '<a href="'+PAGES_URL+'" target="_blank">'+PAGES_URL+'</a>';
+        resultBox.classList.add("show");
+        resultBox.scrollIntoView({behavior:"smooth", block:"center"});
+      })
+      .catch(e => showError("Publishing failed: " + e.message));
+    }).catch(e => showError("Setup failed: " + e.message));
+};
+
+// ============================================
+// Token UI (identical pattern to quiz generator)
+// ============================================
+(function initTokenUI(){
+  const token = localStorage.getItem("ghToken");
+  const status = document.getElementById("tokenStatus");
+  const body = document.getElementById("tokenBody");
+  const header = document.getElementById("tokenHeader");
+  if(token){ status.textContent = "Ready ✓"; status.className = "token-status set"; }
+  header.onclick = () => body.classList.toggle("show");
+  document.getElementById("saveToken").onclick = () => {
+    const val = document.getElementById("ghToken").value.trim();
+    if(!val){ alert("Paste your GitHub token first."); return; }
+    if(!val.startsWith("ghp_") && !val.startsWith("github_pat_")){ alert("That doesn't look like a GitHub token. It should start with \"ghp_\" or \"github_pat_\"."); return; }
+    localStorage.setItem("ghToken", val);
+    status.textContent = "Ready ✓"; status.className = "token-status set";
+    body.classList.remove("show");
+    document.getElementById("ghToken").value = "";
+    alert("Token saved! You're ready to publish schedules. You only do this once.");
+  };
+})();
+
+// Copy link
+document.getElementById("copylink").onclick = () => {
+  const url = document.getElementById("liveurl").textContent;
+  navigator.clipboard.writeText(url).then(() => {
+    const b = document.getElementById("copylink"); const o = b.textContent;
+    b.textContent = "Copied!"; setTimeout(() => b.textContent = o, 2000);
+  });
+};
+// Generate another
+document.getElementById("again").onclick = () => {
+  resultBox.classList.remove("show");
+  window.scrollTo({top:0, behavior:"smooth"});
+};
+</script>
+</body>
+</html>
