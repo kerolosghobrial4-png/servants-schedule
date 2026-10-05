@@ -123,6 +123,19 @@
       }
     };
 
+    const ANNOUNCEMENTS = [
+      "Tasbeha - This friday - @6:30pm (dont be late)",
+      "No rituals this week!",
+      "Dont forget to grade the kids recorings (and remind them to send)"
+    ];
+
+    function announcementsHtml() {
+      const items = ANNOUNCEMENTS.length
+        ? ANNOUNCEMENTS.map(a => `<li>${a}</li>`).join("")
+        : `<li class="announcement-empty">No announcements this week.</li>`;
+      return `<section class="announcements" style="text-align:left;"><h2>📢 Announcements</h2><ul class="announcement-list">${items}</ul></section>`;
+    }
+
     const params = new URLSearchParams(window.location.search);
     const servantId = params.get("servant");
     const app = document.getElementById("app");
@@ -136,21 +149,26 @@
         </header>
       `;
 
-      html += `<div class="group"><h2>👦 5th &amp; 6th Boys</h2><div class="name-grid">`;
+      html += `<div class="home-columns">`;
+      html += `<div class="group group-left"><h2>👦 5th &amp; 6th Boys</h2><div class="name-grid">`;
       ["abanoub-nagdy", "kerolos-soliman", "jouvany-ghobrial", "divid-romany"].forEach(id => {
         const s = SERVANTS[id];
         html += `<a href="?servant=${id}" class="name-card">${s.name}</a>`;
       });
       html += `</div></div>`;
 
-      html += `<div class="group"><h2>👦 7th &amp; 8th</h2><div class="name-grid">`;
+      html += announcementsHtml();
+
+      html += `<div class="group group-right"><h2>👦 7th &amp; 8th</h2><div class="name-grid">`;
       ["marsilio-nagi", "abanoub-hanna", "mark-william", "poula-khalil"].forEach(id => {
         const s = SERVANTS[id];
         html += `<a href="?servant=${id}" class="name-card">${s.name}</a>`;
       });
       html += `</div></div>`;
+      html += `</div>`;
 
       html += `<footer><p>For questions, contact your coordinator.</p></footer>`;
+      app.className = "container container-wide";
       app.innerHTML = html;
     }
 
@@ -195,6 +213,7 @@
       } else {
         taskHtml = `<div class="no-task">No task has been assigned to you for this week yet. 🙏</div>`;
       }
+      app.className = "container";
       app.innerHTML = `
         <div class="task-view">
           ${task && task.backup ? '' : `<div class="task-date">${WEEK_DATE}</div>`}
@@ -208,6 +227,7 @@
               <div style="font-size:15px;line-height:1.5;color:#1e3a5f;white-space:pre-wrap;">${task.note}</div>
             </div>
           ` : ''}
+          ${ANNOUNCEMENTS.length ? `<div style="margin-top:18px;">${announcementsHtml()}</div>` : ''}
           <a href="index.html" class="back-link">&larr; Back to all weeks</a>
         </div>
       `;
