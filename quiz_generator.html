@@ -1,0 +1,1121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Quiz Generator — St. Stephen Deacons School</title>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Marcellus&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#1a1a1a;--line:#e2e2e2;--brass:#C9963F;--ok:#7A9A6E;--no:#C1272D;--bg:#faf8f3}
+*{box-sizing:border-box;margin:0;padding:0;font-family:'Archivo',system-ui,sans-serif}
+body{background:var(--bg);color:var(--ink);padding:clamp(16px,4vw,48px) clamp(14px,4vw,32px);display:flex;justify-content:center;min-height:100vh}
+.wrap{width:100%;max-width:780px;display:flex;flex-direction:column;gap:24px}
+h1{font-family:'Marcellus',serif;font-weight:400;font-size:clamp(24px,5vw,34px);line-height:1.1}
+.sub{font-size:14px;color:#666;line-height:1.5}
+hr{border:none;border-top:1px solid var(--line)}
+.section{display:flex;flex-direction:column;gap:10px}
+label{font-size:12px;letter-spacing:.12em;text-transform:uppercase;font-weight:700;color:#666}
+input[type=text]{width:100%;padding:12px 14px;border:1px solid var(--line);border-radius:4px;font-size:16px;font-weight:600;background:#fff}
+textarea{width:100%;min-height:340px;padding:16px;border:1px solid var(--line);border-radius:4px;font-family:'Courier New',monospace;font-size:13.5px;line-height:1.6;background:#fff;resize:vertical}
+.hint{font-size:13px;color:#777;line-height:1.6;background:#fff;border:1px dashed var(--line);padding:12px 14px;border-radius:4px}
+.hint code{background:#f0ede4;padding:1px 5px;border-radius:3px;font-size:12px}
+.btn{padding:15px 24px;border:none;border-radius:4px;font-size:15px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;transition:background .15s;width:100%}
+.btn.go{background:var(--brass);color:#fff}
+.btn.go:hover{background:#b8862e}
+.btn.ghost{background:#fff;color:#666;border:1px solid var(--line)}
+.btn.ghost:hover{background:#f4f2ec}
+.row{display:flex;gap:10px}
+.row .btn{flex:1}
+.ok{color:var(--ok);font-weight:700;font-size:15px}
+.err{color:var(--no);font-weight:600;font-size:14px;line-height:1.5;background:#fbecec;border:1px solid #f3c4c4;padding:12px 14px;border-radius:4px;white-space:pre-wrap}
+.result{display:none;flex-direction:column;gap:14px}
+.linkbox{background:#eef5ec;border:1px solid #c4dab9;border-radius:6px;padding:18px 20px;display:flex;flex-direction:column;gap:10px}
+.linkbox .lbl{font-size:11px;letter-spacing:.12em;text-transform:uppercase;font-weight:700;color:var(--ok)}
+.linkbox .url{font-size:17px;font-weight:700;color:var(--ink);word-break:break-all;line-height:1.4}
+.linkbox .url a{color:#3a6b32;text-decoration:underline}
+.copybtn{align-self:flex-start;padding:10px 18px;border:1px solid #c4dab9;border-radius:4px;background:#fff;color:var(--ok);font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;cursor:pointer}
+.copybtn:hover{background:#eef5ec}
+.loading{display:none;align-items:center;gap:10px;color:#666;font-size:14px;font-weight:600}
+.loading.show{display:flex}
+.spinner{width:18px;height:18px;border:3px solid var(--line);border-top-color:var(--brass);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.result.show{display:flex}
+.locked{font-size:12px;color:#999;border:1px solid var(--line);background:#fff;padding:10px 12px;border-radius:4px;word-break:break-all}
+.token-section{background:#fff;border:1px solid var(--line);border-radius:6px;padding:16px 18px;display:flex;flex-direction:column;gap:10px}
+.token-section .token-header{display:flex;justify-content:space-between;align-items:center;cursor:pointer}
+.token-section .token-header span{font-size:13px;font-weight:700;color:#666}
+.token-section .token-status{font-size:11px;font-weight:700;padding:3px 10px;border-radius:3px}
+.token-status.set{background:#eef5ec;color:var(--ok);border:1px solid #c4dab9}
+.token-status.unset{background:#fbecec;color:var(--no);border:1px solid #f3c4c4}
+.token-body{display:none;flex-direction:column;gap:12px}
+.token-body.show{display:flex}
+.token-body ol{font-size:13px;color:#555;line-height:1.7;padding-left:20px}
+.token-body ol a{color:#3a6b32}
+.token-body input{width:100%;padding:12px 14px;border:1px solid var(--line);border-radius:4px;font-size:14px;font-family:'Courier New',monospace;background:#fff}
+.token-hint{font-size:12px;color:#888;line-height:1.5}
+pre.sample{background:#1a1a1a;color:#e8e8e8;padding:16px;border-radius:4px;font-size:12.5px;line-height:1.6;overflow:auto;white-space:pre-wrap}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div>
+    <h1>Quiz Generator</h1>
+    <p class="sub">Paste your questions, pick your class level, and click Publish. You get a permanent live link — same URL every time, never expires. The webhook is already wired in — every quiz sends scores to your Google Sheet.</p>
+  </div>
+
+  <hr>
+
+  <div class="token-section">
+    <div class="token-header" id="tokenHeader">
+      <span>⚙ GitHub publishing setup (one-time)</span>
+      <span class="token-status unset" id="tokenStatus">Not set up</span>
+    </div>
+    <div class="token-body" id="tokenBody">
+      <ol>
+        <li>Go to <a href="https://github.com/settings/tokens/new?scopes=repo&description=Quiz%20Generator" target="_blank">github.com/settings/tokens</a> (sign in or create a free account)</li>
+        <li>Scroll down, click <b>Generate new token (classic)</b></li>
+        <li>Check the <b>repo</b> checkbox (full control of private repos)</li>
+        <li>Click <b>Generate token</b> at the bottom</li>
+        <li>Copy the token (starts with <code>ghp_</code>) and paste it below</li>
+      </ol>
+      <p class="token-hint"><b>Classic tokens expire.</b> If your old token stopped working with a "Bad credentials" error, it probably expired — just generate a new one above and paste it below, then click <b>Save token</b>. You can also use a <b>fine-grained token</b> (starts with <code>github_pat_</code>) with <b>Contents: Read &amp; Write</b> + <b>Pages: Read &amp; Write</b> + <b>Administration: Read &amp; Write</b> permissions.</p>
+      <input type="password" id="ghToken" placeholder="Paste your GitHub token here (ghp_... or github_pat_...)">
+      <div class="row" style="margin-top:6px">
+        <button class="btn ghost" id="saveToken" style="width:auto;align-self:flex-start;padding:10px 20px">Save token</button>
+        <button class="btn ghost" id="testToken" style="width:auto;align-self:flex-start;padding:10px 20px">Test token</button>
+        <button class="btn ghost" id="clearToken" style="width:auto;align-self:flex-start;padding:10px 20px;margin-left:auto">Delete saved token</button>
+      </div>
+      <p id="testResult" class="token-hint" style="display:none"></p>
+      <p class="token-hint">Your token is stored only in this browser (localStorage). It never leaves your computer except to talk directly to GitHub. You only do this once — until the token expires, then repeat the steps above.</p>
+    </div>
+  </div>
+
+  <hr>
+
+  <div class="section">
+    <label for="cls">Class level — this sets the quiz name and routes scores to the right tab in your sheet</label>
+    <select id="cls" style="width:100%;padding:12px 14px;border:1px solid var(--line);border-radius:4px;font-size:16px;font-weight:600;background:#fff">
+      <option value="5-6">Level 5/6</option>
+      <option value="7-8" selected>Level 7/8</option>
+    </select>
+  </div>
+
+  <hr>
+
+  <div class="section">
+    <label>Questions — format below</label>
+    <textarea id="qs" spellcheck="false" placeholder="Paste your questions here..."></textarea>
+    <p class="hint">
+      <b>How to format each question:</b> Start with <code>Q:</code> then the question. List 4 options as
+      <code>A)</code> <code>B)</code> <code>C)</code> <code>D)</code>. Mark the correct one with a
+      <code>*</code> after the letter (e.g. <code>C)*</code>). Add <code>WHY:</code> with a short explanation.
+      Separate questions with a blank line.<br><br>
+      <b>Example:</b>
+    </p>
+    <pre class="sample">Q: Which prayer is prayed at the beginning of every service?
+A) The Lord's Prayer
+B) The Litany of the Departed
+C)* The Thanksgiving Prayer
+D) The Absolution
+WHY: The Thanksgiving Prayer starts every service: Vespers, Matins, Liturgy, weddings and funerals.
+
+Q: How many tunes does the Verses of Cymbals have?
+A)* Three
+B) Four
+C) Five
+D) Two
+WHY: Three: the standard tune, the festive tune, and the Lenten Kyrie eleison.</pre>
+  </div>
+
+  <div class="row">
+    <button class="btn go" id="gen">Generate &amp; Publish — get a live link</button>
+    <button class="btn ghost" id="load">Load example questions</button>
+  </div>
+
+  <div class="loading" id="loading">
+    <div class="spinner"></div>
+    <span id="loadingText">Publishing your quiz to GitHub Pages…</span>
+  </div>
+
+  <div class="result" id="result">
+    <p class="ok" id="okmsg"></p>
+    <div class="linkbox" id="linkbox" style="display:none">
+      <span class="lbl">Your quiz is live — send this link to the kids</span>
+      <div class="url" id="liveurl"></div>
+      <button class="copybtn" id="copylink">Copy link</button>
+    </div>
+    <p class="sub" id="nextsteps"></p>
+    <button class="btn ghost" id="again">Make another quiz</button>
+  </div>
+
+  <div class="err" id="err" style="display:none"></div>
+
+  <hr>
+
+  <div class="section">
+    <label>Webhook (already set — don't change unless you redeploy Apps Script)</label>
+    <p class="locked" id="hook">https://script.google.com/macros/s/AKfycbwk8v1AQwkpXZaagZaPranztjCG1kuszoDQwUQCOq1f0gvzG-r4jeiNadzT8sEwmV1s/exec</p>
+    <label>Teacher code (already set)</label>
+    <p class="locked">stephen</p>
+  </div>
+</div>
+
+<script>
+const SHEET_URL = "https://script.google.com/macros/s/AKfycbwk8v1AQwkpXZaagZaPranztjCG1kuszoDQwUQCOq1f0gvzG-r4jeiNadzT8sEwmV1s/exec";
+const TEACHER_CODE = "stephen";
+
+const SAMPLE = `Q: Which prayer is prayed at the beginning of every service?
+A) The Lord's Prayer
+B) The Litany of the Departed
+C)* The Thanksgiving Prayer
+D) The Absolution
+WHY: The Thanksgiving Prayer starts every service: Vespers, Matins, Liturgy, weddings and funerals.
+
+Q: Why is the hymn called the Verses of Cymbals?
+A) Because it is only sung on feasts
+B)* Because it is chanted with the cymbals
+C) Because it has cymbals written in the words
+D) Because the deacon plays it alone
+WHY: It gets its name from the instrument: it is chanted using the cymbals.
+
+Q: How many stykhons are in one verse?
+A) Two
+B) Three
+C)* Four
+D) Five
+WHY: A verse is a paragraph of four stykhons, which are four melodic sentences.
+
+Q: How many tunes does the Verses of Cymbals have?
+A)* Three
+B) Four
+C) Five
+D) Two
+WHY: Three: the standard tune, the festive tune, and the Lenten Kyrie eleison.
+
+Q: The Adam parts are said on which days?
+A) Wednesday to Saturday
+B)* Sunday to Tuesday
+C) Only on Sundays
+D) Only during feasts
+WHY: Adam parts run Sunday through Tuesday. Watos parts run Wednesday through Saturday.
+
+Q: Which tune is said on the weekdays of Lent and Jonah's Fast?
+A) The festive tune
+B) The standard tune
+C)* The Lenten Kyrie eleison
+D) The Kiahk tune
+WHY: On those weekdays we do not play the cymbals because of their asceticism, so we say the Lenten Kyrie eleison instead.
+
+Q: In the Verses of Cymbals, which part comes FIRST?
+A) The martyrs
+B) The apostles
+C) The saints
+D)* St. Mary and the heavenlies
+WHY: The order is St. Mary and the heavenlies, then the apostles, then the martyrs, then the saints, then the conclusion.
+
+Q: What does the Thanksgiving Prayer thank God for?
+A) Food and drink
+B) The saints
+C)* Everything — good or bad, night and day, sickness and health
+D) The liturgy only
+WHY: The Thanksgiving Prayer thanks God for all His works and every condition, whether things seem good or bad to us.
+
+Q: Who chants the Verses of Cymbals?
+A) The priest alone
+B)* A deacon, with the cymbals
+C) The whole congregation
+D) A child
+WHY: A deacon chants the Verses of Cymbals, playing the cymbals, before the Psalm reading.
+
+Q: What comes right after the Thanksgiving Prayer in the service?
+A) The Liturgy
+B)* The Verses of Cymbals
+C) The sermon
+D) The communion
+WHY: After the Thanksgiving Prayer, the deacon chants the Verses of Cymbals. This is the order in every service.`;
+
+document.getElementById('load').onclick = () => { document.getElementById('qs').value = SAMPLE; };
+
+// Title/subtitle are set automatically based on class level
+function classConfig(cls){
+  if(cls === '5-6'){
+    return {
+      title: 'Raising of Incense and the Offering Quiz',
+      sub: 'Raising of Incense & the Offering · Level 5/6',
+      sub2: ''
+    };
+  }
+  return {
+    title: 'Liturgy of the Believers Quiz',
+    sub: 'Liturgy of the Believers · Level 7/8',
+    sub2: ''
+  };
+}
+
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+
+function parse(text){
+  const blocks = text.trim().split(/\n\s*\n/).map(b=>b.trim()).filter(Boolean);
+  const qs = [];
+  const errors = [];
+  blocks.forEach((blk,bi)=>{
+    const lines = blk.split(/\n/).map(l=>l.trim()).filter(Boolean);
+    if(!lines.length){ return; }
+    const qLine = lines.find(l=>/^Q[:.]/i.test(l));
+    if(!qLine){ errors.push(`Question ${bi+1}: missing a line starting with "Q:"`); return; }
+    const q = qLine.replace(/^Q[:.]\s*/i,'').trim();
+    const opts = [];
+    let answer = -1;
+    let why = '';
+    lines.forEach(l=>{
+      const m = l.match(/^([ABCD])\)\*?\s*(.*)$/i);
+      if(m){
+        const letter = m[1].toUpperCase();
+        const isAns = /\)\s*\*/.test(l);
+        const idx = 'ABCD'.indexOf(letter);
+        opts[idx] = m[2].trim();
+        if(isAns) answer = idx;
+        return;
+      }
+      const w = l.match(/^WHY[:.]\s*(.*)$/i);
+      if(w){ why = w[1].trim(); return; }
+    });
+    if(opts.filter(o=>o!==undefined).length !== 4){
+      errors.push(`Question ${bi+1}: needs exactly 4 options (A, B, C, D). Found ${opts.filter(o=>o!==undefined).length}.`);
+      return;
+    }
+    if(answer < 0){
+      errors.push(`Question ${bi+1}: no correct answer marked. Put a * after the letter, e.g. "C)* The Thanksgiving Prayer".`);
+      return;
+    }
+    if(!why){
+      errors.push(`Question ${bi+1}: missing a WHY: line with the explanation.`);
+      return;
+    }
+    qs.push({q, o:opts, a:answer, why});
+  });
+  return {qs, errors};
+}
+
+function buildQuizHTML(title, sub, sub2, quiz, cls, buildId){
+  const titleE = esc(title);
+  const titleClean = title.replace(/\s*Quiz\s*$/i,'').replace(/[<&]/g,c=>({'<':'&lt;','&':'&amp;'}[c]));
+  const eyebrow = "St. Stephen Deacons School";
+  const subLine = sub.replace(/\s*·\s*/g,' &middot; ');
+  const sub2Line = sub2 ? sub2.replace(/\s*·\s*/g,' &middot; ') : '';
+  const quizJSON = JSON.stringify(quiz);
+  const total = quiz.length;
+  // Unique per-build stamp. It names this build's question file and is what
+  // the ?v= tag in the shared link points at. See buildQuizData below for why
+  // that matters.
+  buildId = buildId || Date.now().toString(36);
+
+  const msgFn = `const pct = QUIZ.length ? Math.round(right/QUIZ.length*100) : 0;
+  const msg = pct===100 ? "Perfect. Every single one."
+            : pct>=80  ? "Strong work. Read over the ones you missed and you have this."
+            : pct>=60  ? "A good start. Go back through the lesson on the ones below."
+            : "Read this lesson again and take it a second time. You will do better.";`;
+
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<meta name="build-id" content="${buildId}">
+<title>${titleE} — St. Stephen Deacons School</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Marcellus&display=swap" rel="stylesheet">
+<style>
+:root{
+  --sanctuary:#0A1538; --sanctuary-deep:#060D24; --sanctuary-lift:#122052;
+  --brass:#C9963F; --brass-lit:#F0C879;
+  --linen:#EDE6D6; --linen-dim:#9AA3BE;
+  --ok:#7A9A6E; --ok-lit:#A8C79C; --no:#C1272D; --no-lit:#F08C86;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  min-height:100vh;background:var(--sanctuary-deep);color:var(--linen);
+  font-family:'Archivo',system-ui,sans-serif;-webkit-font-smoothing:antialiased;
+  background-image:radial-gradient(ellipse 120% 70% at 50% 0%, var(--sanctuary-lift) 0%, var(--sanctuary) 45%, var(--sanctuary-deep) 100%);
+  background-attachment:fixed;
+  display:flex;justify-content:center;padding:clamp(16px,4vw,48px) clamp(14px,4vw,32px);
+}
+button,input{font:inherit;color:inherit}
+button{background:none;border:none;cursor:pointer}
+button:focus-visible,input:focus-visible{outline:2px solid var(--brass-lit);outline-offset:3px}
+
+.wrap{width:100%;max-width:620px;display:flex;flex-direction:column;gap:clamp(18px,3vw,28px)}
+
+.crest{display:flex;flex-direction:column;align-items:center;gap:12px;text-align:center}
+.mark{width:52px;height:30px;position:relative}
+.mark svg{width:100%;height:100%;overflow:visible}
+.eyebrow{font-size:11px;letter-spacing:.3em;text-transform:uppercase;color:var(--brass);font-weight:700}
+h1{font-family:'Marcellus',serif;font-size:clamp(26px,6vw,40px);line-height:1.1;font-weight:400}
+.sub{font-size:clamp(13px,3vw,16px);color:var(--linen-dim);line-height:1.5}
+
+.card{
+  border:1px solid rgba(201,150,63,.24);background:rgba(10,21,56,.55);
+  padding:clamp(18px,4.5vw,32px);display:flex;flex-direction:column;gap:clamp(14px,3vw,22px);
+}
+
+label.fld{font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--linen-dim);font-weight:700}
+input[type=text]{
+  width:100%;padding:14px 16px;background:rgba(6,13,36,.6);
+  border:1px solid rgba(201,150,63,.3);border-radius:2px;
+  font-size:clamp(16px,4vw,19px);font-weight:600;color:var(--linen);
+}
+input[type=text]::placeholder{color:rgba(154,163,190,.5);font-weight:400}
+
+.btn{
+  padding:15px 24px;border:1px solid var(--brass);background:var(--brass);
+  color:var(--sanctuary-deep);border-radius:2px;
+  font-size:clamp(13px,3.2vw,16px);font-weight:800;letter-spacing:.12em;text-transform:uppercase;
+  transition:background .15s,opacity .15s;width:100%;
+}
+.btn:hover:not(:disabled){background:var(--brass-lit)}
+.btn:disabled{opacity:.32;cursor:not-allowed}
+.btn.ghost{background:none;color:var(--linen-dim);border-color:rgba(154,163,190,.3)}
+.btn.ghost:hover{background:rgba(154,163,190,.14);color:var(--linen)}
+
+.bar{display:flex;gap:4px}
+.bar i{flex:1;height:4px;background:rgba(154,163,190,.2);border-radius:2px;transition:background .25s}
+.bar i.done{background:var(--brass)}
+.bar i.now{background:var(--brass-lit)}
+
+.qnum{font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:var(--linen-dim);font-weight:700}
+.qtext{font-size:clamp(19px,4.6vw,26px);line-height:1.32;font-weight:600;text-wrap:balance}
+
+.opts{display:flex;flex-direction:column;gap:9px}
+.opt{
+  display:flex;align-items:flex-start;gap:13px;text-align:left;width:100%;
+  padding:14px 16px;border:1px solid rgba(201,150,63,.22);border-radius:2px;
+  background:rgba(201,150,63,.03);
+  font-size:clamp(15px,3.7vw,18px);line-height:1.35;font-weight:500;
+  transition:border-color .15s,background .15s;
+}
+.opt:hover{border-color:rgba(201,150,63,.55);background:rgba(201,150,63,.09)}
+.opt .ltr{
+  flex:none;width:26px;height:26px;display:grid;place-items:center;
+  border:1px solid rgba(201,150,63,.4);border-radius:50%;
+  font-size:12px;font-weight:800;color:var(--brass);
+}
+.opt.sel{border-color:var(--brass);background:rgba(201,150,63,.14)}
+.opt.sel .ltr{background:var(--brass);color:var(--sanctuary-deep);border-color:var(--brass)}
+
+.row{display:flex;gap:10px}
+.row .btn{width:auto;flex:1}
+
+.score{text-align:center;display:flex;flex-direction:column;gap:6px;align-items:center}
+.score .who{font-family:'Marcellus',serif;font-size:clamp(20px,5vw,30px);letter-spacing:.04em}
+.score .big{font-size:clamp(52px,15vw,90px);font-weight:800;line-height:1;font-variant-numeric:tabular-nums;color:var(--brass-lit)}
+.score .of{font-size:13px;letter-spacing:.24em;text-transform:uppercase;color:var(--linen-dim);font-weight:700}
+.score .msg{font-size:clamp(14px,3.4vw,17px);line-height:1.5;color:var(--linen);max-width:34ch;margin-top:8px}
+
+.rev{display:flex;flex-direction:column;gap:10px}
+.ritem{border-left:3px solid var(--c);padding:12px 14px;background:rgba(201,150,63,.04);display:flex;flex-direction:column;gap:5px}
+.ritem .rq{font-size:clamp(13px,3.2vw,15px);font-weight:700;line-height:1.35}
+.ritem .ra{font-size:clamp(12px,3vw,14px);line-height:1.45;color:var(--linen-dim)}
+.ritem .ra b{color:var(--c);font-weight:700}
+.ritem .why{font-size:clamp(11px,2.9vw,13px);line-height:1.5;color:rgba(154,163,190,.85);font-style:italic}
+
+.warn{font-size:13px;line-height:1.5;color:var(--no-lit);
+  border-left:3px solid var(--no);padding:8px 12px;background:rgba(193,39,45,.08)}
+
+.teach{font-size:11px;letter-spacing:.2em;text-transform:uppercase;font-weight:700;
+  color:rgba(154,163,190,.4);padding:6px;align-self:center;transition:color .15s}
+.teach:hover{color:var(--brass)}
+.note{font-size:12px;line-height:1.6;color:rgba(154,163,190,.75);text-align:center}
+.stamp{font-size:10px;letter-spacing:.08em;text-transform:uppercase;opacity:.45;margin-top:2px}
+
+@media print{
+  body{background:#fff;color:#000;background-image:none;padding:20px}
+  .card{border:1px solid #999;background:#fff}
+  .btn,.noprint{display:none!important}
+  .score .big{color:#000}
+  .ritem{background:#f4f4f4}
+  h1,.eyebrow,.score .who{color:#000}
+  .ra b{color:#000}
+}
+</style>
+</head>
+<body>
+<div class="wrap" id="app"></div>
+
+<script>
+const SHEET_URL   = ${JSON.stringify(SHEET_URL)};
+const TEACHER_CODE = ${JSON.stringify(TEACHER_CODE)};
+const CLASS_LEVEL = ${JSON.stringify(cls)};
+// The build this copy of the page was generated from.
+const BUILD_ID = ${JSON.stringify(buildId)};
+// The build actually being shown. Usually the same, but if GitHub's CDN handed
+// out a stale copy of this page, ACTIVE_BUILD is the newer one we pulled in.
+let ACTIVE_BUILD = BUILD_ID;
+
+// A build id is Date.now() in base 36, so it decodes back to the publish time.
+function whenOf(id){
+  try {
+    const d = new Date(parseInt(id, 36));
+    if (isNaN(d.getTime())) return "";
+    return d.toLocaleDateString(undefined, { month:'short', day:'numeric' }) +
+           ", " + d.toLocaleTimeString(undefined, { hour:'numeric', minute:'2-digit' });
+  } catch(e) { return ""; }
+}
+const STORE_BASE="ssquiz_"+${JSON.stringify(titleE.toLowerCase().replace(/[^a-z0-9]/g,''))};
+let STORE_KEY=STORE_BASE+"_"+ACTIVE_BUILD;
+
+function loadResults(){ try{ return JSON.parse(localStorage.getItem(STORE_KEY)||"[]"); }catch(e){ return []; } }
+function saveResult(rec){
+  try{ const all=loadResults(); all.push(rec); localStorage.setItem(STORE_KEY, JSON.stringify(all)); }catch(e){}
+  if(SHEET_URL){
+    try{
+      fetch(SHEET_URL,{method:"POST",mode:"no-cors",
+        headers:{"Content-Type":"text/plain;charset=utf-8"},
+        body:JSON.stringify(rec)});
+    }catch(e){}
+  }
+}
+function normName(n){ return String(n).trim().toLowerCase().replace(/\\s+/g," "); }
+function alreadyTaken(n){ return loadResults().some(r=>normName(r.name)===normName(n)); }
+function clearResults(){ try{ localStorage.removeItem(STORE_KEY); }catch(e){} }
+
+function toCSV(rows){
+  const esc=v=>'"'+String(v).replace(/"/g,'""')+'"';
+  const head=["Time","Name","Score","Out of","Percent","Missed questions"];
+  return [head.map(esc).join(",")].concat(
+    rows.map(r=>[r.time,r.name,r.score,r.total,r.percent+"%",r.missed].map(esc).join(","))
+  ).join("\\r\\n");
+}
+
+function buildDoc(){
+  const rows=loadResults().slice().sort((a,b)=>a.name.localeCompare(b.name));
+  if(!rows.length){ alert("No results saved on this device yet."); return; }
+  const total=QUIZ.length;
+  const avg=(rows.reduce((n,r)=>n+r.score,0)/rows.length);
+  const missCount=QUIZ.map((_,ix)=>
+    rows.filter(r=>String(r.missed).split(" ").includes(String(ix+1))).length);
+  const cell=(v,b)=>'<td style="border:1px solid #999;padding:6px 9px;'+(b?"font-weight:bold;":"")+'">'+v+'</td>';
+  const esc2=v=>String(v).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+  const body=
+  '<div style="font-family:Georgia,serif;color:#000">'+
+    '<p style="text-align:center;font-size:10pt;letter-spacing:2px;margin:0">'+
+      'ST. STEPHEN DEACONS SCHOOL &middot; ST. GEORGE, NASHVILLE</p>'+
+    '<h1 style="text-align:center;font-size:20pt;margin:6px 0 2px">'+${JSON.stringify(titleClean)}+' Quiz Results</h1>'+
+    '<p style="text-align:center;font-size:11pt;margin:0 0 4px">'+${JSON.stringify(subLine)}+'</p>'+
+    '<p style="text-align:center;font-size:10pt;color:#555;margin:0 0 18px">printed '+new Date().toLocaleDateString()+'</p>'+
+    '<p style="font-size:11pt;margin:0 0 10px"><b>'+rows.length+'</b> student'+(rows.length===1?"":"s")+' &nbsp;&middot;&nbsp; class average <b>'+avg.toFixed(1)+' / '+total+'</b> ('+Math.round(avg/total*100)+'%)</p>'+
+    '<table style="border-collapse:collapse;width:100%;font-size:10pt"><thead><tr>'+
+      cell("#")+cell("Name")+cell("Score")+cell("%")+cell("Missed")+'</tr></thead><tbody>'+
+      rows.map((r,i)=>'<tr>'+cell(i+1)+cell(esc2(r.name))+cell(r.score+'/'+r.total)+cell(r.percent+'%')+cell(esc2(r.missed))+'</tr>').join("")+
+    '</tbody></table>'+
+    '<h3 style="font-size:12pt;margin:18px 0 6px">Questions most often missed</h3>'+
+    '<ol style="font-size:10pt;line-height:1.6;margin:0 0 0 20px">'+
+      missCount.map((c,ix)=>'<li>'+esc2(QUIZ[ix].q)+' — missed by '+c+' student'+(c===1?"":"s")+'</li>').join("")+
+    '</ol></div>';
+  const w=window.open("","_blank");
+  w.document.write(body); w.document.close();
+}
+
+// The questions this page was built with. GitHub's CDN can serve a stale copy
+// of index.html for up to 10 minutes after publishing, so treat these as a
+// fallback, not as the truth. boot() below replaces them when it can.
+const QUIZ_EMBEDDED = ${quizJSON};
+let QUIZ = QUIZ_EMBEDDED;
+
+const MARK='<div class="mark"><svg viewBox="0 0 100 56" aria-hidden="true">'+
+ '<path d="M10 28 Q50 4 90 28 Q50 52 10 28 Z" fill="none" stroke="var(--brass)" stroke-width="2.5"/>'+
+ '<path d="M30 28 L70 28" stroke="var(--brass)" stroke-width="2.5"/>'+
+ '<ellipse cx="58" cy="28" rx="3" ry="5" fill="var(--brass)"/></svg></div>';
+
+let name="", step=-1, saved=false, picks=[];
+const app=document.getElementById('app');
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+function draw(){
+  if(step===-1) return start();
+  if(step<QUIZ.length) return question();
+  results();
+}
+
+function start(){
+  app.innerHTML=
+    '<div class="crest">'+MARK+
+      '<span class="eyebrow">${eyebrow}</span>'+
+      '<h1>${titleE}</h1>'+
+      '<p class="sub">${subLine}'+(${JSON.stringify(sub2Line)}?'<br>'+${JSON.stringify(sub2Line)}:'')+'</p>'+
+    '</div>'+
+    '<div class="card">'+
+      '<label class="fld" for="nm">Write your full name</label>'+
+      '<input type="text" id="nm" placeholder="First and last name" autocomplete="off" value="'+esc(name)+'">'+
+      '<p class="warn" id="warn" hidden></p>'+
+      '<button class="btn" id="go" disabled>Start the quiz</button>'+
+      '<p class="note">'+QUIZ.length+' questions. You get <b>one try</b>, so read each question carefully.<br>'+
+      'You can go back and change an answer before you finish.</p>'+
+      '<button class="teach" id="teach">Teacher</button>'+
+      '<p class="note stamp">Quiz version '+ACTIVE_BUILD+(whenOf(ACTIVE_BUILD)?' &middot; posted '+whenOf(ACTIVE_BUILD):'')+'</p>'+
+    '</div>';
+  const nm=document.getElementById('nm'), go=document.getElementById('go'), warn=document.getElementById('warn');
+  const check=()=>{
+    name=nm.value.trim();
+    const dup = name.length>=2 && alreadyTaken(name);
+    warn.hidden=!dup;
+    if(dup) warn.textContent="A quiz has already been turned in under this name. See your teacher.";
+    go.disabled = name.length<2 || dup;
+  };
+  const begin=()=>{ if(!go.disabled){ step=0; saved=false; draw(); window.scrollTo(0,0); } };
+  nm.addEventListener('input',check);
+  nm.addEventListener('keydown',e=>{ if(e.key==="Enter") begin(); });
+  go.onclick=begin;
+  document.getElementById('teach').onclick=teacher;
+  check(); nm.focus();
+}
+
+function teacher(){
+  const code=prompt("Teacher code:");
+  if(code===null) return;
+  if(code.trim().toLowerCase()!==TEACHER_CODE.toLowerCase()){ alert("That code is not right."); return; }
+  const rows=loadResults().slice().reverse();
+  app.innerHTML=
+    '<div class="crest">'+MARK+'<span class="eyebrow">Saved on this device</span>'+
+      '<h1>Results</h1>'+
+      '<p class="sub">'+rows.length+' '+(rows.length===1?"attempt":"attempts")+' recorded'+(SHEET_URL?" &middot; also sent to your spreadsheet":"")+'</p>'+
+    '</div>'+
+    '<div class="card">'+
+      (rows.length?'<div class="rev">'+rows.map(r=>{
+        const c = r.score>=Math.ceil(QUIZ.length*0.8)?'var(--ok-lit)':r.score>=Math.ceil(QUIZ.length*0.6)?'var(--brass-lit)':'var(--no-lit)';
+        return '<div class="ritem" style="--c:'+c+'">'+
+          '<span class="rq">'+esc(r.name)+' &mdash; '+r.score+'/'+r.total+' ('+r.percent+'%)</span>'+
+          '<span class="ra">'+esc(r.time)+'</span>'+
+          '<span class="why">Missed: '+esc(r.missed)+'</span></div>';}).join("")+'</div>'
+        : '<p class="note">Nothing saved yet on this device.</p>')+
+    '</div>'+
+    '<div class="card noprint">'+
+      '<button class="btn" id="doc">Download as a document</button>'+
+      '<button class="btn ghost" id="csv">Download as a spreadsheet</button>'+
+      '<button class="btn ghost" id="wipe">Clear all results</button>'+
+      '<button class="btn ghost" id="home">Back to the quiz</button>'+
+      '<p class="note">Scores save on this device only. If students use their own phones, each phone keeps its own list &mdash; the spreadsheet receives every attempt.</p>'+
+    '</div>';
+  document.getElementById('doc').onclick=buildDoc;
+  document.getElementById('csv').onclick=()=>{ const blob=new Blob([toCSV(loadResults())],{type:"text/csv"}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download="quiz-results.csv"; a.click(); };
+  document.getElementById('wipe').onclick=()=>{ if(confirm("Delete every saved result on this device? This cannot be undone.")) { clearResults(); teacher(); } };
+  document.getElementById('home').onclick=()=>{ step=-1; draw(); };
+}
+
+function question(){
+  const item=QUIZ[step], L=["A","B","C","D"];
+  app.innerHTML=
+    '<div class="crest">'+MARK+'<span class="eyebrow">'+esc(name)+'</span></div>'+
+    '<div class="card">'+
+      '<div class="bar">'+QUIZ.map((_,n)=>'<i class="'+(n<step?'done':n===step?'now':'')+'"></i>').join("")+'</div>'+
+      '<span class="qnum">Question '+(step+1)+' of '+QUIZ.length+'</span>'+
+      '<p class="qtext">'+esc(item.q)+'</p>'+
+      '<div class="opts">'+item.o.map((t,n)=>
+        '<button class="opt '+(picks[step]===n?'sel':'')+'" data-pick="'+n+'">'+
+           '<span class="ltr">'+L[n]+'</span><span>'+esc(t)+'</span></button>').join("")+'</div>'+
+      '<div class="row">'+
+        (step>0?'<button class="btn ghost" id="back">Back</button>':'')+
+        '<button class="btn" id="fwd" '+(picks[step]===null?'disabled':'')+'>'+
+          (step===QUIZ.length-1?'Finish &amp; see my score':'Next')+'</button>'+
+      '</div>'+
+    '</div>';
+  app.querySelectorAll('[data-pick]').forEach(b=>b.onclick=()=>{ picks[step]=+b.dataset.pick; step++; draw(); });
+  const back=document.getElementById('back'); if(back) back.onclick=()=>{ step--; draw(); };
+  document.getElementById('fwd').onclick=()=>{ step++; draw(); };
+}
+
+function results(){
+  const right=picks.reduce((n,p,ix)=>n+(p===QUIZ[ix].a?1:0),0);
+  if(!saved){
+    saved=true;
+    const missed=QUIZ.map((it,ix)=>picks[ix]===it.a?null:ix+1).filter(Boolean).join(" ");
+    saveResult({time:new Date().toLocaleString(),name:name,score:right,
+                total:QUIZ.length,percent:Math.round(right/QUIZ.length*100),
+                missed:missed||"none",class:CLASS_LEVEL});
+  }
+  ${msgFn}
+  app.innerHTML=
+    '<div class="crest">'+MARK+'<span class="eyebrow">${eyebrow}</span></div>'+
+    '<div class="card">'+
+      '<div class="score">'+
+        '<span class="who">'+esc(name)+'</span>'+
+        '<span class="big">'+right+'</span>'+
+        '<span class="of">out of '+QUIZ.length+'</span>'+
+        '<p class="msg">'+msg+'</p>'+
+      '</div>'+
+    '</div>'+
+    '<div class="card">'+
+      '<span class="qnum">Every question, reviewed</span>'+
+      '<div class="rev">'+QUIZ.map((it,ix)=>{
+        const ok=picks[ix]===it.a, c=ok?'var(--ok-lit)':'var(--no-lit)';
+        return '<div class="ritem" style="--c:'+c+'">'+
+          '<span class="rq">'+(ix+1)+'. '+esc(it.q)+'</span>'+
+          '<span class="ra">'+(ok
+            ? '<b>Correct</b> &mdash; '+esc(it.o[it.a])
+            : '<b>You said</b> '+esc(it.o[picks[ix]])+' &middot; <b>Answer</b> '+esc(it.o[it.a]))+'</span>'+
+          '<span class="why">'+esc(it.why)+'</span></div>';}).join("")+'</div>'+
+    '</div>'+
+    '<div class="card noprint">'+
+      '<button class="btn" id="prt">Print or save this page</button>'+
+      '<p class="note">This was your one try, and it has been turned in.<br>Show this screen to your teacher.</p>'+
+    '</div>';
+  document.getElementById('prt').onclick=()=>window.print();
+}
+
+// GitHub Pages sits behind a CDN that caches this page for 10 minutes AND
+// ignores the query string when deciding what is cached — so "index.html?v=new"
+// is served the same stale bytes as "index.html". That is why a freshly
+// published quiz could still show the old questions.
+//
+// The path, however, IS part of the cache key. So every publish also writes the
+// questions to q-<build>.js, a path the CDN has never served before and so
+// cannot have cached. The link the teacher hands out carries ?v=<build>; the
+// query is invisible to the CDN but perfectly visible to this script. If that
+// id is not the one baked into this copy, this copy is stale — go fetch the
+// real questions by their unique path.
+function boot(){
+  const wanted = (function(){
+    try { return new URLSearchParams(location.search).get('v'); } catch(e){ return null; }
+  })();
+
+  function go(){
+    STORE_KEY = STORE_BASE + "_" + ACTIVE_BUILD;
+    picks = new Array(QUIZ.length).fill(null);
+    draw();
+  }
+
+  if (!wanted || wanted === BUILD_ID) { go(); return; }
+
+  let settled = false;
+  function finish(){
+    if (settled) return;
+    settled = true;
+    const d = window.QUIZ_DATA;
+    if (d && Array.isArray(d.quiz) && d.quiz.length) {
+      QUIZ = d.quiz;
+      ACTIVE_BUILD = d.build || wanted;
+    }
+    go();
+  }
+
+  const sc = document.createElement('script');
+  sc.src = 'q-' + encodeURIComponent(wanted) + '.js';
+  sc.onload = finish;
+  sc.onerror = finish;          // fall back to the embedded questions
+  setTimeout(finish, 8000);     // and never leave a student on a blank page
+  document.head.appendChild(sc);
+}
+boot();
+<\/script>
+</body>
+</html>`;
+}
+
+// The per-build questions file. Its whole purpose is to live at a path no CDN
+// has seen before, so it cannot be served stale.
+function buildQuizData(quiz, buildId){
+  return 'window.QUIZ_DATA=' + JSON.stringify({ build: buildId, quiz: quiz }) + ';\n';
+}
+
+function download(filename, text){
+  const blob = new Blob([text], {type:"text/html"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click();
+  document.body.removeChild(a);
+  setTimeout(()=>URL.revokeObjectURL(url), 2000);
+}
+
+document.getElementById('gen').onclick = () => {
+  const errBox = document.getElementById('err');
+  const resultBox = document.getElementById('result');
+  errBox.style.display = 'none';
+  errBox.textContent = '';
+  resultBox.classList.remove('show');
+
+  const cls = document.getElementById('cls').value;
+  const cfg = classConfig(cls);
+  const title = cfg.title;
+  const sub = cfg.sub;
+  const sub2 = cfg.sub2;
+  const raw = document.getElementById('qs').value;
+
+  if(!raw.trim()){
+    errBox.textContent = "Paste your questions first. Click \"Load example questions\" if you want to see the format.";
+    errBox.style.display = 'block';
+    return;
+  }
+
+  const {qs, errors} = parse(raw);
+  if(errors.length){
+    errBox.textContent = errors.join("\n");
+    errBox.style.display = 'block';
+    return;
+  }
+  if(qs.length < 1){
+    errBox.textContent = "No valid questions found. Check the format and try again.";
+    errBox.style.display = 'block';
+    return;
+  }
+
+  const buildId = Date.now().toString(36);
+  const html = buildQuizHTML(title, sub, sub2, qs, cls, buildId);
+  const dataJs = buildQuizData(qs, buildId);
+
+  // Check if GitHub token is set up
+  const token = localStorage.getItem('ghToken');
+  if (!token) {
+    errBox.textContent = "You need to set up GitHub publishing first. Click the \"GitHub publishing setup\" section above, paste your token, and save.";
+    errBox.style.display = 'block';
+    document.getElementById('tokenBody').classList.add('show');
+    document.getElementById('tokenHeader').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    return;
+  }
+
+  // Show loading spinner
+  const loadingEl = document.getElementById('loading');
+  loadingEl.classList.add('show');
+  const genBtn = document.getElementById('gen');
+  genBtn.disabled = true;
+  genBtn.style.opacity = '0.5';
+
+  // Deploy to GitHub Pages — permanent link, same URL every time
+  deployToGitHub(token, html, cls, dataJs, buildId)
+    .then(res => {
+      var liveUrl = res.url;
+      var verified = res.verified;
+      loadingEl.classList.remove('show');
+      document.getElementById('loadingText').textContent = 'Publishing your quiz to GitHub Pages…';
+      genBtn.disabled = false;
+      genBtn.style.opacity = '1';
+
+      const clsLabel = cls === '5-6' ? 'Levels 5/6' : 'Levels 7/8';
+      localStorage.setItem('deployed-' + cls, '1');
+      // Cache-proof link: appending ?v=<buildId> makes every browser that opens
+      // THIS link fetch the quiz fresh from the network instead of reusing a
+      // cached copy of the old quiz (GitHub Pages caches the page for 10 min).
+      var sendUrl = liveUrl + '?v=' + buildId;
+      document.getElementById('okmsg').innerHTML = verified
+        ? "Done! Your " + clsLabel + " quiz is live now (" + qs.length + " questions) — checked and confirmed."
+        : "Uploaded! Your " + clsLabel + " quiz (" + qs.length + " questions) is still going live.";
+      document.getElementById('linkbox').style.display = 'flex';
+      document.getElementById('liveurl').innerHTML =
+        '<a href="' + sendUrl + '" target="_blank">' + sendUrl + '</a>';
+      document.getElementById('nextsteps').innerHTML = verified
+        ? "This is the <b>permanent link for " + clsLabel + "</b> — it never expires and is separate from the other class level's link. " +
+          "The new questions are live on it now; I waited and confirmed that before showing you this. " +
+          "<br><br><b>Send the kids the link exactly as it appears above, including the <code>?v=</code> on the end.</b> " +
+          "That tag is not decoration — it is how the page knows to load <i>this</i> set of questions. " +
+          "A link without it can serve the previous quiz for up to 10 minutes, which is the bug you were hitting. " +
+          "<br><br>Each quiz shows its version at the bottom of the start screen, so you can always tell which one you are looking at."
+        : "Your quiz uploaded fine, but GitHub is taking longer than usual to put it live. " +
+          "Wait another minute or two, then open the link above — it will have the new questions. " +
+          "<b>Send the kids the link exactly as it appears, including the <code>?v=</code> on the end</b> — that tag is how the page finds this set of questions.";
+      resultBox.classList.add('show');
+      resultBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    })
+    .catch(err => {
+      // deployToGitHub rejects with an Error object, not a string. Calling
+      // .includes() on the Error threw inside this handler, so every failed
+      // publish silently stopped the spinner and never showed what went wrong.
+      const errMsg = String((err && err.message) || err);
+      loadingEl.classList.remove('show');
+      document.getElementById('loadingText').textContent = 'Publishing your quiz to GitHub Pages…';
+      genBtn.disabled = false;
+      genBtn.style.opacity = '1';
+      document.getElementById('okmsg').textContent =
+        "Publishing failed (" + qs.length + " questions ready).";
+      document.getElementById('linkbox').style.display = 'none';
+      document.getElementById('nextsteps').innerHTML =
+        "Publishing to GitHub failed: " + errMsg + "<br><br>" +
+        (errMsg.includes('Bad credentials') || errMsg.includes('401')
+          ? "<b>Your GitHub token has most likely expired or been revoked.</b> Open the setup section above, click <b>Delete saved token</b>, generate a new token at github.com/settings/tokens, paste it, click <b>Test token</b> to confirm, then publish again.<br><br>"
+          : "Check your token is correct (delete it in the setup section above and re-paste if needed). ") +
+        "Make sure you picked the right class level and try again.";
+      resultBox.classList.add('show');
+    });
+};
+
+// === GitHub Pages deploy function ===
+function ghAPI(path, method, token, body) {
+  const opts = {
+    method: method || 'GET',
+    // GitHub sends "Cache-Control: private, max-age=60" on API reads. Without
+    // no-store, publishing twice in the same minute reads a STALE file sha and
+    // the upload gets rejected.
+    cache: 'no-store',
+    headers: {
+      'Authorization': 'token ' + token,
+      'Accept': 'application/vnd.github.v3+json'
+    }
+  };
+  if (body) {
+    opts.headers['Content-Type'] = 'application/json';
+    opts.body = JSON.stringify(body);
+  }
+  return fetch('https://api.github.com' + path, opts).then(r => {
+    if (r.status === 204) return null;
+    return r.json().then(data => {
+      if (!r.ok) {
+        // GitHub puts the useful part (e.g. "name already exists") in errors[].
+        const details = (data.errors || []).map(e => e.message || e.code).filter(Boolean).join('; ');
+        throw new Error((data.message || ('GitHub API error ' + r.status)) + (details ? ' (' + details + ')' : ''));
+      }
+      return data;
+    });
+  });
+}
+
+function deployToGitHub(token, html, cls, dataJs, buildId) {
+  let owner, repoName, pagesUrl, isFirstDeploy;
+  let commitSha = null;
+
+  function step(label, fn) {
+    return fn().catch(err => {
+      throw new Error(label + ': ' + (err.message || err));
+    });
+  }
+  function wait(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+  // Progress text on the spinner, so a slow Pages build does not look frozen.
+  function say(msg) {
+    const el = document.getElementById('loadingText');
+    if (el) el.textContent = msg;
+  }
+
+  function getSha(path) {
+    return ghAPI('/repos/' + owner + '/' + repoName + '/contents/' + path + '?ref=main', 'GET', token)
+      .then(fileData => fileData.sha)
+      .catch(() => null);
+  }
+
+  // Upload one file, retrying if the branch is not ready yet or if GitHub says
+  // our sha is out of date.
+  function putFile(path, text, label) {
+    const content = btoa(unescape(encodeURIComponent(text)));
+
+    function attemptPut(curSha, attempt) {
+      const body = {
+        message: 'Update quiz — ' + new Date().toLocaleString(),
+        content: content,
+        branch: 'main'
+      };
+      if (curSha) body.sha = curSha;
+      return ghAPI('/repos/' + owner + '/' + repoName + '/contents/' + path, 'PUT', token, body)
+        .catch(err => {
+          const m = String(err.message || '');
+          if (attempt >= 4) throw err;
+          // Branch not ready yet on a brand-new repo.
+          if (m.includes('404') || m.includes('Not Found')) {
+            return wait(3000).then(() => attemptPut(curSha, attempt + 1));
+          }
+          // Our sha was stale or missing. Re-read it and push again instead of
+          // failing and leaving the old quiz live.
+          if (m.includes('409') || m.includes('422') || m.includes('sha') ||
+              m.includes('match') || m.includes('Conflict') || m.includes('already exists')) {
+            return wait(1500).then(() => getSha(path)).then(fresh => attemptPut(fresh, attempt + 1));
+          }
+          throw err;
+        });
+    }
+
+    return step(label, () => getSha(path).then(sha => attemptPut(sha, 1)));
+  }
+
+  // Uploading the file only creates a COMMIT. GitHub Pages then has to rebuild
+  // the site before that commit is actually served, which takes anywhere from
+  // ~20 seconds to a couple of minutes. Handing over the link before that is
+  // finished is why a freshly published quiz can still show the old questions.
+  // So: wait here until Pages reports it has built THIS commit.
+  function waitForPagesBuild(sha) {
+    const started = Date.now();
+    const LIMIT = 300000;  // 5 minutes, then hand the link over unverified
+
+    function poll() {
+      return ghAPI('/repos/' + owner + '/' + repoName + '/pages/builds/latest', 'GET', token)
+        .then(b => {
+          if (b && b.status === 'errored') {
+            const e = new Error('GitHub Pages could not build the site. ' + ((b.error && b.error.message) || ''));
+            e.pagesBuildFailed = true;
+            throw e;
+          }
+          return !!(b && b.status === 'built' && (!sha || b.commit === sha));
+        })
+        .catch(err => {
+          // A brand-new site has no build record yet; that is not an error.
+          if (err && err.pagesBuildFailed) throw err;
+          return false;
+        })
+        .then(done => {
+          if (done) return true;
+          if (Date.now() - started > LIMIT) return false;
+          const secs = Math.round((Date.now() - started) / 1000);
+          say('Uploaded. Waiting for GitHub to put the new quiz live... (' + secs + 's)');
+          return wait(4000).then(poll);
+        });
+    }
+    return poll();
+  }
+
+  // Step 1: Get the authenticated user's info
+  return step('Could not verify your GitHub token', () => ghAPI('/user', 'GET', token))
+    .then(user => {
+      owner = user.login;
+      // SEPARATE repos per class level = SEPARATE permanent links
+      repoName = cls === '5-6' ? 'sunday-quiz-56' : 'sunday-quiz-78';
+      pagesUrl = 'https://' + owner + '.github.io/' + repoName + '/';
+    })
+    // Step 2: Check if repo exists; create if not
+    .then(() => step('Could not access the repo', () =>
+      ghAPI('/repos/' + owner + '/' + repoName, 'GET', token)
+        .then(() => { isFirstDeploy = false; })
+        .catch(err => {
+          // Only a missing repo should be created. Anything else (expired
+          // token, rate limit, no permission) is the real error to show.
+          if (!String(err.message || '').includes('Not Found')) throw err;
+          isFirstDeploy = true;
+          return ghAPI('/user/repos', 'POST', token, {
+            name: repoName,
+            description: 'Sunday School Quiz — ' + (cls === '5-6' ? 'Level 5/6' : 'Level 7/8'),
+            private: false,
+            auto_init: true
+          }).then(() => wait(4000))  // Wait 4s for branch to init
+            .catch(e => {
+              // A fine-grained token that wasn't given access to this repo
+              // sees it as "Not Found", then can't create it because it exists.
+              if (/already exists/i.test(String(e.message))) {
+                throw new Error('Your token cannot see the "' + repoName + '" repo. If it is a fine-grained token, edit it on GitHub and add ' + repoName + ' under Repository access (or use a classic token with the "repo" box checked).');
+              }
+              throw e;
+            });
+        })
+    ))
+    // Step 3: Push this build's questions to their own unique path FIRST, so
+    //         the file is already there the moment any page asks for it.
+    .then(() => {
+      say('Uploading the questions…');
+      return putFile('q-' + buildId + '.js', dataJs, 'Could not upload the questions');
+    })
+    // Step 4: Push the page itself
+    .then(() => {
+      say('Uploading the quiz page…');
+      return putFile('index.html', html, 'Could not upload the quiz file');
+    })
+    .then(res => { commitSha = (res && res.commit && res.commit.sha) || null; })
+    // Step 5: Enable GitHub Pages (if not already enabled)
+    .then(() => step('Could not enable GitHub Pages', () =>
+      ghAPI('/repos/' + owner + '/' + repoName + '/pages', 'GET', token)
+        .catch(() => ghAPI('/repos/' + owner + '/' + repoName + '/pages', 'POST', token, {
+          source: { branch: 'main', path: '/' }
+        }))
+    ))
+    // Step 6: Do not hand over the link until Pages is really serving this quiz
+    .then(() => waitForPagesBuild(commitSha))
+    // Step 7: Return the permanent URL plus whether we confirmed it is live
+    .then(verified => ({ url: pagesUrl, verified: verified }));
+}
+
+// === Token setup UI ===
+(function initTokenUI() {
+  const token = localStorage.getItem('ghToken');
+  const status = document.getElementById('tokenStatus');
+  const body = document.getElementById('tokenBody');
+  const header = document.getElementById('tokenHeader');
+
+  if (token) {
+    status.textContent = 'Ready ✓';
+    status.className = 'token-status set';
+  }
+
+  // Toggle the token section
+  header.onclick = () => {
+    body.classList.toggle('show');
+  };
+
+  // Save token
+  document.getElementById('saveToken').onclick = () => {
+    const val = document.getElementById('ghToken').value.trim();
+    if (!val) {
+      alert('Paste your GitHub token first.');
+      return;
+    }
+    if (!val.startsWith('ghp_') && !val.startsWith('github_pat_')) {
+      alert('That does not look like a GitHub token. It should start with "ghp_" (classic) or "github_pat_" (fine-grained).');
+      return;
+    }
+    localStorage.setItem('ghToken', val);
+    status.textContent = 'Ready ✓';
+    status.className = 'token-status set';
+    body.classList.remove('show');
+    document.getElementById('ghToken').value = '';
+    alert('Token saved! Click "Test token" once to confirm it works, then publish your quiz.');
+  };
+
+  // Test token — calls GET /user to verify the token actually works
+  document.getElementById('testToken').onclick = () => {
+    const val = (document.getElementById('ghToken').value.trim() || localStorage.getItem('ghToken') || '').trim();
+    const out = document.getElementById('testResult');
+    out.style.display = 'block';
+    if (!val) {
+      out.textContent = '⚠ No token to test. Paste a token or save one first.';
+      out.style.color = 'var(--no)';
+      return;
+    }
+    out.textContent = 'Testing token against GitHub…';
+    out.style.color = '#666';
+    ghAPI('/user', 'GET', val)
+      .then(user => {
+        out.innerHTML = '✅ Token works. Signed in as <b>' + user.login + '</b>. You are ready to publish.';
+        out.style.color = 'var(--ok)';
+      })
+      .catch(err => {
+        const m = (err.message || '') + '';
+        let hint = '';
+        if (m.includes('Bad credentials') || m.includes('401')) {
+          hint = ' This usually means the token has <b>expired or been revoked</b>. Generate a new one and paste it above, then click Save token.';
+        } else if (m.includes('403') || m.includes('Resource not accessible')) {
+          hint = ' The token is valid but <b>lacks permission</b>. For a fine-grained token, grant Contents (R/W), Pages (R/W), and Administration (R/W).';
+        }
+        out.innerHTML = '❌ ' + m + hint;
+        out.style.color = 'var(--no)';
+      });
+  };
+
+  // Delete saved token
+  document.getElementById('clearToken').onclick = () => {
+    if (localStorage.getItem('ghToken')) {
+      localStorage.removeItem('ghToken');
+      status.textContent = 'Not set up';
+      status.className = 'token-status unset';
+      const out = document.getElementById('testResult');
+      out.style.display = 'block';
+      out.textContent = 'Saved token deleted. Paste a new one and click Save token.';
+      out.style.color = '#666';
+    } else {
+      alert('No saved token to delete.');
+    }
+  };
+})();
+
+// Copy link button
+document.getElementById('copylink').onclick = () => {
+  const url = document.getElementById('liveurl').textContent;
+  navigator.clipboard.writeText(url).then(() => {
+    const btn = document.getElementById('copylink');
+    const orig = btn.textContent;
+    btn.textContent = 'Copied!';
+    setTimeout(() => { btn.textContent = orig; }, 2000);
+  });
+};
+
+document.getElementById('again').onclick = () => {
+  document.getElementById('result').classList.remove('show');
+  window.scrollTo({top:0, behavior:'smooth'});
+};
+</script>
+</body>
+</html>
