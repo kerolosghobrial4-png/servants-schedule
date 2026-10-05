@@ -147,6 +147,14 @@ select:disabled{background:#f4f2ec;color:#aaa}
   </div>
   <hr>
 
+  <!-- Announcements (middle column of the home page) -->
+  <div class="section">
+    <label for="announcements">📢 Announcements (shown in the middle of the home page)</label>
+    <textarea id="announcements" class="note" rows="4" placeholder="One announcement per line, e.g.&#10;No class next Saturday — church retreat.&#10;Servants meeting Friday at 7pm."></textarea>
+    <div class="hint" style="font-size:12px;">One announcement per line. Links (https://…) become clickable. Leave empty to show &ldquo;No announcements this week.&rdquo; Kept until you change it.</div>
+  </div>
+  <hr>
+
   <!-- Publish -->
   <button class="btn go" id="gen">Generate &amp; Publish</button>
   <button type="button" class="btn ghost" id="wipeAll" style="margin-top:10px;width:auto;align-self:flex-start;padding:10px 20px;">🧹 Wipe all selections</button>
@@ -678,6 +686,41 @@ container.addEventListener("click", hideRestoreHint, { once: true });
 weekInput.addEventListener("input", hideRestoreHint, { once: true });
 
 // ============================================
+// Announcements box (saved on its own so loading a past week doesn't touch it)
+// ============================================
+const ANNOUNCE_KEY = "scheduleAnnouncements";
+const announceInput = document.getElementById("announcements");
+let announceSaved = null;
+try { announceSaved = localStorage.getItem(ANNOUNCE_KEY); } catch(e){}
+if(announceSaved !== null) announceInput.value = announceSaved;
+announceInput.addEventListener("input", () => {
+  try { localStorage.setItem(ANNOUNCE_KEY, announceInput.value); } catch(e){}
+});
+
+function collectAnnouncements(){
+  return announceInput.value.split("\n").map(x => x.trim()).filter(Boolean);
+}
+
+// Read the announcements back out of a published index.html (plain text, one per item)
+function parseAnnouncements(html){
+  const block = (html.match(/<ul class="announcement-list">([\s\S]*?)<\/ul>/) || [])[1];
+  if(!block) return null;
+  const items = [];
+  const re = /<li(?![^>]*announcement-empty)[^>]*>([\s\S]*?)<\/li>/g;
+  let m;
+  while((m = re.exec(block))){
+    items.push(decodeEntities(m[1].replace(/<[^>]+>/g, "")).trim());
+  }
+  return items.filter(Boolean);
+}
+
+// Escape an announcement and turn any http(s) links into clickable links
+function announcementHTML(text){
+  return escAttr(text).replace(/https?:\/\/[^\s<"]+/g, url =>
+    '<a href="'+url+'" target="_blank" rel="noopener">'+url+'</a>');
+}
+
+// ============================================
 // Load a past published week back into the form
 // (fetches the live week-*.html from GitHub Pages — public, no token needed —
 //  parses the embedded TASKS object, and fills the form so you can tweak & republish)
@@ -719,6 +762,11 @@ function loadPastWeeksList(){
   fetch(PAGES_URL + "index.html", { cache: "no-store" })
     .then(r => { if(!r.ok) throw new Error("HTTP " + r.status); return r.text(); })
     .then(html => {
+      // First time using the announcements box: start from what's live now
+      if(announceSaved === null && !announceInput.value){
+        const live = parseAnnouncements(html);
+        if(live && live.length) announceInput.value = live.join("\n");
+      }
       const weeks = parseWeekLinks(html);
       if(weeks.length === 0){
         pastWeeksSelect.innerHTML = '<option value="">— no published weeks found yet —</option>';
@@ -1044,27 +1092,24 @@ TASKS_BLOCK+'\n'+
 // ============================================
 // Build the updated index.html
 // ============================================
-function buildIndexHTML(weekDate, cssV, weekFile, oldIndexHtml){
+function buildIndexHTML(weekDate, cssV, weekFile, oldIndexHtml, announcements){
   const weekDateStr = fmtDate(weekDate);
 
-  // Parse past weeks out of the old index.html if present
-  let pastWeeksLinks = "";
-  if(oldIndexHtml){
-    // Current week link in old file
-    const curMatch = oldIndexHtml.match(/<a href="(week-[a-z]+\d+\.html)" class="week-link"[^>]*>([^<]+)<\/a>/);
-    if(curMatch){
-      const oldFile = curMatch[1];
-      const oldDate = curMatch[2];
-      // Don't duplicate if re-generating same week
-      if(oldFile !== weekFile){
-        const oldPastBlock = (oldIndexHtml.match(/Past Weeks<\/h2>\s*<div class="week-link-list">([\s\S]*?)<\/div>/) || [])[1] || "";
-        pastWeeksLinks = '        <a href="'+oldFile+'" class="week-link" style="opacity:.75;border-left-color:#a0aec0;background:#f7fafc;color:#4a5568;">'+oldDate+'</a>\n' + oldPastBlock.trim();
-      } else {
-        // Re-generating same week: keep existing past weeks
-        pastWeeksLinks = ((oldIndexHtml.match(/Past Weeks<\/h2>\s*<div class="week-link-list">([\s\S]*?)<\/div>/) || [])[1] || "").trim();
-      }
-    }
-  }
+  // Past weeks = every week linked from the old index.html (its current week first,
+  // then its past weeks), minus the week being published, with duplicates removed.
+  const pastWeeks = oldIndexHtml ? parseWeekLinks(oldIndexHtml).filter(w => w.file !== weekFile) : [];
+  const PAST_STYLE = 'opacity:.75;border-left-color:#a0aec0;background:#f7fafc;color:#4a5568;';
+  const pastWeeksLinks = pastWeeks.map(w =>
+    '        <a href="'+w.file+'" class="week-link" style="'+PAST_STYLE+'">'+escHTML(w.label)+' &rarr;</a>'
+  ).join("\n");
+
+  const nameCards = section => ROSTER.filter(s => s.section === section).map(s =>
+    '        <a href="'+weekFile+'?servant='+s.id+'" class="name-card">'+escHTML(s.name)+'</a>'
+  ).join("\n");
+
+  const announceItems = (announcements && announcements.length)
+    ? announcements.map(a => '        <li>'+announcementHTML(a)+'</li>').join("\n")
+    : '        <li class="announcement-empty">No announcements this week.</li>';
 
   const html = '<!DOCTYPE html>\n'+
 '<html lang="en">\n'+
@@ -1075,7 +1120,7 @@ function buildIndexHTML(weekDate, cssV, weekFile, oldIndexHtml){
 '  <link rel="stylesheet" href="style.css?v='+cssV+'">\n'+
 '</head>\n'+
 '<body>\n'+
-'  <div class="container">\n'+
+'  <div class="container container-wide">\n'+
 '    <header>\n'+
 '      <h1>🛡️ Servants Lesson Plan</h1>\n'+
 '      <p class="subtitle">Select your name to view your assigned task</p>\n'+
@@ -1088,28 +1133,31 @@ function buildIndexHTML(weekDate, cssV, weekFile, oldIndexHtml){
 '      </div>\n'+
 '      <h2 style="margin-top:20px;font-size:1rem;color:#718096;border-bottom:none;padding-bottom:0;">Past Weeks</h2>\n'+
 '      <div class="week-link-list">\n'+
-(pastWeeksLinks ? pastWeeksLinks.split("\n").map(l=>l.trim()).filter(Boolean).map(l=>"        "+l).join("\n") : "        ")+'\n'+
+(pastWeeksLinks || '        ')+'\n'+
 '      </div>\n'+
 '    </div>\n'+
 '\n'+
-'    <div class="group">\n'+
+'    <div class="home-columns">\n'+
+'    <div class="group group-left">\n'+
 '      <h2>👦 5th &amp; 6th Boys</h2>\n'+
 '      <div class="name-grid">\n'+
-'        <a href="'+weekFile+'?servant=abanoub-nagdy" class="name-card">Abanoub Nagdy</a>\n'+
-'        <a href="'+weekFile+'?servant=kerolos-soliman" class="name-card">Kerolos Soliman</a>\n'+
-'        <a href="'+weekFile+'?servant=jouvany-ghobrial" class="name-card">Jouvany Ghobrial</a>\n'+
-'        <a href="'+weekFile+'?servant=divid-romany" class="name-card">Divid Romany</a>\n'+
+nameCards("5-6")+'\n'+
 '      </div>\n'+
 '    </div>\n'+
 '\n'+
-'    <div class="group">\n'+
+'    <section class="announcements">\n'+
+'      <h2>📢 Announcements</h2>\n'+
+'      <ul class="announcement-list">\n'+
+announceItems+'\n'+
+'      </ul>\n'+
+'    </section>\n'+
+'\n'+
+'    <div class="group group-right">\n'+
 '      <h2>👦 7th &amp; 8th</h2>\n'+
 '      <div class="name-grid">\n'+
-'        <a href="'+weekFile+'?servant=marsilio-nagi" class="name-card">Marsilio Nagi</a>\n'+
-'        <a href="'+weekFile+'?servant=abanoub-hanna" class="name-card">Abanoub Hanna</a>\n'+
-'        <a href="'+weekFile+'?servant=mark-william" class="name-card">Mark William</a>\n'+
-'        <a href="'+weekFile+'?servant=poula-khalil" class="name-card">Poula Khalil</a>\n'+
+nameCards("7-8")+'\n'+
 '      </div>\n'+
+'    </div>\n'+
 '    </div>\n'+
 '\n'+
 '    <footer>\n'+
@@ -1218,6 +1266,26 @@ function putFile(path, content, token, sha){
   return tryPut(1);
 }
 
+// Poll GitHub Pages until it has built the commit we just pushed.
+// Gives up quietly after ~3 minutes so publishing never gets stuck.
+function waitForPagesBuild(token, commitSha){
+  if(!commitSha) return wait(60000);
+  const deadline = Date.now() + 180000;
+  function check(){
+    return ghAPI("/repos/"+REPO_OWNER+"/"+REPO_NAME+"/pages/builds/latest", "GET", token)
+      .catch(() => null)
+      .then(build => {
+        if(build && build.commit === commitSha && build.status === "built") return;
+        if(build && build.commit === commitSha && build.status === "errored"){
+          throw new Error("GitHub Pages failed to build the site. Try publishing again.");
+        }
+        if(Date.now() > deadline) return;
+        return wait(5000).then(check);
+      });
+  }
+  return wait(5000).then(check);
+}
+
 // ============================================
 // Generate & Publish
 // ============================================
@@ -1284,10 +1352,15 @@ genBtn.onclick = () => {
       })
       // 3. Build + push new index.html
       .then(oldIndex => {
-        const newIndex = buildIndexHTML(wd, cssV, weekFile, oldIndex);
+        const newIndex = buildIndexHTML(wd, cssV, weekFile, oldIndex, collectAnnouncements());
         return getFileSha("index.html", token).then(sha => putFile("index.html", newIndex, token, sha));
       })
-      // 4. Show result
+      // 4. Wait for GitHub Pages to finish rebuilding the site (avoids opening a 404)
+      .then(res => {
+        document.getElementById("loadingText").textContent = "Waiting for the website to update (about a minute)…";
+        return waitForPagesBuild(token, res && res.commit && res.commit.sha);
+      })
+      // 5. Show result
       .then(() => {
         loadingEl.classList.remove("show");
         genBtn.disabled = false;

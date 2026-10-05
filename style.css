@@ -391,3 +391,13 @@ footer {
     grid-template-areas: "middle" "left" "right";
   }
 }
+
+.announcement-list a {
+  color: #2b6cb0;
+  word-break: break-all;
+}
+
+.announcement-list .announcement-empty {
+  color: #718096;
+  font-style: italic;
+}
