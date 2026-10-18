@@ -213,6 +213,7 @@ const ROSTER = [
   { id:"kerolos-soliman",  name:"Kerolos Soliman",  group:"5th & 6th Boys", section:"5-6" },
   { id:"jouvany-ghobrial", name:"Jouvany Ghobrial", group:"5th & 6th Boys", section:"5-6" },
   { id:"divid-romany",     name:"Divid Romany",     group:"5th & 6th Boys", section:"5-6" },
+  { id:"romany-ghobrial",  name:"Romany Ghobrial",  group:"5th & 6th Boys", section:"5-6" },
   { id:"marsilio-nagi",    name:"Marsilio Nagi",    group:"7th & 8th",      section:"7-8" },
   { id:"abanoub-hanna",    name:"Abanoub Hanna",    group:"7th & 8th",      section:"7-8" },
   { id:"mark-william",     name:"Mark William",     group:"7th & 8th",      section:"7-8" },
@@ -1021,7 +1022,7 @@ TASKS_BLOCK+'\n'+
 '\n'+
 '      html += `<div class="home-columns">`;\n'+
 '      html += `<div class="group group-left"><h2>👦 5th &amp; 6th Boys</h2><div class="name-grid">`;\n'+
-'      ["abanoub-nagdy", "kerolos-soliman", "jouvany-ghobrial", "divid-romany"].forEach(id => {\n'+
+'      '+JSON.stringify(ROSTER.filter(s => s.section === "5-6").map(s => s.id))+'.forEach(id => {\n'+
 '        const s = SERVANTS[id];\n'+
 '        html += `<a href="?servant=${id}" class="name-card">${s.name}</a>`;\n'+
 '      });\n'+
@@ -1030,7 +1031,7 @@ TASKS_BLOCK+'\n'+
 '      html += announcementsHtml();\n'+
 '\n'+
 '      html += `<div class="group group-right"><h2>👦 7th &amp; 8th</h2><div class="name-grid">`;\n'+
-'      ["marsilio-nagi", "abanoub-hanna", "mark-william", "poula-khalil"].forEach(id => {\n'+
+'      '+JSON.stringify(ROSTER.filter(s => s.section === "7-8").map(s => s.id))+'.forEach(id => {\n'+
 '        const s = SERVANTS[id];\n'+
 '        html += `<a href="?servant=${id}" class="name-card">${s.name}</a>`;\n'+
 '      });\n'+
