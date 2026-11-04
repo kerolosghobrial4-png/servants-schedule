@@ -7,6 +7,9 @@ window.SEKKA_LEVELS.push({
       lesson: [
         { p: 'English sentences **always need a verb**. In Arabic we can say "أنا تعبانة" with no verb. In English we must say **I am tired**.' },
         { ar: 'في العربي بنقول «هي دكتورة» من غير فعل. في الإنجليزي لازم نحط **am / is / are**: She **is** a doctor.' },
+        { h: 'Grammar words you will see' },
+        { p: 'These lessons use a few grammar words. You don\'t need to memorize them today. Come back to this table any time.' },
+        { table: [['Word', 'بالعربي', 'Example'], ['**noun**', 'اسم', 'mother, bus, coffee'], ['**verb**', 'فعل', 'work, eat, is'], ['**adjective**', 'صفة', 'happy, big, tired'], ['**subject**', 'الفاعل (مين بيعمل)', '**She** works.'], ['**sentence**', 'جملة', 'I am tired.'], ['**singular**', 'مفرد (واحد)', 'a book'], ['**plural**', 'جمع (أكتر من واحد)', 'two books'], ['**present**', 'المضارع (دلوقتي)', 'I work.'], ['**past**', 'الماضي', 'I worked.'], ['**question**', 'سؤال', 'Do you work?'], ['**negative**', 'نفي', 'I don\'t work.']] },
         { h: 'The verb "to be"' },
         { table: [['Person', 'Verb', 'Example'], ['I', 'am', 'I am happy.'], ['he / she / it', 'is', 'She is at home.'], ['you / we / they', 'are', 'They are my children.']] },
         { ex: ['I am a mother.', 'My son is a student.', 'We are ready.'] },
