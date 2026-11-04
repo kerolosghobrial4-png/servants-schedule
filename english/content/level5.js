@@ -41,7 +41,7 @@ window.SEKKA_LEVELS.push({
     {
       id: 'L5U2', kind: 'vocab', title: 'Academic Words 2 and Transitions', ar: 'كلمات أكاديمية ٢ وكلمات الربط',
       lesson: [
-        { p: 'Transition words show the **logic** between ideas. In college reading (and the MCAT), they are road signs: they tell you if the next idea agrees, disagrees, or results from the last one.' },
+        { p: 'Transition words show the **logic** between ideas. In college reading and at work, they are road signs: they tell you if the next idea agrees, disagrees, or results from the last one.' },
         { table: [['Logic', 'Words'], ['Adds more', 'furthermore, moreover, in addition'], ['Contrast', 'however, nevertheless, whereas, although, albeit'], ['Result', 'consequently, therefore, thus, thereby'], ['Example', 'for instance, namely'], ['Concession (admit, then argue)', 'admittedly, granted, even though']] },
         { ar: 'كلمات الربط زي إشارات المرور: **however** يعني «بس / لكن» والفكرة الجاية عكس اللي فاتت. **therefore** يعني «علشان كده» والفكرة الجاية نتيجة.' }
       ],

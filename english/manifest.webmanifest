@@ -1,7 +1,7 @@
 {
   "name": "Sekka English",
   "short_name": "Sekka",
-  "description": "English lessons from grade 4 to college and MCAT reading, with Egyptian Arabic help.",
+  "description": "English lessons from grade 4 to workplace conversation and college level, with Egyptian Arabic help.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

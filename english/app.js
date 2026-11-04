@@ -42,7 +42,7 @@
     name: '', created: today(), xp: 0, days: {}, streak: { count: 0, last: '' },
     units: {}, tests: {}, placement: null, cards: {}, writing: {}, drafts: {},
     miss: {}, session: {}, fluency: {},
-    settings: { size: 'l', arabic: true, rate: 0.85, voice: '', theme: '', goal: 30 }
+    settings: { size: 'l', arabic: true, rate: 0.85, voice: '', theme: '', goal: 30, job: '' }
   });
   let S;
   try { S = Object.assign(fresh(), JSON.parse(localStorage.getItem(KEY) || '{}')); } catch (e) { S = fresh(); }
@@ -108,11 +108,12 @@
     vocab: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h10a4 4 0 0 1 4 4v12H9a4 4 0 0 1-4-4V4z" fill="none" stroke="currentColor" stroke-width="2"/><path d="M9 9h6M9 13h4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
     reading: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 5c3-1 6-1 9 1 3-2 6-2 9-1v14c-3-1-6-1-9 1-3-2-6-2-9-1V5z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M12 6v14" stroke="currentColor" stroke-width="2"/></svg>',
     speaking: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v10H9l-5 4V5z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M8 9h8M8 12h5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
+    conversation: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 5h12v8H8l-4 3V5z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M15 9h6v8l-3-2h-6v-2" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>',
     strategy: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="3" fill="currentColor"/></svg>',
     test: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h9l4 4v14H6V3z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M9 13l2 2 4-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>'
   };
   const kindIcon = (k) => I[k] || I.grammar;
-  const kindName = { grammar: 'Grammar', vocab: 'Vocabulary', reading: 'Reading', speaking: 'Speaking & Writing', strategy: 'Strategy' };
+  const kindName = { conversation: 'Talk at Work', grammar: 'Grammar', vocab: 'Vocabulary', reading: 'Reading', speaking: 'Speaking & Writing', strategy: 'Strategy' };
   const speakBtn = (text, label) => `<button class="icon-btn" data-say="${esc(text)}" aria-label="${esc(label || 'Listen')}">${I.speak}</button>`;
 
   document.addEventListener('click', (e) => {
@@ -162,16 +163,19 @@
       <div class="hero">
         <span class="eyebrow">Welcome · أهلاً بيكي</span>
         <h1>Your English road, one step at a time.</h1>
-        <p>Six levels, from everyday English to college reading and the MCAT. Every lesson has help in Egyptian Arabic.</p>
-        <p class="ar" lang="ar">ست مستويات، من إنجليزي كل يوم لحد قراية الجامعة وامتحان الـ MCAT. كل درس فيه شرح بالعربي.</p>
+        <p>Six levels, from everyday English to confident conversations at work and college-level reading and writing. Every lesson has help in Egyptian Arabic.</p>
+        <p class="ar" lang="ar">ست مستويات، من إنجليزي كل يوم لحد إنك تتكلمي بثقة في الشغل وتقري وتكتبي بمستوى الجامعة. كل درس فيه شرح بالعربي.</p>
       </div>
       <div class="card stack">
         <label class="field" for="nm">What should we call you?<span class="ar small muted" lang="ar">نناديكي إيه؟</span>
           <input id="nm" class="input" autocomplete="given-name" placeholder="Mama">
         </label>
+        <label class="field" for="jb">What is your job? (optional)<span class="ar small muted" lang="ar">شغلك إيه؟ عشان التدريب على المحادثة يبقى عن شغلك</span>
+          <input id="jb" class="input" placeholder="For example: cashier, medical assistant, office assistant">
+        </label>
         <button class="btn primary block" id="go">Start</button>
       </div>`;
-    const go = () => { S.name = document.getElementById('nm').value.trim() || 'Mama'; save(); location.hash = '#/placement-intro'; };
+    const go = () => { S.name = document.getElementById('nm').value.trim() || 'Mama'; S.settings.job = document.getElementById('jb').value.trim(); save(); location.hash = '#/placement-intro'; };
     document.getElementById('go').onclick = go;
     document.getElementById('nm').onkeydown = (e) => { if (e.key === 'Enter') go(); };
   }
@@ -244,6 +248,7 @@
       <div class="body">
         <div class="spread"><div><span class="eyebrow">${esc(L.grade)} · ${esc(L.cefr)}</span><h3>${esc(L.title)}</h3><div class="ar small muted" lang="ar">${esc(L.ar)}</div></div>
           ${rec ? '<span class="chip gold">Your start</span>' : ''}</div>
+        ${L.cando ? `<p class="small"><b>After this level:</b> ${esc(L.cando)}</p>` : ''}
         <div class="bar"><i style="width:${Math.round(p * 100)}%"></i></div>
         <details class="units-wrap" ${cur || rec ? 'open' : ''}><summary class="small muted">${L.units.length} units and a test · ${Math.round(p * 100)}% done</summary>
         <div class="units">
@@ -303,6 +308,8 @@
       passages = `<h3>Read</h3>` + u.passages.map((p, i) => passageHTML(p, i === 0)).join('');
     }
     box.innerHTML = `<div class="lesson">${blocks}${words}${passages}</div>
+      <div id="dialoguebox" class="stack"></div>
+      <div id="roleplaybox" class="stack"></div>
       <div id="fluencybox" class="stack"></div>
       <div id="speakbox" class="stack"></div>
       <div id="writebox" class="stack"></div>
@@ -320,6 +327,8 @@
       save(); toast('+20 points. Nice work!');
       location.hash = `#/unit/${u.id}/practice`;
     };
+    if (u.dialogue) renderDialogue(u, document.getElementById('dialoguebox'));
+    if (u.roleplays && u.roleplays.length) renderRoleplays(u, document.getElementById('roleplaybox'));
     if (u.passages && u.passages.length) renderFluency(u, document.getElementById('fluencybox'));
     if (u.speak && u.speak.length) renderSpeakList(u, document.getElementById('speakbox'));
     if (u.write && u.write.length) renderWrite(u, document.getElementById('writebox'));
@@ -886,6 +895,10 @@ Please:
       <div class="card flat stack"><h3>How to practice with Claude voice</h3>
         <ol class="steps"><li>Tap <b>Claude voice coach</b> under any sentence. It copies a message.</li><li>Open the Claude app and paste the message.</li><li>Tap the voice button and read the sentence out loud.</li><li>Claude tells you which words to fix and practices them with you.</li></ol>
         <p class="ar small" lang="ar">دوسي «Claude voice coach»، افتحي تطبيق Claude والزقي الرسالة، وبعدين دوسي على زرار الصوت واقري الجملة.</p></div>
+      <div class="card flat stack"><h3>Conversation practice at work</h3>
+        <p class="small muted">Role-plays for every level are in the <b>Talk at Work</b> unit of each level.</p>
+        <div class="row">${LEVELS.map(L => { const t = L.units.find(u => u.kind === 'conversation'); return t ? `<a class="btn small" href="#/unit/${t.id}/lesson">Level ${L.n}</a>` : ''; }).join('')}</div>
+        <button class="btn small ghost" id="freeconv">${I.copy} Free conversation with Claude about my day</button></div>
       <div class="stack"><h2>My recordings</h2><div id="recs"><p class="muted">Loading…</p></div></div>`;
     const free = document.getElementById('free');
     const drawFree = (text) => sayWidget(text, free, { unitId: 'free' });
@@ -895,6 +908,10 @@ Please:
     extra.className = 'row';
     extra.innerHTML = `<button class="btn small" id="newsent">Give me another sentence</button><button class="btn small ghost" id="mysent">Use my own sentence</button>`;
     free.after(extra);
+    document.getElementById('freeconv').onclick = () => {
+      const L = S.placement ? LEVELS[S.placement.level - 1] : LEVELS[0];
+      copy(claudeRoleplayPrompt(L, { setup: 'We are friendly coworkers on a lunch break. Ask me about my day, my family, my work, and my plans. Share a little about yourself too, so it feels like a real conversation.', role: 'a friendly coworker', goal: 'Have a natural 10-minute conversation and speak in full sentences.' }));
+    };
     document.getElementById('newsent').onclick = () => drawFree(pick(starters));
     document.getElementById('mysent').onclick = () => {
       const c = document.createElement('div'); c.className = 'card stack';
@@ -971,6 +988,7 @@ Please:
         ${passed.length ? passed.map(L => `<a class="unit-link" href="#/cert/${L.id}"><span class="k">${I.test}</span><span class="t"><b>Level ${L.n}: ${esc(L.title)}</b><span>${S.tests[L.id].best}%</span></span><span class="chip gold">View</span></a>`).join('') : '<p class="muted">Pass a level test to earn your first certificate.</p>'}</div>
       <div class="card stack"><h3>Settings</h3>
         <label class="field" for="s-name">Name<input class="input" id="s-name" value="${esc(S.name)}"></label>
+        <label class="field" for="s-job">My job <span class="small muted">(used in conversation role-plays)</span><input class="input" id="s-job" value="${esc(S.settings.job)}" placeholder="For example: medical assistant"></label>
         <div class="switch"><span>Text size</span><select class="input" id="s-size" style="width:auto">${[['m', 'Normal'], ['l', 'Large'], ['xl', 'Extra large']].map(([v, n]) => `<option value="${v}" ${S.settings.size === v ? 'selected' : ''}>${n}</option>`).join('')}</select></div>
         <div class="switch"><span>Arabic help <span class="ar small muted" lang="ar">الشرح بالعربي</span></span><input type="checkbox" id="s-ar" ${S.settings.arabic ? 'checked' : ''} style="width:24px;height:24px;accent-color:var(--nile)"></div>
         <div class="switch"><span>Daily goal</span><select class="input" id="s-goal" style="width:auto">${[20, 30, 50, 80].map(v => `<option value="${v}" ${S.settings.goal === v ? 'selected' : ''}>${v} points</option>`).join('')}</select></div>
@@ -992,6 +1010,7 @@ Please:
       <p class="small muted">Recordings stay on this phone only and are not in the backup code.</p>`;
     const set = (k, v) => { S.settings[k] = v; save(); applySettings(); };
     document.getElementById('s-name').onchange = (e) => { S.name = e.target.value.trim() || S.name; save(); };
+    document.getElementById('s-job').onchange = (e) => set('job', e.target.value.trim());
     document.getElementById('s-size').onchange = (e) => set('size', e.target.value);
     document.getElementById('s-ar').onchange = (e) => set('arabic', e.target.checked);
     document.getElementById('s-goal').onchange = (e) => set('goal', +e.target.value);
@@ -1019,6 +1038,95 @@ Please:
     };
   }
 
+
+  /* ================= Conversation: dialogues and role-plays ================= */
+  function twoVoices() {
+    const en = Speech.voices();
+    const main = Speech.pickVoice(S.settings.voice);
+    const other = en.find(v => v !== main && /en[-_]US/i.test(v.lang)) || en.find(v => v !== main) || null;
+    return { A: other ? { voiceObj: other } : { voiceObj: main, pitch: 1.25 }, B: { voiceObj: main, pitch: 0.95 } };
+  }
+  function renderDialogue(u, box) {
+    const d = u.dialogue;
+    const me = d.me;
+    box.innerHTML = `<h3>Listen to the conversation: ${esc(d.title)}</h3>
+      <p class="small muted">First listen to the whole conversation. Then practice it: the app plays the other person, and you say your lines out loud.</p>
+      <div class="card stack" id="dlg">
+        ${d.lines.map(([w, t], k) => `<div class="dl ${w === me ? 'mine' : ''}" data-l="${k}"><span class="who">${esc(d.roles[w])}</span><span class="line">${esc(t)}</span></div>`).join('')}
+        <div class="row"><button class="btn" id="dl-all">${I.speak} Listen to all</button><button class="btn primary" id="dl-me">${I.mic} Practice my part</button><button class="btn ghost small" id="dl-stop" hidden>Stop</button></div>
+        <div class="status small muted" id="dl-st" aria-live="polite"></div>
+      </div>`;
+    const rows = box.querySelectorAll('.dl'), st = box.querySelector('#dl-st'), stopB = box.querySelector('#dl-stop');
+    let run = 0;
+    const live = (r) => r === run && box.isConnected;
+    const mark = (k, cls) => rows.forEach(x => x.classList.toggle(cls, +x.dataset.l === k));
+    const clear = () => rows.forEach(x => x.classList.remove('hl', 'turn', 'ok', 'miss'));
+    const voices = twoVoices();
+    const speakLine = (w, t) => Speech.sayP(t, Object.assign({ rate: S.settings.rate }, voices[w]));
+    const playAll = async () => {
+      const r = ++run; clear(); stopB.hidden = false;
+      for (let k = 0; k < d.lines.length && live(r); k++) { mark(k, 'hl'); await speakLine(d.lines[k][0], d.lines[k][1]); }
+      if (live(r)) { clear(); st.textContent = 'Now try "Practice my part."'; stopB.hidden = true; }
+    };
+    const practice = async () => {
+      const r = ++run; clear(); stopB.hidden = false; let scores = [];
+      for (let k = 0; k < d.lines.length && live(r); k++) {
+        const [w, t] = d.lines[k];
+        if (w !== me) { mark(k, 'hl'); st.textContent = 'Listen…'; await speakLine(w, t); continue; }
+        mark(k, 'turn');
+        if (Speech.canHear) {
+          st.textContent = 'Your turn. Say your line now.';
+          try {
+            const alts = await Speech.listen();
+            if (!live(r)) break;
+            const res = Speech.best(t, alts); scores.push(res.score);
+            rows[k].classList.add(res.score >= 70 ? 'ok' : 'miss');
+            st.textContent = `${res.score}%${res.heard ? ' · I heard: “' + res.heard + '”' : ''}`;
+            await new Promise(x => setTimeout(x, 700));
+          } catch (e) { st.textContent = 'I could not hear you. Keep going.'; await new Promise(x => setTimeout(x, 1500)); }
+        } else {
+          st.textContent = 'Your turn. Say your line out loud.';
+          await new Promise(x => setTimeout(x, 1500 + t.split(/\s+/).length * 550));
+        }
+      }
+      if (live(r)) {
+        rows.forEach(x => x.classList.remove('hl', 'turn'));
+        stopB.hidden = true; addXP(5); markStep('speak');
+        const avg = scores.length ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : null;
+        st.textContent = avg !== null ? `Conversation finished. Average: ${avg}%. Practice it again until it feels natural.` : 'Conversation finished. Practice it again until it feels natural.';
+      }
+    };
+    box.querySelector('#dl-all').onclick = playAll;
+    box.querySelector('#dl-me').onclick = practice;
+    stopB.onclick = () => { run++; Speech.cancel(); Speech.stopListening(); clear(); stopB.hidden = true; st.textContent = ''; };
+    onLeave(() => { run++; Speech.cancel(); Speech.stopListening(); });
+  }
+  function claudeRoleplayPrompt(L, rp) {
+    const job = S.settings.job ? `I work as ${S.settings.job}.` : 'I work in an American workplace.';
+    return `Let's do a speaking role-play in voice mode. I'm an adult English learner, and my first language is Egyptian Arabic. My level is about ${L.cefr} (${L.grade}). ${job}
+
+Scenario: ${rp.setup}
+You play: ${rp.role}.
+My goal: ${rp.goal}
+
+Rules:
+- Stay in character and talk like a real person at work. Keep your sentences at my level and speak a little slowly.
+- Don't stop to correct me during the conversation. If I make a mistake, just repeat my idea back correctly in your reply, the way a native speaker naturally would.
+- If I'm stuck, give me a hint with a useful phrase.
+- After about 8–10 exchanges, step out of the role and give me feedback: 3 things I did well, 3 useful phrases I should learn (with examples), and my 2 most important grammar or pronunciation mistakes. Explain briefly in Egyptian Arabic if I seem confused.
+- Then offer to do the role-play again so I can improve.
+
+Start now by saying your first line in character.`;
+  }
+  function renderRoleplays(u, box) {
+    const L = u.level;
+    box.innerHTML = `<h3>Real conversation practice with Claude</h3>
+      <p class="small muted">Tap a scenario to copy it. Open the Claude app, paste it, then tap the voice button and talk. Claude plays the other person and gives you feedback at the end.</p>
+      ${S.settings.arabic ? '<p class="ar small" lang="ar">دوسي على الموقف، افتحي تطبيق Claude والزقي الرسالة، ودوسي على زرار الصوت واتكلمي. Claude هيمثّل الشخص التاني ويقولك رأيه في الآخر.</p>' : ''}
+      ${S.settings.job ? '' : '<p class="small">Tip: add your job in <a href="#/me">Me → Settings</a> so the conversations match your workplace.</p>'}
+      <div class="units">${u.roleplays.map((rp, k) => `<button class="unit-link" data-rp="${k}" style="text-align:left;cursor:pointer;font:inherit"><span class="k">${I.speaking}</span><span class="t"><b>${esc(rp.title)}</b><span>${esc(rp.goal)}</span></span><span class="chip">Copy</span></button>`).join('')}</div>`;
+    box.querySelectorAll('[data-rp]').forEach(b => b.onclick = () => { copy(claudeRoleplayPrompt(L, u.roleplays[+b.dataset.rp])); addXP(5); markStep('speak'); });
+  }
 
   /* ================= Daily session ================= */
   function sess() { if (S.session.date !== today()) S.session = { date: today() }; return S.session; }
@@ -1057,7 +1165,8 @@ Please:
       let k = 0;
       app.innerHTML = `<a class="back" href="#/today">${I.back} Today's session</a><div class="stack" style="gap:6px"><span class="eyebrow">Step 4 · Speak</span><h1>Listen and repeat</h1>
         <p class="muted">Tap <b>Listen and repeat</b>. The voice says a short piece, then you say it. Copying a native speaker closely is one of the fastest ways to improve your accent and rhythm.</p></div>
-        <div id="sb"></div><div class="row" id="snav"></div>`;
+        <div id="sb"></div><div class="row" id="snav"></div>
+        <p class="small muted">Want more? Open the <b>Talk at Work</b> unit in your level and practice a real conversation with Claude voice.</p>`;
       const draw = () => {
         sayWidget(list[k], document.getElementById('sb'), { unitId: 'today' });
         document.getElementById('snav').innerHTML = `<span class="small muted">Sentence ${k + 1} of ${list.length}</span>` + (k < list.length - 1 ? '<button class="btn primary" id="sn">Next sentence</button>' : '<button class="btn primary" id="sn">Finish</button>');

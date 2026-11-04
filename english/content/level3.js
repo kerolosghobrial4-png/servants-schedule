@@ -39,7 +39,7 @@ window.SEKKA_LEVELS.push({
     {
       id: 'L3U2', kind: 'vocab', title: 'Word Roots: Unlock Thousands of Words', ar: 'جذور الكلمات',
       lesson: [
-        { p: 'Many English words are built from small Latin and Greek parts. If you know the parts, you can guess the meaning of words you have never seen. This skill is very important for college and the MCAT.' },
+        { p: 'Many English words are built from small Latin and Greek parts. If you know the parts, you can guess the meaning of words you have never seen. This skill is very important for college.' },
         { table: [['Part', 'Meaning', 'Examples'], ['un-, dis-, in-, im-', 'not', 'unhappy, disagree, impossible'], ['re-', 'again / back', 'rewrite, return'], ['pre-', 'before', 'preview, prepare'], ['mis-', 'wrongly', 'misunderstand'], ['-ful', 'full of', 'careful, hopeful'], ['-less', 'without', 'careless, hopeless'], ['-able / -ible', 'can be done', 'readable, visible'], ['port', 'carry', 'transport, portable'], ['dict', 'say', 'predict, dictionary'], ['spect', 'look', 'inspect, respect'], ['bio', 'life', 'biology'], ['graph', 'write', 'autograph, paragraph'], ['tele', 'far', 'telephone, television']] },
         { ar: 'الكلمات الإنجليزي الطويلة غالباً مبنية من حتت صغيرة. لو عرفتي إن **pre** يعني «قبل» و **dict** يعني «يقول»، هتفهمي إن **predict** يعني «يقول قبل ما يحصل» = يتنبّأ.' },
         { ex: ['pre + dict = predict: to say before it happens.', 'in + spect = inspect: to look into carefully.', 'bio + logy = biology: the study of life.'] }
@@ -50,7 +50,7 @@ window.SEKKA_LEVELS.push({
         { w: 'respect', ar: 'احترام / يحترم', d: 'To admire someone and treat them well.', ex: 'I respect my teachers.' },
         { w: 'transport', ar: 'ينقل / مواصلات', d: 'To carry from one place to another. (trans = across, port = carry)', ex: 'Trucks transport food to stores.' },
         { w: 'portable', ar: 'محمول / سهل الشيل', d: 'Easy to carry.', ex: 'A portable fan is useful in summer.' },
-        { w: 'biology', ar: 'علم الأحياء', d: 'The study of living things. (bio = life, logy = study of)', ex: 'Biology is a big part of the MCAT.' },
+        { w: 'biology', ar: 'علم الأحياء', d: 'The study of living things. (bio = life, logy = study of)', ex: 'Biology is a common college class.' },
         { w: 'autograph', ar: 'توقيع (لشخص مشهور)', d: 'A famous person\'s signature. (auto = self, graph = write)', ex: 'He asked the singer for an autograph.' },
         { w: 'misunderstand', ar: 'يفهم غلط', d: 'To understand wrongly. (mis = wrongly)', ex: 'Sorry, I misunderstood your question.' },
         { w: 'careless', ar: 'مهمل / مش واخد باله', d: 'Not careful. (less = without)', ex: 'A careless driver caused the accident.' },

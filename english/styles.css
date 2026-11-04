@@ -283,3 +283,12 @@ ol.steps { margin: 0; padding-left: 1.3em; display: flex; flex-direction: column
 .say-text [data-ch] { border-radius: 6px; padding: 0 2px; transition: background .15s ease; }
 .say-text .hl { background: var(--nile-soft); }
 .say-text .turn { background: var(--sun-soft); outline: 2px solid var(--sun); }
+.dl { display: flex; flex-direction: column; gap: 2px; padding: 8px 12px; border-radius: 12px; max-width: 88%; background: var(--paper); border: 1px solid var(--line); }
+.dl.mine { align-self: flex-end; background: var(--nile-soft); border-color: transparent; }
+.dl .who { font-size: .72rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; }
+.dl .line { font-family: var(--f-read); }
+.dl.hl { outline: 2px solid var(--nile); }
+.dl.turn { outline: 2px solid var(--sun); background: var(--sun-soft); }
+.dl.ok { outline: 2px solid var(--good); }
+.dl.miss { outline: 2px solid var(--bad); }
+#dlg { gap: 8px; }
