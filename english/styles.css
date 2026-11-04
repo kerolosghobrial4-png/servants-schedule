@@ -208,7 +208,7 @@ textarea.input { min-height: 180px; font-family: var(--f-read); line-height: 1.6
 .feedback.wrong b.v { color: var(--bad); }
 .tiles { display: flex; flex-wrap: wrap; gap: 8px; min-height: 56px; padding: 8px; border-radius: 12px; }
 .tiles.answer { border: 2px dashed var(--line); background: var(--card); }
-.tile { appearance: none; border: 1.5px solid var(--line); background: var(--card); padding: .5em .8em; border-radius: 10px; font-weight: 700; cursor: pointer; font-size: 1rem; }
+.tile { appearance: none; border: 1.5px solid var(--line); background: var(--card); min-height: 48px; min-width: 44px; padding: .55em .9em; border-radius: 10px; font-weight: 700; cursor: pointer; font-size: 1rem; }
 .tiles.answer .tile { background: var(--nile-soft); border-color: transparent; color: var(--ink); }
 .play-big { width: 84px; height: 84px; border-radius: 50%; border: 0; background: var(--nile); color: var(--nile-ink); display: grid; place-items: center; cursor: pointer; }
 .play-big svg { width: 36px; height: 36px; }
