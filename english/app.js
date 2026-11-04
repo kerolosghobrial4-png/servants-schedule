@@ -89,12 +89,13 @@
     t.textContent = msg; t.hidden = false;
     clearTimeout(toastT); toastT = setTimeout(() => { t.hidden = true; }, 2600);
   }
-  async function copy(text) {
-    try { await navigator.clipboard.writeText(text); toast('Copied. Paste it into Claude.'); return true; }
+  async function copy(text, msg) {
+    msg = msg || 'Copied. Paste it into Claude.';
+    try { await navigator.clipboard.writeText(text); toast(msg); return true; }
     catch (e) {
       const ta = document.createElement('textarea'); ta.value = text; document.body.appendChild(ta); ta.select();
       let ok = false; try { ok = document.execCommand('copy'); } catch (e2) {}
-      ta.remove(); toast(ok ? 'Copied. Paste it into Claude.' : 'Select the text and copy it.'); return ok;
+      ta.remove(); toast(ok ? msg : 'Select the text and copy it.'); return ok;
     }
   }
   const say = (text) => { if (!Speech.say(text, { rate: S.settings.rate, voice: S.settings.voice })) toast('This browser cannot read aloud.'); };
@@ -373,6 +374,7 @@
         box, items: mixed, mode: 'quiz',
         onFinish: (r) => {
           s.tries++; if (s.best === null || r.pct > s.best) s.best = r.pct;
+          if (r.pct >= PASS_UNIT && !s.passed) s.passed = today();
           if (r.pct >= PASS_UNIT) addXP(30);
           markStep('learn'); save();
           results(box, r, { pass: PASS_UNIT, again: () => viewUnit(u, 'quiz'), next: nextUnitHref(u), backHref: `#/unit/${u.id}/lesson` });
@@ -531,14 +533,19 @@
   const pick = (a) => a[Math.floor(Math.random() * a.length)];
 
   /* ================= Results ================= */
-  function results(box, r, { pass, again, next, backHref, title }) {
+  function results(box, r, { pass, again, next, backHref, title, review }) {
     const ok = r.pct >= pass;
+    const msg = review ? (r.pct >= 80 ? 'Great memory! These are getting stronger.' : 'Good work. The ones you missed will come back in a few days.')
+      : ok ? pick(['You passed! Very good.', 'Passed! You are getting stronger.', 'Well done, you passed!'])
+      : r.pct >= pass - 15 ? 'Almost there. Practice a little more and try again.'
+      : 'This needs more practice. Read the lesson again, practice, then try the quiz.';
+    const msgAr = review ? 'شاطرة! اللي غلطتي فيه هيرجعلك تاني بعد كام يوم.' : ok ? 'برافو عليكي! كمّلي.' : r.pct >= pass - 15 ? 'قربتي خلاص. ذاكري شوية وجرّبي تاني.' : 'محتاجة تدريب أكتر. اقري الدرس تاني واتمرني، وبعدين جرّبي.';
     box.innerHTML = `<div class="card stack" style="text-align:center;align-items:center">
         <span class="eyebrow">${esc(title || 'Your score')}</span>
-        <div class="score-ring" style="color:${ok ? 'var(--good)' : 'var(--bad)'}">${r.pct}%</div>
+        <div class="score-ring" style="color:${ok || review ? 'var(--good)' : 'var(--bad)'}">${r.pct}%</div>
         <p>${r.right} of ${r.counted} correct</p>
-        <h2>${ok ? pick(['You passed! Very good.', 'Passed! You are getting stronger.', 'Well done, you passed!']) : 'Almost there. Practice a little more and try again.'}</h2>
-        <p class="ar muted" lang="ar">${ok ? 'برافو عليكي! كمّلي.' : 'قربتي خلاص. ذاكري شوية وجرّبي تاني.'}</p>
+        <h2>${msg}</h2>
+        <p class="ar muted" lang="ar">${msgAr}</p>
         <div class="row" style="justify-content:center">
           ${ok && next ? `<a class="btn primary" href="${next.href}">${esc(next.label)}</a>` : ''}
           <button class="btn ${ok ? '' : 'primary'}" id="again">Try again</button>
@@ -1001,6 +1008,10 @@ Please:
       <div class="card stack"><div class="spread"><h3>This week</h3><span class="small muted">points per day</span></div>
         <div class="week">${days.map(([d, v]) => `<div><i style="height:${Math.max(3, v / max * 70)}px" title="${v} points"></i><span>${new Date(d + 'T12:00:00').toLocaleDateString(undefined, { weekday: 'short' })}</span></div>`).join('')}</div></div>
       <a class="card flat spread" href="#/method" style="text-decoration:none;color:inherit"><div><b>How Sekka teaches, and how family can help</b><div class="small muted">The learning methods behind the app</div></div><span class="chip">Read</span></a>
+      <div class="card stack"><h3>Weekly report for family</h3>
+        <p class="small muted">A short summary of this week to send to your son or whoever helps you study.</p>
+        <div class="row"><button class="btn small primary" id="rep-send">Send weekly report</button><button class="btn small ghost" id="rep-show">Show it</button></div>
+        <pre class="report" id="rep-out" hidden></pre></div>
       <div class="card stack"><h3>Certificates</h3>
         ${passed.length ? passed.map(L => `<a class="unit-link" href="#/cert/${L.id}"><span class="k">${I.test}</span><span class="t"><b>Level ${L.n}: ${esc(L.title)}</b><span>${S.tests[L.id].best}%</span></span><span class="chip gold">View</span></a>`).join('') : '<p class="muted">Pass a level test to earn your first certificate.</p>'}</div>
       <div class="card stack"><h3>Settings</h3>
@@ -1026,6 +1037,12 @@ Please:
       </div>
       <p class="small muted">Recordings stay on this phone only and are not in the backup code.</p>`;
     const set = (k, v) => { S.settings[k] = v; save(); applySettings(); };
+    document.getElementById('rep-show').onclick = async () => { const o = document.getElementById('rep-out'); o.textContent = await weeklyReport(); o.hidden = false; };
+    document.getElementById('rep-send').onclick = async () => {
+      const text = await weeklyReport();
+      if (navigator.share) { try { await navigator.share({ title: 'Sekka English weekly report', text }); return; } catch (e) { if (e && e.name === 'AbortError') return; } }
+      copy(text, 'Report copied. Paste it in a message.');
+    };
     document.getElementById('s-name').onchange = (e) => { S.name = e.target.value.trim() || S.name; save(); };
     document.getElementById('s-job').onchange = (e) => set('job', e.target.value.trim());
     document.getElementById('s-size').onchange = (e) => set('size', e.target.value);
@@ -1034,7 +1051,7 @@ Please:
     document.getElementById('s-theme').onchange = (e) => set('theme', e.target.value);
     document.getElementById('s-rate').oninput = (e) => { set('rate', +e.target.value); document.getElementById('rate-v').textContent = e.target.value; };
     const sv = document.getElementById('s-voice'); if (sv) sv.onchange = (e) => set('voice', e.target.value);
-    document.getElementById('bk-copy').onclick = () => copy('SEKKA1:' + btoa(unescape(encodeURIComponent(JSON.stringify(S)))));
+    document.getElementById('bk-copy').onclick = () => copy('SEKKA1:' + btoa(unescape(encodeURIComponent(JSON.stringify(S)))), 'Backup code copied. Keep it somewhere safe.');
     document.getElementById('bk-show').onclick = () => {
       const a = document.getElementById('bk-area');
       a.innerHTML = `<textarea class="input" id="bk-in" style="min-height:90px" placeholder="Paste the backup code"></textarea><button class="btn primary small" id="bk-go">Restore</button>`;
@@ -1226,7 +1243,7 @@ Start now by saying your first line in character.`;
 
   /* ================= Tap-a-word ================= */
   function wrapWords(text) {
-    return String(text).split(/([A-Za-z][A-Za-z'’]*(?:-[A-Za-z]+)*)/).map((t, k) => k % 2 ? `<span class="w" tabindex="0">${esc(t)}</span>` : md(t)).join('');
+    return String(text).split(/([A-Za-z][A-Za-z'’]*(?:-[A-Za-z]+)*)/).map((t, k) => k % 2 ? `<span class="w">${esc(t)}</span>` : md(t)).join('');
   }
   function lookupWord(raw) {
     const w = raw.toLowerCase().replace(/[’]/g, "'").replace(/'s$/, '');
@@ -1289,6 +1306,44 @@ Start now by saying your first line in character.`;
   });
   window.addEventListener('hashchange', closeSheet);
 
+  /* ================= Weekly report ================= */
+  async function weeklyReport() {
+    const days = []; for (let k = 6; k >= 0; k--) days.push(addDays(today(), -k));
+    const active = days.filter(d => (S.days[d] || 0) > 0).length;
+    const pts = days.reduce((a, d) => a + (S.days[d] || 0), 0);
+    const passedWeek = UNIT_ORDER.filter(u => S.units[u.id] && S.units[u.id].passed && S.units[u.id].passed >= days[0]);
+    const testsWeek = LEVELS.filter(L => S.tests[L.id] && S.tests[L.id].passed && S.tests[L.id].date >= days[0]);
+    const deck = Object.keys(S.cards).length, strong = Object.values(S.cards).filter(c => c.box >= 3).length;
+    const storiesWeek = Object.values(S.read).filter(r => r.last >= days[0]).length;
+    const flu = Object.values(S.fluency).map(h => h.filter(x => x.d >= days[0])).filter(h => h.length);
+    let ungraded = 0;
+    try { ungraded = (await Speech.allRecs()).filter(r => !r.grade || !r.grade.stars).length; } catch (e) {}
+    const next = nextStep();
+    const fmt = (d) => new Date(d + 'T12:00:00').toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+    const lines = [
+      `Sekka English: weekly report for ${S.name}`,
+      `${fmt(days[0])} – ${fmt(days[6])}`,
+      '',
+      `Days practiced: ${active} of 7 (streak: ${streakNow()} day${streakNow() === 1 ? '' : 's'})`,
+      `Points this week: ${pts}`,
+      `Units passed this week: ${passedWeek.length ? passedWeek.map(u => `L${u.level.n} ${u.title}`).join('; ') : 'none yet'}`,
+      testsWeek.length ? `Level tests passed: ${testsWeek.map(L => 'Level ' + L.n).join(', ')}` : null,
+      `Words in review deck: ${deck} (${strong} learned well)`,
+      `Stories read this week: ${storiesWeek}`,
+      flu.length ? `Timed reading: ${flu.map(h => `${h[0].wcpm}→${h[h.length - 1].wcpm} wpm`).join(', ')}` : null,
+      `Old mistakes waiting for review: ${dueMisses().length}`,
+      `Recordings waiting for your grade: ${ungraded}`,
+      next ? `Working on now: ${next.title} (${next.sub})` : 'Working on now: all levels finished',
+      '',
+      'How you can help this week:',
+      ungraded ? `- Open the Voice tab on her phone and grade her ${ungraded} recording${ungraded === 1 ? '' : 's'}. Give one thing to fix.` : '- Ask her to record one sentence for you to grade on the Voice tab.',
+      active < 4 ? '- Help her pick a fixed daily time for the 20-minute session (for example, right after morning tea).' : '- Tell her you noticed she practiced most days this week. Specific praise keeps the habit going.',
+      '- Ask her: "What did you learn this week? Teach me."',
+      '- Speak only English with her for 10 minutes a day about real things.'
+    ].filter(x => x !== null);
+    return lines.join('\n');
+  }
+
   /* ================= Daily session ================= */
   function sess() { if (S.session.date !== today()) S.session = { date: today() }; return S.session; }
   function markStep(k) { sess()[k] = true; save(); }
@@ -1317,7 +1372,7 @@ Start now by saying your first line in character.`;
         <button class="btn primary" id="wgo">Start warm-up</button></div>`;
       document.getElementById('wgo').onclick = () => runSet({ box, items, mode: 'review', onFinish: (r) => {
         markStep('warm');
-        results(box, r, { pass: 0, title: 'Warm-up', again: () => viewToday('warm'), next: { href: '#/today', label: 'Next step' } });
+        results(box, r, { pass: 0, review: true, title: 'Warm-up', again: () => viewToday('warm'), next: { href: '#/today', label: 'Next step' } });
       } });
       return;
     }
