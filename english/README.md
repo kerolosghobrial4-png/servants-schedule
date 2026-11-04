@@ -2,6 +2,15 @@
 
 An installable web app (PWA) that takes an Egyptian-Arabic-speaking adult from about a 4th–5th grade English level to holding full conversations at work and succeeding in college.
 
+## For family
+
+- **Install:** open the site on her phone in Chrome (Android) or Safari (iPhone), then Add to Home Screen. It works offline after the first visit.
+- **Where her data lives:** progress, words, and writing are saved in the browser on her phone. Recordings are saved there too. Nothing is uploaded anywhere.
+- **Backups:** once a month, open **Me → Backup → Copy backup code** and send it to yourself. Use **Restore from code** on a new phone. Recordings are not included in the backup.
+- **Don't clear the browser data** for the site, or progress is lost (unless you have a backup code).
+- **Weekly:** ask her to tap **Me → Send weekly report**, listen to her recordings on the **Voice** tab, and give stars plus one tip.
+- **Updates:** when a new version is published, the app shows "A new version of Sekka is ready". Tap it to refresh.
+
 ## What's inside
 
 | Level | Grade / CEFR | Talk at Work | Grammar | Vocabulary | Reading | Speaking & Writing |
@@ -53,15 +62,6 @@ About 670 practice and quiz questions (`content/levelN.js` plus `content/extra*.
 ## Talk at Work (conversation)
 
 Each level has a conversation unit: ready-made work phrases, politeness and culture notes for Arabic speakers, a two-voice model dialogue she can practice as "her part" (speech-checked), and role-play scenarios. Each scenario copies a prompt for **Claude voice mode**: Claude plays the coworker, manager, customer, or interviewer, corrects her by naturally repeating her sentence back the right way, and gives feedback at the end. Set her job in **Me → Settings** so role-plays match her workplace.
-
-## For family
-
-- **Install:** open the site on her phone in Chrome (Android) or Safari (iPhone), then Add to Home Screen. It works offline after the first visit.
-- **Where her data lives:** progress, words, and writing are saved in the browser on her phone. Recordings are saved there too. Nothing is uploaded anywhere.
-- **Backups:** once a month, open **Me → Backup → Copy backup code** and send it to yourself. Use **Restore from code** on a new phone. Recordings are not included in the backup.
-- **Don't clear the browser data** for the site, or progress is lost (unless you have a backup code).
-- **Weekly:** ask her to tap **Me → Send weekly report**, listen to her recordings on the **Voice** tab, and give stars plus one tip.
-- **Updates:** when a new version is published, the app shows "A new version of Sekka is ready". Tap it to refresh.
 
 ## Grading speech
 
