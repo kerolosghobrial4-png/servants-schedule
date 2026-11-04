@@ -36,7 +36,11 @@ Every unit has a **Lesson** (with Egyptian Arabic notes), unlimited **Practice**
 - **Practice for my job:** 29 Claude voice role-plays for 8 common jobs (retail, medical office, warehouse, office, restaurant, childcare, housekeeping, phone customer service), picked from her job setting.
 - **My progress:** unit mastery grid, words learned, 4-week practice calendar, and reading-speed history.
 - **Weekly family report:** a summary she can send to family (days practiced, units passed, words, stories, reading speed, recordings to grade, and ways to help).
+- **Grammar guide:** every grammar rule, table, and tip from the lessons in one searchable page, with links to practice.
+- **My writing:** all her saved writing in one place, with word counts and copy-for-Claude grading.
+- **Check yourself:** two quick retrieval questions at the end of every lesson.
 - **First-run guide** and a nudge to turn off Arabic notes at Level 4+.
+- Tested at 320px phone width with extra-large text, in light and dark mode; all text colors meet 4.5:1 contrast.
 
 About 640 practice and quiz questions in total (`content/levelN.js` plus `content/extra*.js`).
 

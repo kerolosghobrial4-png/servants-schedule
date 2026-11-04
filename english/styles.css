@@ -335,3 +335,6 @@ details.card > summary::-webkit-details-marker { display: none; }
 
 details.card.stack { display: block; }
 details.card.stack > * + * { margin-top: 12px; }
+
+h1, h2, h3 { overflow-wrap: break-word; hyphens: auto; }
+@media (max-width: 360px) { h1 { font-size: 1.5rem; } }
