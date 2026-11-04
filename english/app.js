@@ -952,6 +952,7 @@ Please:
         <a class="btn small" href="#/phrases">Open the work phrasebook</a>
         <a class="btn small" href="#/numbers">Numbers and spelling drill</a>
         <button class="btn small ghost" id="freeconv">${I.copy} Free conversation with Claude about my day</button></div>
+      <div class="card stack" id="jobbox"></div>
       <div class="stack"><h2>My recordings</h2><div id="recs"><p class="muted">Loading…</p></div></div>`;
     const free = document.getElementById('free');
     const drawFree = (text) => sayWidget(text, free, { unitId: 'free' });
@@ -961,6 +962,7 @@ Please:
     extra.className = 'row';
     extra.innerHTML = `<button class="btn small" id="newsent">Give me another sentence</button><button class="btn small ghost" id="mysent">Use my own sentence</button>`;
     free.after(extra);
+    renderJobs(document.getElementById('jobbox'));
     document.getElementById('freeconv').onclick = () => {
       const L = S.placement ? LEVELS[S.placement.level - 1] : LEVELS[0];
       copy(claudeRoleplayPrompt(L, { setup: 'We are friendly coworkers on a lunch break. Ask me about my day, my family, my work, and my plans. Share a little about yourself too, so it feels like a real conversation.', role: 'a friendly coworker', goal: 'Have a natural 10-minute conversation and speak in full sentences.' }));
@@ -1549,6 +1551,32 @@ Start now by saying your first line in character.`;
           + '<p class="small muted">Words correct per minute on each try. A strong goal is 110 or more with 95% accuracy.</p>'
           : '<p class="muted">Use "Read alone, timed" in any reading lesson to track your reading speed.</p>'}
       </div>`;
+  }
+
+  /* ================= Job-specific role-plays ================= */
+  const JOBS = window.SEKKA_JOBS || [];
+  function guessJob() {
+    const j = (S.settings.job || '').toLowerCase();
+    const map = [['retail', /cash|retail|store|shop|sales/], ['medical', /medic|clinic|hospital|nurs|doctor|dental|pharm|patient/], ['warehouse', /warehouse|factory|packag|plant|forklift|ware/],
+      ['office', /office|admin|secretar|reception|assistant|clerk|account/], ['restaurant', /restaurant|server|waitress|cook|kitchen|food|cafe|bakery/],
+      ['childcare', /child|daycare|school|teacher|nanny|babysit/], ['housekeep', /clean|housekeep|hotel|maid/], ['callcenter', /call|customer service|phone|support/]];
+    const hit = map.find(([, re]) => re.test(j));
+    return hit ? (JOBS.find(x => x.id.startsWith(hit[0])) || JOBS[0]) : null;
+  }
+  function renderJobs(box) {
+    if (!box || !JOBS.length) return;
+    const cur = JOBS.find(x => x.id === S.settings.jobPick) || guessJob() || JOBS[0];
+    const L = S.placement ? LEVELS[Math.max(0, curLevelN() - 1)] : LEVELS[0];
+    box.innerHTML = `<h3>Practice for my job</h3>
+      <p class="small muted">Real situations from your kind of work. Tap one to copy it, paste it into the Claude app, and talk in voice mode.</p>
+      <label class="small" for="job-sel">My kind of work</label>
+      <select class="input" id="job-sel">${JOBS.map(j => `<option value="${j.id}" ${j.id === cur.id ? 'selected' : ''}>${esc(j.name)}</option>`).join('')}</select>
+      <div class="units">${cur.scenes.map((sc, k) => `<button class="unit-link" data-sc="${k}" style="text-align:left;cursor:pointer;font:inherit"><span class="k">${I.speaking}</span><span class="t"><b>${esc(sc.title)}</b><span>${esc(sc.goal)}</span></span><span class="chip">Copy</span></button>`).join('')}</div>`;
+    box.querySelector('#job-sel').onchange = (e) => { S.settings.jobPick = e.target.value; save(); renderJobs(box); };
+    box.querySelectorAll('[data-sc]').forEach(b => b.onclick = () => {
+      copy(claudeRoleplayPrompt(L, cur.scenes[+b.dataset.sc]));
+      addXP(5); markStep('speak');
+    });
   }
 
   /* ================= Daily session ================= */
