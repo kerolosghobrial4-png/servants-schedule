@@ -245,6 +245,7 @@
         <div class="stat"><b>${Object.keys(S.units).filter(unitDone).length}</b><span>Units passed</span></div>
       </div>
       ${arabicNudge()}
+      ${dueMisses().length >= 8 ? `<a class="card flat spread" href="#/today/warm" style="text-decoration:none;color:inherit;border-color:var(--sun)"><div><b>${dueMisses().length} old mistakes are ready to fix</b><div class="small muted">A few minutes now turns mistakes into things you know.</div>${S.settings.arabic ? '<div class="ar small muted" lang="ar">دقايق قليلة تحوّل الغلط لحاجة انتي عارفاها.</div>' : ''}</div><span class="chip gold">Fix them</span></a>` : ''}
       ${storyCard()}
       ${homeTip()}
       ${!S.placement ? `<a class="card flat spread" href="#/placement" style="text-decoration:none;color:inherit"><div><b>Find my level</b><div class="small muted">18 questions · about 10 minutes</div></div><span class="chip">Start</span></a>` : ''}

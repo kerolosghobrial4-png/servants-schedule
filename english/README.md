@@ -40,6 +40,8 @@ Every unit has a **Lesson** (with Egyptian Arabic notes), unlimited **Practice**
 - **My writing:** all her saved writing in one place, with word counts and copy-for-Claude grading.
 - **Check yourself:** two quick retrieval questions at the end of every lesson.
 - **First-run guide** and a nudge to turn off Arabic notes at Level 4+.
+- **Two model dialogues per Talk at Work unit** (`content/dialogues2.js`), **20 more workplace words** (`content/words2.js`), and a weekly **English at home** tip on Home.
+- A reminder card when 8+ old mistakes are due, a **Check my level again** option, and an **update notice** ("A new version is ready") when a new version is published.
 - Tested at 320px phone width with extra-large text, in light and dark mode; all text colors meet 4.5:1 contrast.
 
 About 640 practice and quiz questions in total (`content/levelN.js` plus `content/extra*.js`).
@@ -57,7 +59,7 @@ Each level has a conversation unit: ready-made work phrases, politeness and cult
 
 ## Adding content
 
-Each level is one file in `content/levelN.js`. Extra questions go in `content/extra*.js`, appended by unit id. Always append, never insert, because question ids are their position and missed-question review depends on them. Stories go in `content/stories*.js` and job role-plays in `content/jobs.js`. Question types:
+Each level is one file in `content/levelN.js`. Extra questions go in `content/extra*.js`, appended by unit id. Always append, never insert, because question ids are their position and missed-question review depends on them. Stories go in `content/stories*.js`, job role-plays in `content/jobs.js`, extra dialogues in `content/dialogues2.js`, and extra words in `content/words2.js` (load new item files **after** existing ones in `index.html` and `sw.js`). Question types:
 
 ```js
 { t: 'mc', q: 'Question with ___ blank', o: ['right', 'wrong'], a: 0, why: 'Explanation' }
