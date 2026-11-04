@@ -924,9 +924,10 @@ Please:
         const ws = [].concat(...L.units.map(u => u.words || [])).filter(w => !q || w.w.toLowerCase().includes(q) || (w.d || '').toLowerCase().includes(q) || (w.ar || '').includes(q));
         if (!ws.length) return '';
         const inDeck = ws.filter(w => S.cards[w.w]).length;
-        return `<div class="card flat stack" style="gap:0"><div class="spread"><h3>Level ${L.n}</h3>
-          ${inDeck < ws.length ? `<button class="btn small" data-addlvl="${L.id}">${inDeck ? 'Add the other ' + (ws.length - inDeck) : 'Add all ' + ws.length + ' to review'}</button>` : '<span class="chip good">In your deck</span>'}</div>
-          ${ws.map(w => `<div class="word-row"><b>${esc(w.w)}</b>${speakBtn(w.w)}${S.settings.arabic && w.ar ? `<div class="ar" lang="ar">${esc(w.ar)}</div>` : ''}<div class="d">${md(w.d)}</div>${w.ex ? `<div class="e">“${esc(w.ex)}”</div>` : ''}</div>`).join('')}</div>`;
+        const open = q || L.n === curLevelN();
+        return `<details class="card flat wl" ${open ? 'open' : ''}><summary class="spread"><b>Level ${L.n}: ${esc(L.title)}</b><span class="small muted">${ws.length} words · ${inDeck} in deck</span></summary>
+          <div class="row" style="margin-top:10px">${inDeck < ws.length ? `<button class="btn small" data-addlvl="${L.id}">${inDeck ? 'Add the other ' + (ws.length - inDeck) : 'Add all ' + ws.length + ' to review'}</button>` : '<span class="chip good">All in your deck</span>'}</div>
+          ${ws.map(w => `<div class="word-row"><b>${esc(w.w)}</b>${speakBtn(w.w)}${S.settings.arabic && w.ar ? `<div class="ar" lang="ar">${esc(w.ar)}</div>` : ''}<div class="d">${md(w.d)}</div>${w.ex ? `<div class="e">“${esc(w.ex)}”</div>` : ''}</div>`).join('')}</details>`;
       }).join('') || '<p class="muted">No words match.</p>';
       list.querySelectorAll('[data-addlvl]').forEach(b => b.onclick = () => {
         const L = LEVEL[b.dataset.addlvl];
