@@ -29,6 +29,9 @@
       ITEM[x.id] = x;
     });
   });
+  const STORIES = window.SEKKA_STORIES || [];
+  const STORY = {};
+  STORIES.forEach(st => { STORY[st.id] = st; st.qs.forEach((q, k) => { q.id = st.id + '-q' + k; if (q.t === 'tf') { q.t = 'mc'; q.o = ['True', 'False']; q.a = q.a ? 0 : 1; } }); });
   const PASS_UNIT = 80, PASS_TEST = 80;
   const MISS_GAPS = [1, 3, 7, 16];
   const ALL_WORDS = {};
@@ -41,7 +44,7 @@
   const fresh = () => ({
     name: '', created: today(), xp: 0, days: {}, streak: { count: 0, last: '' },
     units: {}, tests: {}, placement: null, cards: {}, writing: {}, drafts: {},
-    miss: {}, session: {}, fluency: {},
+    miss: {}, session: {}, fluency: {}, read: {}, storyDay: {},
     settings: { size: 'l', arabic: true, rate: 0.85, voice: '', theme: '', goal: 30, job: '' }
   });
   let S;
@@ -144,6 +147,8 @@
     else if (a === 'placement') viewPlacement();
     else if (a === 'placement-intro') viewPlacementIntro();
     else if (a === 'today') viewToday(b);
+    else if (a === 'stories') viewStories();
+    else if (a === 'story' && STORY[b]) viewStory(STORY[b]);
     else if (a === 'method') { tab = 'me'; viewMethod(); }
     else if (a === 'words') { tab = 'words'; viewWords(b); }
     else if (a === 'voice') { tab = 'voice'; viewVoice(); }
@@ -232,9 +237,10 @@
         <a class="stat" href="#/words" style="text-decoration:none;color:inherit"><b>${due}</b><span>Words to review</span></a>
         <div class="stat"><b>${Object.keys(S.units).filter(unitDone).length}</b><span>Units passed</span></div>
       </div>
+      ${storyCard()}
       ${!S.placement ? `<a class="card flat spread" href="#/placement" style="text-decoration:none;color:inherit"><div><b>Find my level</b><div class="small muted">18 questions · about 10 minutes</div></div><span class="chip">Start</span></a>` : ''}
       <div class="stack">
-        <h2>Your path</h2>
+        <div class="spread"><h2>Your path</h2><a class="small" href="#/stories">Story library</a></div>
         <div>${LEVELS.map(levelBlock).join('')}</div>
       </div>`;
   }
@@ -402,7 +408,8 @@
     const total = order.length;
     function show() {
       if (mode !== 'practice' && i >= total) return finish();
-      const item = order[i % total];
+      if (mode === 'practice' && i >= order.length) order.push(...shuffle(items));
+      const item = order[i];
       const head = mode === 'practice'
         ? `<div class="qhead"><span class="eyebrow">Practice · ${right} right so far</span><button class="btn small ghost" id="endp">Finish practice</button></div>`
         : `<div class="qhead"><span class="eyebrow">Question ${i + 1} of ${total}</span><span class="chip plain">${right} right</span></div><div class="bar"><i style="width:${i / total * 100}%"></i></div>`;
@@ -416,7 +423,7 @@
           if (track) trackItem(item, c, mode);
           counted++;
           if (c) { right++; addXP(mode === 'practice' ? 2 : 3); } else wrongs.push(item);
-          if (mode === 'practice' && !c) order.push(item);
+          if (mode === 'practice' && !c) order.splice(Math.min(order.length, i + 3), 0, item);
         },
         onNext() { i++; show(); }
       });
@@ -1128,6 +1135,86 @@ Start now by saying your first line in character.`;
     box.querySelectorAll('[data-rp]').forEach(b => b.onclick = () => { copy(claudeRoleplayPrompt(L, u.roleplays[+b.dataset.rp])); addXP(5); markStep('speak'); });
   }
 
+  /* ================= Story library (extensive reading) ================= */
+  function curLevelN() {
+    const n = nextStep();
+    if (n && n.u) return n.u.level.n;
+    if (n) return LEVEL[n.href.split('/')[2]] ? LEVEL[n.href.split('/')[2]].n : 1;
+    return S.placement ? S.placement.level : LEVELS.length;
+  }
+  function storyOfDay() {
+    if (!STORIES.length) return null;
+    if (S.storyDay.date === today() && STORY[S.storyDay.id]) return STORY[S.storyDay.id];
+    const lv = curLevelN();
+    const fits = STORIES.filter(x => x.lvl <= lv);
+    const unread = fits.filter(x => !S.read[x.id]).sort((a, b) => Math.abs(lv - a.lvl) - Math.abs(lv - b.lvl) || b.lvl - a.lvl);
+    const pickS = unread[0] || pick(fits.length ? fits : STORIES);
+    S.storyDay = { date: today(), id: pickS.id }; save();
+    return pickS;
+  }
+  function storyCard() {
+    const st = storyOfDay();
+    if (!st) return '';
+    const r = S.read[st.id];
+    const words = st.text.split(/\s+/).length;
+    return `<a class="card flat spread" href="#/story/${st.id}" style="text-decoration:none;color:inherit">
+      <div><span class="eyebrow">Story of the day · Level ${st.lvl}</span><div><b>${esc(st.title)}</b></div>
+      <div class="small muted">${words} words · about ${Math.max(2, Math.round(words / 90))} min${r ? ' · read ' + r.n + (r.n === 1 ? ' time' : ' times') : ''}</div></div>
+      <span class="chip">${r ? 'Read again' : 'Read'}</span></a>`;
+  }
+  function viewStories() {
+    const lv = curLevelN();
+    app.innerHTML = `<a class="back" href="#/">${I.back} Home</a>
+      <div class="stack" style="gap:6px"><span class="eyebrow">Reading for pleasure</span><h1>Story library</h1>
+      <p class="muted">Reading a lot of easy, interesting English is one of the best ways to learn. Pick stories at your level or a little below. Tap any sentence to hear it.</p>
+      <p class="ar small muted" lang="ar">اقري حكايات سهلة وممتعة كتير. ده من أحسن الطرق لتعلم اللغة. دوسي على أي جملة عشان تسمعيها.</p></div>
+      ${LEVELS.map(L => {
+        const list = STORIES.filter(x => x.lvl === L.n);
+        if (!list.length) return '';
+        return `<div class="stack"><div class="spread"><h3>Level ${L.n}: ${esc(L.title)}</h3>${L.n === lv ? '<span class="chip gold">Your level</span>' : ''}</div>
+          <div class="units">${list.map(st => { const r = S.read[st.id]; return `<a class="unit-link" href="#/story/${st.id}"><span class="k">${I.reading}</span><span class="t"><b>${esc(st.title)}</b><span>${st.text.split(/\s+/).length} words</span></span>${r ? `<span class="chip good">Read ${r.n}×</span>` : '<span class="chip plain">New</span>'}</a>`; }).join('')}</div></div>`;
+      }).join('')}`;
+  }
+  function viewStory(st) {
+    const r = S.read[st.id];
+    const sentences = (p) => (p.match(/[^.!?]+[.!?]+["”’']?\s*|[^.!?]+$/g) || [p]).map(x => x.trim()).filter(Boolean);
+    app.innerHTML = `<a class="back" href="#/stories">${I.back} Story library</a>
+      <div class="stack" style="gap:6px"><span class="eyebrow">Level ${st.lvl} story${r ? ` · read ${r.n}×` : ''}</span><h1>${esc(st.title)}</h1></div>
+      <div class="row"><button class="btn" id="st-all">${I.speak} Listen to the story</button><button class="btn ghost small" id="st-stop" hidden>Stop</button></div>
+      <div class="card reading story" id="st-text">${st.text.split(/\n\n+/).map(p => `<p>${sentences(p).map(x => `<span class="sent" role="button" tabindex="0" data-say="${esc(x)}">${esc(x)}</span>`).join(' ')}</p>`).join('')}</div>
+      <p class="small muted">Tap a sentence to hear it. Read the story once for the meaning. Don't stop for every new word: guess from the story.</p>
+      <div id="st-q" class="stack"><button class="btn primary" id="st-check">I finished reading · Quick check</button></div>`;
+    const sents = [...app.querySelectorAll('.sent')];
+    let run = 0;
+    const stopB = document.getElementById('st-stop');
+    document.getElementById('st-all').onclick = async () => {
+      const me = ++run; stopB.hidden = false;
+      for (const el of sents) {
+        if (me !== run || !el.isConnected) break;
+        sents.forEach(x => x.classList.toggle('hl', x === el));
+        await Speech.sayP(el.dataset.say, { rate: S.settings.rate, voice: S.settings.voice });
+      }
+      sents.forEach(x => x.classList.remove('hl')); stopB.hidden = true;
+    };
+    stopB.onclick = () => { run++; Speech.cancel(); sents.forEach(x => x.classList.remove('hl')); stopB.hidden = true; };
+    sents.forEach(el => el.onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); say(el.dataset.say); } });
+    onLeave(() => { run++; Speech.cancel(); });
+    document.getElementById('st-check').onclick = () => {
+      const box = document.getElementById('st-q');
+      runSet({ box, items: st.qs.slice(), mode: 'story', track: false, onFinish: (res) => {
+        const rec = S.read[st.id] || { n: 0 };
+        rec.n++; rec.last = today(); rec.best = Math.max(rec.best || 0, res.pct);
+        S.read[st.id] = rec; addXP(10); save();
+        const lvStories = STORIES.filter(x => x.lvl === st.lvl);
+        const nx = lvStories[(lvStories.indexOf(st) + 1) % lvStories.length];
+        box.innerHTML = `<div class="card stack"><h3>${res.right} of ${res.counted} correct</h3>
+          <p>${res.pct >= 67 ? 'You understood the story. Great reading!' : 'Read the story one more time, then try the questions again.'}</p>
+          <p class="ar small" lang="ar">${res.pct >= 67 ? 'فهمتي القصة. برافو!' : 'اقري القصة تاني وجرّبي الأسئلة.'}</p>
+          <div class="row">${nx && nx !== st ? `<a class="btn primary" href="#/story/${nx.id}">Next story: ${esc(nx.title)}</a>` : ''}<a class="btn" href="#/stories">Story library</a></div></div>`;
+      } });
+    };
+  }
+
   /* ================= Daily session ================= */
   function sess() { if (S.session.date !== today()) S.session = { date: today() }; return S.session; }
   function markStep(k) { sess()[k] = true; save(); }
@@ -1192,6 +1279,7 @@ Start now by saying your first line in character.`;
         ${step('words', 3, 'Word review', due ? `${due} word${due === 1 ? '' : 's'} ready` : 'No words due today', due ? '#/words/review' : '#/words', due ? 'Review' : 'Open', 4)}
         ${step('speak', 4, 'Listen and repeat', '3 sentences, out loud', '#/today/speak', 'Start', 3)}
       </div>
+      <div class="stack" style="gap:6px"><span class="eyebrow">Bonus</span>${storyCard()}</div>
       ${stepsDone() === 4 ? '<div class="hero"><h2>All done for today!</h2><p>Come back tomorrow. Sleep helps your brain store what you learned.</p><p class="ar" lang="ar">برافو! النوم بيساعد المخ يحفظ اللي اتعلمتيه. نكمّل بكرة.</p></div>' : ''}
       <a class="small" href="#/method">Why it works this way</a>`;
   }
