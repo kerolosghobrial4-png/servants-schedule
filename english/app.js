@@ -31,7 +31,15 @@
   });
   const STORIES = window.SEKKA_STORIES || [];
   const STORY = {};
-  STORIES.forEach(st => { STORY[st.id] = st; st.qs.forEach((q, k) => { q.id = st.id + '-q' + k; if (q.t === 'tf') { q.t = 'mc'; q.o = ['True', 'False']; q.a = q.a ? 0 : 1; } }); });
+  STORIES.forEach(st => {
+    STORY[st.id] = st;
+    const passage = { title: st.title, text: st.text };
+    st.qs.forEach((q, k) => {
+      q.id = st.id + '-q' + k; q.passage = passage;
+      if (q.t === 'tf') { q.t = 'mc'; q.o = ['True', 'False']; q.a = q.a ? 0 : 1; }
+      ITEM[q.id] = q;
+    });
+  });
   const PASS_UNIT = 80, PASS_TEST = 80;
   const MISS_GAPS = [1, 3, 7, 16];
   const ALL_WORDS = {};
@@ -1313,7 +1321,7 @@ Start now by saying your first line in character.`;
     onLeave(() => { run++; Speech.cancel(); });
     document.getElementById('st-check').onclick = () => {
       const box = document.getElementById('st-q');
-      runSet({ box, items: st.qs.slice(), mode: 'story', track: false, onFinish: (res) => {
+      runSet({ box, items: st.qs.map(q => Object.assign({}, q, { passage: null })), mode: 'story', track: true, onFinish: (res) => {
         const rec = S.read[st.id] || { n: 0 };
         rec.n++; rec.last = today(); rec.best = Math.max(rec.best || 0, res.pct);
         S.read[st.id] = rec; addXP(10); save();
@@ -1402,8 +1410,13 @@ Start now by saying your first line in character.`;
     const deck = Object.keys(S.cards).length, strong = Object.values(S.cards).filter(c => c.box >= 3).length;
     const storiesWeek = Object.values(S.read).filter(r => r.last >= days[0]).length;
     const flu = Object.values(S.fluency).map(h => h.filter(x => x.d >= days[0])).filter(h => h.length);
-    let ungraded = 0;
-    try { ungraded = (await Speech.allRecs()).filter(r => !r.grade || !r.grade.stars).length; } catch (e) {}
+    let ungraded = 0, challenges = 0;
+    try {
+      const recs = await Speech.allRecs();
+      ungraded = recs.filter(r => !r.grade || !r.grade.stars).length;
+      const since = new Date(days[0] + 'T00:00:00').getTime();
+      challenges = recs.filter(r => r.unitId === 'challenge' && r.at >= since).length;
+    } catch (e) {}
     const next = nextStep();
     const fmt = (d) => new Date(d + 'T12:00:00').toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
     const lines = [
@@ -1419,6 +1432,7 @@ Start now by saying your first line in character.`;
       flu.length ? `Timed reading: ${flu.map(h => `${h[0].wcpm}→${h[h.length - 1].wcpm} wpm`).join(', ')}` : null,
       `Old mistakes waiting for review: ${dueMisses().length}`,
       `Recordings waiting for your grade: ${ungraded}`,
+      `Speaking challenge recordings this week: ${challenges}`,
       next ? `Working on now: ${next.title} (${next.sub})` : 'Working on now: all levels finished',
       '',
       'How you can help this week:',

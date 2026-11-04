@@ -43,6 +43,8 @@ Every unit has a **Lesson** (with Egyptian Arabic notes), unlimited **Practice**
 - **Two model dialogues per Talk at Work unit** (`content/dialogues2.js`), **20 more workplace words** (`content/words2.js`), and a weekly **English at home** tip on Home.
 - **How American College Works** (end of Level 4, `content/college.js`): credits, degrees, placement, advisors, FAFSA and grants, syllabus, office hours.
 - Level test results list the units her mistakes came from, with links to practice them.
+- **Weekly speaking challenge** (Voice tab): a free-speaking topic each week (easier for levels 1–3, harder for 4–6) to record for family to grade or practice with Claude voice.
+- **Type the word** recall on Arabic-first flashcards; missed story questions also return in mistake review.
 - A reminder card when 8+ old mistakes are due, a **Check my level again** option, and an **update notice** ("A new version is ready") when a new version is published.
 - Tested at 320px phone width with extra-large text, in light and dark mode; all text colors meet 4.5:1 contrast.
 
