@@ -151,6 +151,7 @@
     else if (a === 'stories') viewStories();
     else if (a === 'phrases') { tab = 'voice'; viewPhrases(); }
     else if (a === 'numbers') { tab = 'voice'; viewNumbers(); }
+    else if (a === 'progress') { tab = 'me'; viewProgress(); }
     else if (a === 'story' && STORY[b]) viewStory(STORY[b]);
     else if (a === 'method') { tab = 'me'; viewMethod(); }
     else if (a === 'words') { tab = 'words'; viewWords(b); }
@@ -578,7 +579,7 @@
           ${backHref ? `<a class="btn ghost" href="${backHref}">Back to lesson</a>` : ''}
         </div></div>
       ${r.wrongs.length ? `<div class="stack"><h3>Review your mistakes</h3>${r.wrongs.map(w => `<div class="card flat stack" style="gap:6px">
-          ${w.q ? `<div>${md(w.q)}</div>` : w.say ? `<div class="row"><span class="muted">Audio:</span> ${esc(w.say)} ${speakBtn(w.say)}</div>` : w.text ? `<div>${esc(w.text)}</div>` : '<div class="muted">Word order</div>'}
+          ${w.q ? `<div class="row" style="gap:8px"><span>${md(w.q)}</span>${w.say ? speakBtn(w.say) : ''}</div>` : w.say ? `<div class="row"><span class="muted">Audio:</span> ${esc(w.say)} ${speakBtn(w.say)}</div>` : w.text ? `<div>${esc(w.text)}</div>` : '<div class="muted">Word order</div>'}
           <div>Correct answer: <b>${md(answerText(w))}</b></div>
           ${w.why ? `<div class="small muted">${md(w.why)}</div>` : ''}</div>`).join('')}</div>` : ''}`;
     document.getElementById('again').onclick = again;
@@ -1035,6 +1036,7 @@ Please:
       </div>
       <div class="card stack"><div class="spread"><h3>This week</h3><span class="small muted">points per day</span></div>
         <div class="week">${days.map(([d, v]) => `<div><i style="height:${Math.max(3, v / max * 70)}px" title="${v} points"></i><span>${new Date(d + 'T12:00:00').toLocaleDateString(undefined, { weekday: 'short' })}</span></div>`).join('')}</div></div>
+      <a class="card flat spread" href="#/progress" style="text-decoration:none;color:inherit"><div><b>My progress</b><div class="small muted">Units mastered, words learned, reading speed</div></div><span class="chip">Open</span></a>
       <a class="card flat spread" href="#/method" style="text-decoration:none;color:inherit"><div><b>How Sekka teaches, and how family can help</b><div class="small muted">The learning methods behind the app</div></div><span class="chip">Read</span></a>
       <div class="card stack"><h3>Weekly report for family</h3>
         <p class="small muted">A short summary of this week to send to your son or whoever helps you study.</p>
@@ -1182,7 +1184,7 @@ Start now by saying your first line in character.`;
   }
   function renderRoleplays(u, box) {
     const L = u.level;
-    box.innerHTML = `<p class="small"><a href="#/phrases">All work phrases in one list →</a></p><h3>Real conversation practice with Claude</h3>
+    box.innerHTML = `<p class="small"><a href="#/phrases">All work phrases in one list →</a> · <a href="#/numbers">Numbers and spelling drill →</a></p><h3>Real conversation practice with Claude</h3>
       <p class="small muted">Tap a scenario to copy it. Open the Claude app, paste it, then tap the voice button and talk. Claude plays the other person and gives you feedback at the end.</p>
       ${S.settings.arabic ? '<p class="ar small" lang="ar">دوسي على الموقف، افتحي تطبيق Claude والزقي الرسالة، ودوسي على زرار الصوت واتكلمي. Claude هيمثّل الشخص التاني ويقولك رأيه في الآخر.</p>' : ''}
       ${S.settings.job ? '' : '<p class="small">Tip: add your job in <a href="#/me">Me → Settings</a> so the conversations match your workplace.</p>'}
@@ -1503,6 +1505,52 @@ Start now by saying your first line in character.`;
     });
   }
 
+  /* ================= Progress page ================= */
+  function viewProgress() {
+    const cards = Object.values(S.cards);
+    const wNew = cards.filter(c => c.box === 0).length, wLearning = cards.filter(c => c.box > 0 && c.box < 3).length, wStrong = cards.filter(c => c.box >= 3).length;
+    const wTotal = Math.max(1, cards.length);
+    const mastered = UNIT_ORDER.filter(u => unitDone(u.id)).length;
+    const days = []; for (let k = 27; k >= 0; k--) days.push(addDays(today(), -k));
+    const maxDay = Math.max(S.settings.goal, ...days.map(d => S.days[d] || 0));
+    const fl = Object.entries(S.fluency).filter(([, h]) => h.length).map(([key, h]) => {
+      const [uid, pi, k] = key.split(':');
+      const u = UNIT[uid];
+      const title = u && u.passages && u.passages[+pi] ? `${u.passages[+pi].title}, paragraph ${+k + 1}` : key;
+      return { title, h };
+    });
+    const storiesRead = Object.keys(S.read).length;
+    app.innerHTML = `<a class="back" href="#/me">${I.back} Me</a>
+      <div class="stack" style="gap:6px"><span class="eyebrow">Progress</span><h1>How far you have come</h1>
+      <p class="ar small muted" lang="ar">شوفي انتي وصلتي لفين.</p></div>
+      <div class="stats">
+        <div class="stat"><b>${mastered}</b><span>of ${UNIT_ORDER.length} units mastered</span></div>
+        <div class="stat"><b>${wStrong}</b><span>words learned well</span></div>
+        <div class="stat"><b>${storiesRead}</b><span>stories read</span></div>
+      </div>
+      <div class="card stack"><h3>Units by level</h3>
+        <div class="stack" style="gap:10px">${LEVELS.map(L => `<div class="stack" style="gap:4px">
+          <div class="spread small"><b>Level ${L.n}: ${esc(L.title)}</b>${S.tests[L.id] && S.tests[L.id].passed ? '<span class="chip good">Test passed</span>' : ''}</div>
+          <div class="cells">${L.units.map(u => { const st = S.units[u.id]; const cls = unitDone(u.id) ? 'done' : st && st.best !== null ? 'tried' : st && st.lesson ? 'started' : ''; return `<a class="cell ${cls}" href="#/unit/${u.id}/lesson" title="${esc(u.title)}${st && st.best !== null ? ' · best ' + st.best + '%' : ''}"><span>${esc(({ grammar: 'Grammar', conversation: 'Talk', vocab: 'Words', reading: 'Reading', speaking: 'Speak', strategy: 'Method' })[u.kind] || u.kind)}</span></a>`; }).join('')}</div></div>`).join('')}</div>
+        <div class="row small muted" style="gap:14px"><span><i class="key done"></i> Mastered (80%+)</span><span><i class="key tried"></i> Tried</span><span><i class="key started"></i> Lesson read</span></div>
+      </div>
+      <div class="card stack"><h3>Words</h3>
+        ${cards.length ? `<div class="stackbar"><i style="width:${wStrong / wTotal * 100}%;background:var(--good)"></i><i style="width:${wLearning / wTotal * 100}%;background:var(--nile)"></i><i style="width:${wNew / wTotal * 100}%;background:var(--line)"></i></div>
+        <div class="row small" style="gap:14px"><span><i class="key" style="background:var(--good)"></i> Learned well: ${wStrong}</span><span><i class="key" style="background:var(--nile)"></i> Learning: ${wLearning}</span><span><i class="key" style="background:var(--line)"></i> New: ${wNew}</span></div>`
+        : '<p class="muted">Finish a vocabulary lesson to start your word deck.</p>'}
+      </div>
+      <div class="card stack"><h3>Last 4 weeks</h3>
+        <div class="cal">${days.map(d => { const v = S.days[d] || 0; const lvl = v === 0 ? 0 : v < maxDay / 3 ? 1 : v < maxDay * 2 / 3 ? 2 : 3; return `<i class="l${lvl}" title="${d}: ${v} points"></i>`; }).join('')}</div>
+        <p class="small muted">${days.filter(d => S.days[d]).length} of 28 days practiced. Stronger color means more practice.</p>
+      </div>
+      <div class="card stack"><h3>Reading speed</h3>
+        ${fl.length ? fl.map(({ title, h }) => `<div class="stack" style="gap:4px"><span class="small"><b>${esc(title)}</b></span>
+          <div class="sparks">${h.slice(-8).map(x => `<div><i style="height:${Math.min(100, x.wcpm / 160 * 100)}%"></i><span>${x.wcpm}</span></div>`).join('')}</div></div>`).join('')
+          + '<p class="small muted">Words correct per minute on each try. A strong goal is 110 or more with 95% accuracy.</p>'
+          : '<p class="muted">Use "Read alone, timed" in any reading lesson to track your reading speed.</p>'}
+      </div>`;
+  }
+
   /* ================= Daily session ================= */
   function sess() { if (S.session.date !== today()) S.session = { date: today() }; return S.session; }
   function markStep(k) { sess()[k] = true; save(); }
@@ -1574,7 +1622,8 @@ Start now by saying your first line in character.`;
         ${step('words', 3, 'Word review', due ? `${due} word${due === 1 ? '' : 's'} ready` : 'No words due today', due ? '#/words/review' : '#/words', due ? 'Review' : 'Open', 4)}
         ${step('speak', 4, 'Listen and repeat', '3 sentences, out loud', '#/today/speak', 'Start', 3)}
       </div>
-      <div class="stack" style="gap:6px"><span class="eyebrow">Bonus</span>${storyCard()}</div>
+      <div class="stack" style="gap:6px"><span class="eyebrow">Bonus</span>${storyCard()}
+        <a class="card flat spread" href="#/numbers" style="text-decoration:none;color:inherit"><div><b>Numbers and spelling</b><div class="small muted">Phone numbers, times, prices · 3 min</div></div><span class="chip">Practice</span></a></div>
       ${stepsDone() === 4 ? '<div class="hero"><h2>All done for today!</h2><p>Come back tomorrow. Sleep helps your brain store what you learned.</p><p class="ar" lang="ar">برافو! النوم بيساعد المخ يحفظ اللي اتعلمتيه. نكمّل بكرة.</p></div>' : ''}
       <a class="small" href="#/method">Why it works this way</a>`;
   }

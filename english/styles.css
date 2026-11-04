@@ -305,3 +305,20 @@ ol.steps { margin: 0; padding-left: 1.3em; display: flex; flex-direction: column
   padding: 18px max(16px, env(safe-area-inset-right, 0px)) calc(18px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); }
 .big-w { font-family: var(--f-read); font-size: 1.6rem; }
 .report { white-space: pre-wrap; font-family: var(--f-ui); font-size: .9rem; background: var(--paper); border: 1px solid var(--line); border-radius: 12px; padding: 12px; margin: 0; }
+
+.cells { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+.cell { display: flex; align-items: flex-end; min-height: 44px; padding: 5px 3px; border-radius: 8px; background: var(--paper); border: 1px solid var(--line); text-decoration: none; color: var(--muted); font-size: .66rem; line-height: 1.15; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: clip; letter-spacing: -.01em; }
+.cell.done { background: var(--good); color: var(--card); border-color: var(--good); }
+.cell.tried { background: var(--sun-soft); color: var(--ink); border-color: var(--sun); }
+.cell.started { background: var(--nile-soft); color: var(--ink); }
+.key { display: inline-block; width: 12px; height: 12px; border-radius: 3px; vertical-align: -1px; margin-right: 4px; background: var(--line); }
+.key.done { background: var(--good); } .key.tried { background: var(--sun-soft); outline: 1px solid var(--sun); } .key.started { background: var(--nile-soft); }
+.stackbar { display: flex; height: 14px; border-radius: 999px; overflow: hidden; background: var(--line); }
+.stackbar i { display: block; height: 100%; }
+.cal { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; }
+.cal i { aspect-ratio: 1; border-radius: 5px; background: var(--paper); border: 1px solid var(--line); max-width: 100%; }
+.cal i.l1 { background: var(--nile-soft); } .cal i.l2 { background: color-mix(in srgb, var(--nile) 55%, var(--card)); } .cal i.l3 { background: var(--nile); border-color: var(--nile); }
+.sparks { display: flex; gap: 6px; align-items: flex-end; height: 80px; }
+.sparks div { flex: 1; max-width: 36px; height: 100%; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; gap: 2px; }
+.sparks i { width: 100%; background: var(--nile); border-radius: 4px 4px 2px 2px; min-height: 3px; }
+.sparks span { font-size: .68rem; color: var(--muted); font-variant-numeric: tabular-nums; }
