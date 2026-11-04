@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <title>Sekka English</title>
+  <meta name="description" content="English lessons, practice, quizzes and tests from grade 4 to college and MCAT reading, with Egyptian Arabic help.">
+  <meta name="theme-color" content="#0e6e6a">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Sekka">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=Literata:opsz,wght@7..72,400;7..72,600;7..72,700&family=Noto+Naskh+Arabic:wght@400;600&display=swap">
+  <link rel="stylesheet" href="styles.css?v=2">
+</head>
+<body>
+  <div id="app" class="app" aria-live="polite"></div>
+
+  <nav class="tabs" aria-label="Main">
+    <a href="#/" data-tab="home">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19c3-1 4-5 8-6s5-5 8-8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="4" cy="19" r="2" fill="currentColor"/><circle cx="20" cy="5" r="2" fill="currentColor"/></svg>
+      <span>Path</span><small lang="ar">السكة</small>
+    </a>
+    <a href="#/words" data-tab="words">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="6" width="14" height="14" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M7 3h12a2 2 0 0 1 2 2v12" fill="none" stroke="currentColor" stroke-width="2"/></svg>
+      <span>Words</span><small lang="ar">الكلمات</small>
+    </a>
+    <a href="#/voice" data-tab="voice">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3" fill="none" stroke="currentColor" stroke-width="2"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      <span>Voice</span><small lang="ar">الصوت</small>
+    </a>
+    <a href="#/me" data-tab="me">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4" fill="none" stroke="currentColor" stroke-width="2"/><path d="M4 21c1-4 4-6 8-6s7 2 8 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      <span>Me</span><small lang="ar">أنا</small>
+    </a>
+  </nav>
+
+  <div id="toast" class="toast" role="status" hidden></div>
+
+  <script src="content/level1.js?v=2"></script>
+  <script src="content/level2.js?v=2"></script>
+  <script src="content/level3.js?v=2"></script>
+  <script src="content/level4.js?v=2"></script>
+  <script src="content/level5.js?v=2"></script>
+  <script src="content/level6.js?v=2"></script>
+  <script src="content/placement.js?v=2"></script>
+  <script src="speech.js?v=2"></script>
+  <script src="app.js?v=2"></script>
+</body>
+</html>
