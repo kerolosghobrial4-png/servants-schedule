@@ -6,6 +6,8 @@ window.SEKKA_LEVELS.push({
       id: 'L3U1', kind: 'grammar', title: 'Present Perfect, Comparisons, and the Future', ar: 'المضارع التام والمقارنة والمستقبل',
       lesson: [
         { h: 'Present perfect: have / has + past participle' },
+        { tip: 'The **past participle** is the third form of a verb. For regular verbs it is the same as the past: work → worked → **worked**. For many irregular verbs it is different: go → went → **gone**, eat → ate → **eaten**, see → saw → **seen**, write → wrote → **written**.' },
+        { ar: 'الـ **past participle** هو التصريف التالت للفعل: go – went – **gone**. في الأفعال العادية بيبقى زي الماضي: worked.' },
         { p: 'Use the present perfect for (1) life experiences with no exact time, (2) things that started in the past and **continue now**, and (3) recent news.' },
         { ex: ['I have lived in America for ten years.', 'She has never seen snow.', 'Have you ever eaten sushi?', 'We have just finished dinner.'] },
         { ar: '«I **have lived** here for ten years» يعني لسه عايشة هنا لحد دلوقتي. لكن «I **lived** in Cairo for ten years» يعني خلاص مبقتيش عايشة هناك.' },

@@ -10,6 +10,7 @@ window.SEKKA_LEVELS.push({
         { table: [['Active', 'Passive'], ['The nurse **gives** the medicine.', 'The medicine **is given** (by the nurse).'], ['Someone **stole** my bag.', 'My bag **was stolen**.'], ['They **have built** a new hospital.', 'A new hospital **has been built**.'], ['They **will announce** the results.', 'The results **will be announced**.']] },
         { ar: 'المبني للمجهول = لما مش مهم مين اللي عمل الحاجة. «اتسرقت شنطتي» = My bag **was stolen**. علمي كتير بيستخدمه: The samples **were tested**.' },
         { h: 'Relative clauses: who, which, that, whose, where' },
+        { p: 'A **relative clause** is a part of a sentence that gives more information about a noun. It starts with **who, which, that, whose,** or **where**.' },
         { ex: ['The doctor **who** treated me was kind. (people)', 'The book **which / that** I borrowed is long. (things)', 'The woman **whose** son is a pilot lives here. (possession)', 'This is the town **where** I was born. (place)'] },
         { tip: 'Do not repeat the subject. Wrong: *The man who he called me.* Right: **The man who called me.**' },
         { ar: 'في العربي بنقول «الراجل اللي **هو** كلّمني». في الإنجليزي منقولش **he** تاني: The man **who** called me.' },
