@@ -153,6 +153,7 @@
     else if (a === 'numbers') { tab = 'voice'; viewNumbers(); }
     else if (a === 'progress') { tab = 'me'; viewProgress(); }
     else if (a === 'writing') { tab = 'me'; viewWriting(); }
+    else if (a === 'grammar') viewGrammar();
     else if (a === 'story' && STORY[b]) viewStory(STORY[b]);
     else if (a === 'method') { tab = 'me'; viewMethod(); }
     else if (a === 'words') { tab = 'words'; viewWords(b); }
@@ -247,7 +248,7 @@
       ${storyCard()}
       ${!S.placement ? `<a class="card flat spread" href="#/placement" style="text-decoration:none;color:inherit"><div><b>Find my level</b><div class="small muted">18 questions · about 10 minutes</div></div><span class="chip">Start</span></a>` : ''}
       <div class="stack">
-        <div class="spread"><h2>Your path</h2><a class="small" href="#/stories">Story library</a></div>
+        <div class="spread"><h2>Your path</h2><span class="small"><a href="#/stories">Story library</a> · <a href="#/grammar">Grammar guide</a></span></div>
         <div>${LEVELS.map(levelBlock).join('')}</div>
       </div>`;
   }
@@ -1643,6 +1644,51 @@ Start now by saying your first line in character.`;
       const e = entries[+b.dataset.wcopy];
       copy(claudeWritingPrompt(e.u.level, e.task, e.text));
     });
+  }
+
+  /* ================= Grammar guide ================= */
+  function grammarTopics() {
+    const out = [];
+    LEVELS.forEach(L => L.units.filter(u => u.kind === 'grammar' || /Punctuation/.test(u.title)).forEach(u => {
+      let cur = null;
+      (u.lesson || []).forEach(b => {
+        if (b.h) { cur = { L, u, title: b.h, blocks: [] }; out.push(cur); }
+        else {
+          if (!cur) { cur = { L, u, title: u.title, blocks: [] }; out.push(cur); }
+          cur.blocks.push(b);
+        }
+      });
+    }));
+    return out.filter(t => t.blocks.length && !/aloud/i.test(t.title));
+  }
+  function blockText(b) {
+    if (b.p) return b.p; if (b.tip) return b.tip; if (b.ar) return b.ar;
+    if (b.ex) return b.ex.join(' '); if (b.table) return b.table.map(r => r.join(' ')).join(' ');
+    return '';
+  }
+  function viewGrammar() {
+    const topics = grammarTopics();
+    app.innerHTML = `<a class="back" href="#/">${I.back} Home</a>
+      <div class="stack" style="gap:6px"><span class="eyebrow">Quick reference</span><h1>Grammar guide</h1>
+      <p class="muted">Every grammar rule from the lessons in one place. Search when you are not sure, for example "since", "passive", "has", or "comma".</p>
+      <p class="ar small muted" lang="ar">كل قواعد الدروس في مكان واحد. دوري على أي قاعدة لما تبقي مش متأكدة.</p></div>
+      <input class="input" id="gr-q" placeholder="Search grammar" autocomplete="off">
+      <div id="gr-list" class="stack"></div>`;
+    const list = document.getElementById('gr-list');
+    const draw = (q) => {
+      q = (q || '').toLowerCase().trim();
+      const shown = topics.filter(t => !q || t.title.toLowerCase().includes(q) || t.blocks.some(b => blockText(b).toLowerCase().includes(q)));
+      let lastL = null;
+      list.innerHTML = shown.map(t => {
+        const head = t.L !== lastL ? `<h2 style="margin-top:6px">Level ${t.L.n}</h2>` : '';
+        lastL = t.L;
+        return head + `<details class="card stack gr" ${q ? 'open' : ''}><summary><b>${md(t.title)}</b> <span class="small muted">${esc(t.u.title)}</span></summary>
+          <div class="lesson">${t.blocks.map(blockHTML).join('')}</div>
+          <div><a class="small" href="#/unit/${t.u.id}/practice">Practice this →</a></div></details>`;
+      }).join('') || '<p class="muted">Nothing found. Try a shorter word.</p>';
+    };
+    draw();
+    document.getElementById('gr-q').oninput = (e) => draw(e.target.value);
   }
 
   /* ================= Daily session ================= */
