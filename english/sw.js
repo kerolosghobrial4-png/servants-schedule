@@ -2,7 +2,7 @@
 const VERSION = 'sekka-v5';
 const FILES = ['./', 'index.html', 'styles.css?v=5', 'app.js?v=5', 'speech.js?v=5', 'manifest.webmanifest',
   'content/level1.js?v=5', 'content/level2.js?v=5', 'content/level3.js?v=5', 'content/level4.js?v=5',
-  'content/level5.js?v=5', 'content/level6.js?v=5', 'content/talk.js?v=5', 'content/dialogues2.js?v=5', 'content/extra.js?v=5', 'content/extra2.js?v=5', 'content/extra3.js?v=5', 'content/words2.js?v=5', 'content/college.js?v=5', 'content/stories.js?v=5', 'content/stories2.js?v=5', 'content/stories3.js?v=5', 'content/stories4.js?v=5', 'content/jobs.js?v=5', 'content/placement.js?v=5', 'icons/icon.svg', 'icons/icon-192.png', 'icons/icon-512.png'];
+  'content/level5.js?v=5', 'content/level6.js?v=5', 'content/talk.js?v=5', 'content/dialogues2.js?v=5', 'content/extra.js?v=5', 'content/extra2.js?v=5', 'content/extra3.js?v=5', 'content/words2.js?v=5', 'content/college.js?v=5', 'content/words3.js?v=5', 'content/stories.js?v=5', 'content/stories2.js?v=5', 'content/stories3.js?v=5', 'content/stories4.js?v=5', 'content/jobs.js?v=5', 'content/placement.js?v=5', 'icons/icon.svg', 'icons/icon-192.png', 'icons/icon-512.png'];
 self.addEventListener('install', (e) => { e.waitUntil(caches.open(VERSION).then(c => c.addAll(FILES)).then(() => self.skipWaiting())); });
 self.addEventListener('activate', (e) => {
   e.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(k => k !== VERSION).map(k => caches.delete(k)))).then(() => self.clients.claim()));
