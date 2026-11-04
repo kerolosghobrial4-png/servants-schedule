@@ -1047,6 +1047,7 @@ Please:
     const max = Math.max(S.settings.goal, ...days.map(d => d[1]));
     const passed = LEVELS.filter(L => S.tests[L.id] && S.tests[L.id].passed);
     const voices = Speech.voices();
+    const installed = !!(window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true;
     app.innerHTML = `${brand()}
       <div class="stack" style="gap:6px"><span class="eyebrow">Profile</span><h1>${esc(S.name || 'Me')}</h1></div>
       <div class="stats">
@@ -1065,7 +1066,8 @@ Please:
         <pre class="report" id="rep-out" hidden></pre></div>
       <div class="card stack"><h3>Certificates</h3>
         ${passed.length ? passed.map(L => `<a class="unit-link" href="#/cert/${L.id}"><span class="k">${I.test}</span><span class="t"><b>Level ${L.n}: ${esc(L.title)}</b><span>${S.tests[L.id].best}%</span></span><span class="chip gold">View</span></a>`).join('') : '<p class="muted">Pass a level test to earn your first certificate.</p>'}</div>
-      <div class="card stack"><h3>Settings</h3>
+      <h2 style="margin-top:8px">Settings and phone</h2>
+      <details class="card stack" id="set-box"><summary><b>Settings</b> <span class="small muted">text size, Arabic help, voice, job</span></summary>
         <label class="field" for="s-name">Name<input class="input" id="s-name" value="${esc(S.name)}"></label>
         <label class="field" for="s-job">My job <span class="small muted">(used in conversation role-plays)</span><input class="input" id="s-job" value="${esc(S.settings.job)}" placeholder="For example: medical assistant"></label>
         <div class="switch"><span>Text size</span><select class="input" id="s-size" style="width:auto">${[['m', 'Normal'], ['l', 'Large'], ['xl', 'Extra large']].map(([v, n]) => `<option value="${v}" ${S.settings.size === v ? 'selected' : ''}>${n}</option>`).join('')}</select></div>
@@ -1075,18 +1077,18 @@ Please:
         <label class="field" for="s-rate">Reading voice speed: <span id="rate-v">${S.settings.rate}</span><input type="range" id="s-rate" min="0.5" max="1.2" step="0.05" value="${S.settings.rate}"></label>
         ${voices.length ? `<label class="field" for="s-voice">Voice<select class="input" id="s-voice"><option value="">Automatic</option>${voices.map(v => `<option ${S.settings.voice === v.name ? 'selected' : ''}>${esc(v.name)}</option>`).join('')}</select></label>` : ''}
         <button class="btn small" data-say="Hello! I am learning English, and I am doing a great job.">${I.speak} Test the voice</button>
-      </div>
-      <div class="card stack"><h3>Install on the phone</h3>
+      </details>
+      ${installed ? '' : `<details class="card stack"><summary><b>Install on the phone</b> <span class="small muted">use it like an app</span></summary>
         <p><b>Android (Chrome):</b> tap the ⋮ menu, then <b>Add to Home screen</b> or <b>Install app</b>.</p>
         <p><b>iPhone (Safari):</b> tap the Share button, then <b>Add to Home Screen</b>.</p>
-        <p class="ar small" lang="ar">من كروم: دوسي على التلات نقط ⋮ وبعدين «إضافة للشاشة الرئيسية». هيبقى زي التطبيق بالظبط.</p></div>
-      <div class="card stack"><h3>Backup</h3>
+        <p class="ar small" lang="ar">من كروم: دوسي على التلات نقط ⋮ وبعدين «إضافة للشاشة الرئيسية». هيبقى زي التطبيق بالظبط.</p></details>`}
+      <details class="card stack"><summary><b>Backup</b> <span class="small muted">move progress to a new phone</span></summary>
         <p class="small muted">Progress is saved on this phone. Copy a backup code to move it to another phone or keep it safe.</p>
         <div class="row"><button class="btn small" id="bk-copy">${I.copy} Copy backup code</button><button class="btn small ghost" id="bk-show">Restore from code</button></div>
         <div id="bk-area"></div>
         <div class="row"><button class="btn small ghost" id="reset" style="color:var(--bad)">Erase all progress</button></div>
-      </div>
-      <p class="small muted">Recordings stay on this phone only and are not in the backup code.</p>`;
+        <p class="small muted">Recordings stay on this phone only and are not in the backup code.</p>
+      </details>`;
     const set = (k, v) => { S.settings[k] = v; save(); applySettings(); };
     document.getElementById('rep-show').onclick = async () => { const o = document.getElementById('rep-out'); o.textContent = await weeklyReport(); o.hidden = false; };
     document.getElementById('rep-send').onclick = async () => {

@@ -9,7 +9,7 @@
   --nile: #0e6e6a;
   --nile-ink: #ffffff;
   --nile-soft: #dbeeea;
-  --sun: #b87c0c;
+  --sun: #865500;
   --sun-soft: #f6ead0;
   --good: #24713a;
   --good-soft: #def0e2;
@@ -332,3 +332,6 @@ details.card > summary::-webkit-details-marker { display: none; }
 
 .unit-link:focus-visible, .qk:focus-visible, .cell:focus-visible, .opt:focus-visible, .tile:focus-visible { outline: 3px solid var(--nile); outline-offset: 2px; }
 .unit-link:hover, .qk:hover { border-color: var(--nile); }
+
+details.card.stack { display: block; }
+details.card.stack > * + * { margin-top: 12px; }
