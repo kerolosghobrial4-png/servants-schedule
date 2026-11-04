@@ -446,9 +446,16 @@
     return '';
   }
 
+  const passageOpen = {};
+  document.addEventListener('toggle', (e) => {
+    const d = e.target;
+    if (d.classList && d.classList.contains('passage') && d.closest('#qbox')) {
+      const t = d.querySelector('summary span'); if (t) passageOpen[t.textContent] = d.open;
+    }
+  }, true);
   function renderQ(item, box, cb) {
     let answered = false;
-    const passage = item.passage ? passageHTML(item.passage, true) : '';
+    const passage = item.passage ? passageHTML(item.passage, passageOpen[item.passage.title] !== false) : '';
     const prompt = item.q ? `<div class="qprompt">${md(item.q)}</div>` : '';
     function feedback(correct, extra) {
       if (answered) return; answered = true;
