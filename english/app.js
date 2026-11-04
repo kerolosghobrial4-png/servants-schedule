@@ -815,6 +815,15 @@ Please:
             const a = document.createElement('a'); a.className = 'btn block'; a.href = `#/unit/${nl.units[0].id}/lesson`; a.textContent = `Start Level ${nl.n}: ${nl.title}`;
             box.querySelector('.card').appendChild(a);
           }
+          const byUnit = {};
+          r.wrongs.forEach(w => { if (w.unit) byUnit[w.unit.id] = (byUnit[w.unit.id] || 0) + 1; });
+          const weak = Object.entries(byUnit).sort((a, b) => b[1] - a[1]);
+          if (weak.length) {
+            const c = document.createElement('div'); c.className = 'card stack';
+            c.innerHTML = `<h3>What to review</h3><p class="small muted">Your mistakes came from these units. Practice them, then take the test again.</p>
+              <div class="units">${weak.map(([id, n]) => `<a class="unit-link" href="#/unit/${id}/practice"><span class="k">${kindIcon(UNIT[id].kind)}</span><span class="t"><b>${esc(UNIT[id].title)}</b><span>${kindName[UNIT[id].kind]}</span></span><span class="chip bad">${n} mistake${n === 1 ? '' : 's'}</span></a>`).join('')}</div>`;
+            box.querySelector('.card').after(c);
+          }
         }
       });
     };
