@@ -941,19 +941,23 @@ Please:
         return;
       }
       const w = cardInfo(queue[0]);
-      const flipFirst = Math.random() < 0.35 && w.ar;
-      box.innerHTML = `<div class="qhead"><span class="eyebrow">${queue.length} left</span>${speakBtn(w.w)}</div>
+      const flipFirst = Math.random() < 0.5 && w.ar && S.settings.arabic !== false;
+      box.innerHTML = `<div class="qhead"><span class="eyebrow">${queue.length} left</span>${flipFirst ? '' : speakBtn(w.w)}</div>
         <div class="card flash" id="fl" tabindex="0" role="button" aria-label="Show answer">
           ${flipFirst ? `<div class="ar big" lang="ar" style="font-family:var(--f-ar)">${esc(w.ar)}</div><p class="muted">What is the English word?</p>` : `<div class="big">${esc(w.w)}</div><p class="muted">What does it mean?</p>`}
-          <p class="small muted">Tap to see the answer</p></div>
+          ${flipFirst ? '' : '<p class="small muted">Tap to see the answer</p>'}</div>
+        ${flipFirst ? `<div class="stack" id="ty"><input class="input" id="ty-in" placeholder="Type the English word" autocomplete="off" autocapitalize="off" spellcheck="false">
+          <div class="row"><button class="btn primary" id="ty-go">Check</button><button class="btn ghost" id="ty-skip">Show the answer</button></div></div>` : ''}
         <div id="gr"></div>`;
       if (!flipFirst) say(w.w);
-      const reveal = () => {
+      const reveal = (typed) => {
         const fl = document.getElementById('fl');
+        const ty = document.getElementById('ty'); if (ty) ty.remove();
         fl.innerHTML = `<div class="big">${esc(w.w)}</div>${w.ar && S.settings.arabic ? `<div class="ar" lang="ar" style="font-size:1.3rem;color:var(--sun)">${esc(w.ar)}</div>` : ''}${/[\u0600-\u06FF]/.test(w.d) ? `<p class="ar" lang="ar" style="font-size:1.25rem">${esc(w.d)}</p>` : `<p>${md(w.d)}</p>`}${w.ex ? `<p class="muted" style="font-family:var(--f-read);font-style:italic">“${esc(w.ex)}”</p>` : ''}`;
         fl.onclick = null;
         if (flipFirst) say(w.w);
-        document.getElementById('gr').innerHTML = `<div class="grade3"><button class="btn" data-g="0">I forgot</button><button class="btn" data-g="1">Hard</button><button class="btn primary" data-g="2">I knew it</button></div>`;
+        const verdict = typed === undefined ? '' : typed ? '<div class="feedback right"><b class="v">Correct! You remembered it.</b></div>' : `<div class="feedback wrong"><b class="v">Not quite.</b><div>The word is <b>${esc(w.w)}</b>. Say it out loud once.</div></div>`;
+        document.getElementById('gr').innerHTML = verdict + `<div class="grade3"><button class="btn ${typed === false ? 'primary' : ''}" data-g="0">I forgot</button><button class="btn" data-g="1">Hard</button><button class="btn ${typed === false ? '' : 'primary'}" data-g="2">I knew it</button></div>`;
         document.querySelectorAll('[data-g]').forEach(b => b.onclick = () => {
           const g = +b.dataset.g; const c = S.cards[w.w];
           if (g === 0) { c.box = 0; c.due = today(); queue.push(queue.shift()); }
@@ -962,7 +966,17 @@ Please:
         });
       };
       const fl = document.getElementById('fl');
-      fl.onclick = reveal; fl.onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); reveal(); } };
+      if (flipFirst) {
+        fl.removeAttribute('role'); fl.removeAttribute('tabindex'); fl.style.cursor = 'default';
+        const inp = document.getElementById('ty-in');
+        const check = () => { const v = normAns(inp.value); if (!v) { inp.focus(); return; } reveal(v === normAns(w.w)); };
+        document.getElementById('ty-go').onclick = check;
+        inp.onkeydown = (e) => { if (e.key === 'Enter') check(); };
+        document.getElementById('ty-skip').onclick = () => reveal();
+        setTimeout(() => inp.focus({ preventScroll: true }), 50);
+      } else {
+        fl.onclick = () => reveal(); fl.onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); reveal(); } };
+      }
     };
     show();
   }
