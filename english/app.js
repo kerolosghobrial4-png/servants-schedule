@@ -392,7 +392,7 @@
     if (b.tip) return `<p class="tip">${md(b.tip)}</p>`;
     if (b.ar) return S.settings.arabic ? `<div class="ar-note ar" lang="ar">${md(b.ar)}</div>` : '';
     if (b.ex) return `<div class="ex">${b.ex.map(x => `<div class="ex-line"><span>${md(x)}</span>${speakBtn(x.replace(/\*+/g, '').replace(/_{3,}/g, 'blank'))}</div>`).join('')}</div>`;
-    if (b.table) return `<div class="tbl-wrap"><table><thead><tr>${b.table[0].map(c => `<th>${md(c)}</th>`).join('')}</tr></thead><tbody>${b.table.slice(1).map(r => `<tr>${r.map(c => `<td>${md(c)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
+    if (b.table) return `<div class="tbl-wrap"><table><thead><tr>${b.table[0].map(c => /[\u0600-\u06FF]/.test(c) ? `<th class="ar" lang="ar">${md(c)}</th>` : `<th>${md(c)}</th>`).join('')}</tr></thead><tbody>${b.table.slice(1).map(r => `<tr>${r.map(c => /[\u0600-\u06FF]/.test(c) ? `<td class="ar" lang="ar">${md(c)}</td>` : `<td>${md(c)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
     if (b.pairs) return `<div class="pairs">${b.pairs.map(([x, y]) => `<div class="pair"><button data-say="${esc(x)}">${esc(x)}</button><span class="muted small">vs</span><button data-say="${esc(y)}">${esc(y)}</button></div>`).join('')}</div>`;
     return '';
   }
@@ -925,7 +925,7 @@ Please:
         if (!ws.length) return '';
         const inDeck = ws.filter(w => S.cards[w.w]).length;
         return `<div class="card flat stack" style="gap:0"><div class="spread"><h3>Level ${L.n}</h3>
-          ${inDeck < ws.length ? `<button class="btn small" data-addlvl="${L.id}">Add all ${ws.length} to review</button>` : '<span class="chip good">In your deck</span>'}</div>
+          ${inDeck < ws.length ? `<button class="btn small" data-addlvl="${L.id}">${inDeck ? 'Add the other ' + (ws.length - inDeck) : 'Add all ' + ws.length + ' to review'}</button>` : '<span class="chip good">In your deck</span>'}</div>
           ${ws.map(w => `<div class="word-row"><b>${esc(w.w)}</b>${speakBtn(w.w)}${S.settings.arabic && w.ar ? `<div class="ar" lang="ar">${esc(w.ar)}</div>` : ''}<div class="d">${md(w.d)}</div>${w.ex ? `<div class="e">“${esc(w.ex)}”</div>` : ''}</div>`).join('')}</div>`;
       }).join('') || '<p class="muted">No words match.</p>';
       list.querySelectorAll('[data-addlvl]').forEach(b => b.onclick = () => {
