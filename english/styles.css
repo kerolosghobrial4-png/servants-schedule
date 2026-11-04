@@ -248,7 +248,7 @@ textarea.input { min-height: 180px; font-family: var(--f-read); line-height: 1.6
 .tabs {
   position: fixed; left: 0; right: 0; bottom: 0; z-index: 20;
   background: var(--card); border-top: 1px solid var(--line);
-  display: grid; grid-template-columns: repeat(4, 1fr);
+  display: grid; grid-template-columns: repeat(5, 1fr);
   padding-left: max(8px, env(safe-area-inset-left, 0px));
   padding-right: max(8px, env(safe-area-inset-right, 0px));
   padding-bottom: env(safe-area-inset-bottom, 0px);
@@ -346,3 +346,8 @@ td.ar, th.ar { text-align: right; font-size: 1.02em; }
 details.wl > summary { cursor: pointer; list-style: none; }
 details.wl > summary::-webkit-details-marker { display: none; }
 details.wl[open] > summary { padding-bottom: 4px; border-bottom: 1px solid var(--line); }
+
+.note-link { grid-template-columns: 1fr auto; }
+.note-prev { display: block; font-size: .85rem; color: var(--muted); margin-top: 2px; overflow-wrap: anywhere; }
+.note-title { font-family: var(--f-read); font-size: 1.2rem; font-weight: 600; }
+.tabs a { padding-inline: 2px; }
