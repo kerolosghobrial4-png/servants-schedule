@@ -246,6 +246,7 @@
       </div>
       ${arabicNudge()}
       ${storyCard()}
+      ${homeTip()}
       ${!S.placement ? `<a class="card flat spread" href="#/placement" style="text-decoration:none;color:inherit"><div><b>Find my level</b><div class="small muted">18 questions · about 10 minutes</div></div><span class="chip">Start</span></a>` : ''}
       <div class="stack">
         <div class="spread"><h2>Your path</h2><span class="small"><a href="#/stories">Story library</a> · <a href="#/grammar">Grammar guide</a></span></div>
@@ -1694,6 +1695,27 @@ Start now by saying your first line in character.`;
     };
     draw();
     document.getElementById('gr-q').oninput = (e) => draw(e.target.value);
+  }
+
+  /* ================= English at home: weekly tip ================= */
+  const HOME_TIPS = [
+    ['Label your kitchen', 'Put small English labels on things in your kitchen: fridge, stove, cabinet, spoon. Read them out loud when you cook.', 'حطي ورق صغير بالإنجليزي على حاجات المطبخ واقريه بصوت عالي وانتي بتطبخي.'],
+    ['Change your phone to English', 'Set your phone language to English for one week. You already know where everything is, so you will learn the words fast.', 'خلّي لغة الموبايل إنجليزي لمدة أسبوع. انتي عارفة كل حاجة فين، فهتتعلمي الكلمات بسرعة.'],
+    ['Watch with English subtitles', 'Watch a show you like with English audio and English subtitles. Pause and repeat one sentence you like.', 'اتفرجي على مسلسل بتحبيه بالصوت والترجمة الإنجليزي. وقّفي وكرري جملة عجبتك.'],
+    ['Talk to yourself in English', 'While you cook or clean, describe what you are doing: "Now I am cutting onions." It feels funny, but it really works.', 'وانتي بتطبخي أو بتنضفي، قولي بالإنجليزي بتعملي إيه: «Now I am cutting onions».'],
+    ['Read the news in easy English', 'Read one short article on VOA Learning English or News in Levels. They are written for English learners.', 'اقري خبر قصير على VOA Learning English أو News in Levels. مكتوبين للي بيتعلموا إنجليزي.'],
+    ['Make one phone call in English', 'Call a store, pharmacy, or library and ask one simple question, like their hours. Write your question before you call.', 'اتصلي بمحل أو صيدلية واسألي سؤال بسيط زي مواعيد الفتح. اكتبي السؤال قبل ما تتصلي.'],
+    ['English at dinner', 'Ask your family to speak only English for the first 10 minutes of dinner, about real things from the day.', 'اطلبي من العيلة تتكلموا إنجليزي بس أول ١٠ دقايق في العشا.'],
+    ['Write a shopping list in English', 'Write your grocery list in English this week. Look up any word you don\'t know.', 'اكتبي لستة المشتريات بالإنجليزي الأسبوع ده.'],
+    ['Listen while you travel', 'On the bus or in the car, listen to an English podcast for learners, like "6 Minute English" from the BBC.', 'وانتي في الأتوبيس أو العربية، اسمعي بودكاست إنجليزي للمتعلمين زي «6 Minute English».'],
+    ['Teach someone', 'Teach your son or a friend one thing you learned this week. Explaining it helps you remember it.', 'علّمي ابنك أو صاحبتك حاجة اتعلمتيها الأسبوع ده. لما تشرحيها هتفتكريها أكتر.'],
+    ['Use the library', 'Public libraries have free English classes, conversation groups, and easy books. Ask at the front desk.', 'المكتبة العامة فيها كلاسات إنجليزي ببلاش ومجموعات للكلام وكتب سهلة. اسألي في الاستقبال.'],
+    ['Keep a 3-sentence diary', 'Before bed, write three sentences in English about your day. Read last week\'s sentences: you will see your progress.', 'قبل النوم اكتبي ٣ جمل بالإنجليزي عن يومك.']
+  ];
+  function homeTip() {
+    const week = Math.floor((Date.now() / 86400000 + 3) / 7);
+    const [t, d, a] = HOME_TIPS[week % HOME_TIPS.length];
+    return `<div class="card flat stack" style="gap:6px"><span class="eyebrow">English at home · this week</span><b>${esc(t)}</b><span class="small">${esc(d)}</span>${S.settings.arabic ? `<span class="ar small muted" lang="ar">${esc(a)}</span>` : ''}</div>`;
   }
 
   /* ================= Daily session ================= */
