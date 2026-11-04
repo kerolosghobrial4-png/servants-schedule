@@ -150,6 +150,7 @@
     else if (a === 'today') viewToday(b);
     else if (a === 'stories') viewStories();
     else if (a === 'phrases') { tab = 'voice'; viewPhrases(); }
+    else if (a === 'numbers') { tab = 'voice'; viewNumbers(); }
     else if (a === 'story' && STORY[b]) viewStory(STORY[b]);
     else if (a === 'method') { tab = 'me'; viewMethod(); }
     else if (a === 'words') { tab = 'words'; viewWords(b); }
@@ -457,6 +458,7 @@
     if (item.t === 'fill') return [].concat(item.a)[0];
     if (item.t === 'order') return item.a;
     if (item.t === 'dict') return item.say;
+    if (item.t === 'num') return item.a;
     if (item.t === 'say') return item.text;
     return '';
   }
@@ -502,20 +504,21 @@
         if (!ok) b.classList.add('wrong');
         feedback(ok);
       });
-    } else if (item.t === 'fill' || item.t === 'dict') {
-      box.innerHTML = passage + (item.t === 'dict'
+    } else if (item.t === 'fill' || item.t === 'dict' || item.t === 'num') {
+      const audio = item.t !== 'fill';
+      box.innerHTML = passage + (audio
         ? `<div class="stack" style="align-items:center"><button class="play-big" data-say="${esc(item.say)}" aria-label="Play">${I.speak}</button><span class="small muted">Listen, then type exactly what you hear.</span></div>` : '')
         + (prompt || (item.t === 'dict' ? '<div class="qprompt">Type the sentence.</div>' : ''))
-        + `<input class="input" id="fa" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Type your answer">
+        + `<input class="input" id="fa" autocomplete="off" autocapitalize="off" spellcheck="false" ${item.numeric ? 'inputmode="decimal"' : ''} placeholder="${esc(item.ph || 'Type your answer')}">
         <div><button class="btn primary" id="fc">Check</button></div>`;
-      if (item.t === 'dict') setTimeout(() => say(item.say), 300);
+      if (audio) setTimeout(() => say(item.say), 300);
       const inp = box.querySelector('#fa');
       const check = () => {
         if (answered) return;
         const v = normAns(inp.value);
         if (!v) { inp.focus(); return; }
         const accepts = item.t === 'dict' ? [item.say] : [].concat(item.a);
-        const ok = accepts.some(a => normAns(a) === v);
+        const ok = item.t === 'num' ? item.check(inp.value) : accepts.some(a => normAns(a) === v);
         inp.disabled = true; box.querySelector('#fc').disabled = true;
         feedback(ok, ok ? '' : `<div>Answer: <b>${esc(accepts[0])}</b></div>`);
       };
@@ -555,13 +558,14 @@
   const pick = (a) => a[Math.floor(Math.random() * a.length)];
 
   /* ================= Results ================= */
-  function results(box, r, { pass, again, next, backHref, title, review }) {
+  function results(box, r, { pass, again, next, backHref, title, review, drill }) {
     const ok = r.pct >= pass;
-    const msg = review ? (r.pct >= 80 ? 'Great memory! These are getting stronger.' : 'Good work. The ones you missed will come back in a few days.')
+    const msg = drill ? (r.pct >= pass ? 'Great listening!' : 'Keep practicing. Listening gets easier with every try.')
+      : review ? (r.pct >= 80 ? 'Great memory! These are getting stronger.' : 'Good work. The ones you missed will come back in a few days.')
       : ok ? pick(['You passed! Very good.', 'Passed! You are getting stronger.', 'Well done, you passed!'])
       : r.pct >= pass - 15 ? 'Almost there. Practice a little more and try again.'
       : 'This needs more practice. Read the lesson again, practice, then try the quiz.';
-    const msgAr = review ? 'شاطرة! اللي غلطتي فيه هيرجعلك تاني بعد كام يوم.' : ok ? 'برافو عليكي! كمّلي.' : r.pct >= pass - 15 ? 'قربتي خلاص. ذاكري شوية وجرّبي تاني.' : 'محتاجة تدريب أكتر. اقري الدرس تاني واتمرني، وبعدين جرّبي.';
+    const msgAr = drill ? (r.pct >= pass ? 'سمعك ممتاز!' : 'كمّلي تدريب. السمع بيسهل مع كل مرة.') : review ? 'شاطرة! اللي غلطتي فيه هيرجعلك تاني بعد كام يوم.' : ok ? 'برافو عليكي! كمّلي.' : r.pct >= pass - 15 ? 'قربتي خلاص. ذاكري شوية وجرّبي تاني.' : 'محتاجة تدريب أكتر. اقري الدرس تاني واتمرني، وبعدين جرّبي.';
     box.innerHTML = `<div class="card stack" style="text-align:center;align-items:center">
         <span class="eyebrow">${esc(title || 'Your score')}</span>
         <div class="score-ring" style="color:${ok || review ? 'var(--good)' : 'var(--bad)'}">${r.pct}%</div>
@@ -945,6 +949,7 @@ Please:
         <p class="small muted">Role-plays for every level are in the <b>Talk at Work</b> unit of each level.</p>
         <div class="row">${LEVELS.map(L => { const t = L.units.find(u => u.kind === 'conversation'); return t ? `<a class="btn small" href="#/unit/${t.id}/lesson">Level ${L.n}</a>` : ''; }).join('')}</div>
         <a class="btn small" href="#/phrases">Open the work phrasebook</a>
+        <a class="btn small" href="#/numbers">Numbers and spelling drill</a>
         <button class="btn small ghost" id="freeconv">${I.copy} Free conversation with Claude about my day</button></div>
       <div class="stack"><h2>My recordings</h2><div id="recs"><p class="muted">Loading…</p></div></div>`;
     const free = document.getElementById('free');
@@ -1404,6 +1409,98 @@ Start now by saying your first line in character.`;
     };
     draw();
     document.getElementById('ph-q').oninput = (e) => draw(e.target.value);
+  }
+
+  /* ================= Numbers, times, prices, spelling ================= */
+  const NUM_WORDS = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve', 'thirteen', 'fourteen', 'fifteen', 'sixteen', 'seventeen', 'eighteen', 'nineteen'];
+  const TENS = ['', '', 'twenty', 'thirty', 'forty', 'fifty', 'sixty', 'seventy', 'eighty', 'ninety'];
+  const rnd = (a, b) => a + Math.floor(Math.random() * (b - a + 1));
+  const n2w = (n) => n < 20 ? NUM_WORDS[n] : TENS[Math.floor(n / 10)] + (n % 10 ? '-' + NUM_WORDS[n % 10] : '');
+  const digitsOnly = (v) => String(v).replace(/\D/g, '');
+  const GEN = {
+    phone() {
+      const area = String(rnd(201, 989));
+      const d = String(rnd(200, 989)) + String(rnd(0, 9999)).padStart(4, '0');
+      const spoken = (str) => str.split('').map(c => (c === '0' && Math.random() < 0.3) ? 'oh' : NUM_WORDS[+c]).join(' ');
+      return {
+        t: 'num', q: 'Type the phone number you hear.', ph: 'Example: 973 555 0142', numeric: true,
+        say: `${spoken(area)}. ${spoken(d.slice(0, 3))}. ${spoken(d.slice(3))}.`,
+        a: `(${area}) ${d.slice(0, 3)}-${d.slice(3)}`,
+        check: (v) => digitsOnly(v) === area + d,
+        why: 'Americans say phone numbers in groups: 3 digits, 3 digits, then 4. "Oh" sometimes means zero.'
+      };
+    },
+    time() {
+      const h = [7, 8, 9, 10, 11, 12, 1, 2, 3, 4, 5][rnd(0, 10)], m = [0, 5, 10, 15, 20, 30, 40, 45, 50][rnd(0, 8)];
+      const mins = m === 0 ? "o'clock" : m < 10 ? 'oh ' + NUM_WORDS[m] : n2w(m);
+      const mm = String(m).padStart(2, '0');
+      return {
+        t: 'num', q: 'Type the appointment time you hear (like 3:45).', ph: 'Example: 3:45', numeric: true,
+        say: `Your appointment is at ${n2w(h)} ${mins} ${h >= 7 && h <= 11 ? 'in the morning' : 'in the afternoon'}.`,
+        a: `${h}:${mm}`,
+        check: (v) => digitsOnly(v) === `${h}${mm}` || (m === 0 && digitsOnly(v) === String(h)),
+        why: '"Oh five" means :05. "O\'clock" means :00.'
+      };
+    },
+    price() {
+      const d = rnd(1, 99), c = [0, 25, 50, 75, 99, 10][rnd(0, 5)];
+      const said = `${n2w(d)} dollar${d === 1 ? '' : 's'}` + (c ? ` and ${n2w(c)} cents` : '');
+      return {
+        t: 'num', q: 'Type the price you hear.', ph: 'Example: 12.50', numeric: true,
+        say: `That will be ${said}.`, a: `$${d}.${String(c).padStart(2, '0')}`,
+        check: (v) => { const x = parseFloat(String(v).replace(/[^0-9.]/g, '')); return Math.abs(x - (d + c / 100)) < 0.001; }
+      };
+    },
+    teens() {
+      const n = rnd(3, 9), teen = 10 + n, ten = n * 10, isTeen = Math.random() < 0.5;
+      const val = isTeen ? teen : ten;
+      return {
+        t: 'listen', q: 'Which number do you hear?', say: `${n2w(val)}. The number is ${n2w(val)}.`,
+        o: [String(teen), String(ten)], a: isTeen ? 0 : 1,
+        why: '**-teen** numbers (13–19) are stressed at the end: thir-TEEN. **-ty** numbers are stressed at the start: THIR-ty.'
+      };
+    },
+    date() {
+      const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+      const ord = ['', 'first', 'second', 'third', 'fourth', 'fifth', 'sixth', 'seventh', 'eighth', 'ninth', 'tenth', 'eleventh', 'twelfth', 'thirteenth', 'fourteenth', 'fifteenth', 'sixteenth', 'seventeenth', 'eighteenth', 'nineteenth', 'twentieth', 'twenty-first', 'twenty-second', 'twenty-third', 'twenty-fourth', 'twenty-fifth', 'twenty-sixth', 'twenty-seventh', 'twenty-eighth'];
+      const m = rnd(0, 11), d = rnd(1, 28);
+      const wrongD = d > 18 ? d - 10 : d + 10, wrongM = (m + 1) % 12;
+      return {
+        t: 'listen', q: 'Which date do you hear?', say: `The meeting is on ${months[m]} ${ord[d]}.`,
+        o: [`${months[m]} ${d}`, `${months[m]} ${wrongD}`, `${months[wrongM]} ${d}`], a: 0,
+        why: 'Dates use ordinal numbers: March **fourteenth**, June **twenty-first**.'
+      };
+    },
+    spell() {
+      const names = ['KAREN', 'BRADY', 'NADIA', 'PATEL', 'DIMAS', 'MENDEZ', 'BOWEN', 'PERRY', 'NGUYEN', 'DAVIS', 'MORGAN', 'BIANCA', 'VEGA', 'TIBBS', 'MADDEN'];
+      const nm = names[rnd(0, names.length - 1)];
+      return {
+        t: 'num', q: 'A caller spells their name. Type it.', ph: 'Example: KAREN',
+        say: `My last name is spelled: ${nm.split('').join(', ')}.`, a: nm,
+        check: (v) => String(v).toUpperCase().replace(/[^A-Z]/g, '') === nm,
+        why: 'Letters that are easy to confuse on the phone: **B/P/D/E/T/V**, **M/N**, **F/S**. You can ask: "B as in boy?"'
+      };
+    }
+  };
+  function viewNumbers() {
+    const kinds = [['mix', 'Mixed practice'], ['phone', 'Phone numbers'], ['time', 'Times'], ['price', 'Prices'], ['teens', '13 or 30?'], ['date', 'Dates'], ['spell', 'Spelled names']];
+    app.innerHTML = `<a class="back" href="#/voice">${I.back} Voice</a>
+      <div class="stack" style="gap:6px"><span class="eyebrow">Listening at work</span><h1>Numbers and spelling</h1>
+      <p class="muted">Phone numbers, appointment times, prices, dates, and spelled names come up every day at work. Each drill is new every time. Tap the big button to hear it again.</p>
+      <p class="ar small muted" lang="ar">أرقام التليفون والمواعيد والأسعار وتهجية الأسامي بتيجي كل يوم في الشغل. كل تمرين جديد كل مرة.</p></div>
+      <div class="units" id="nk">${kinds.map(([k, n]) => `<button class="unit-link" data-k="${k}" style="text-align:left;cursor:pointer;font:inherit"><span class="k">${I.speak}</span><span class="t"><b>${n}</b><span>10 questions</span></span><span class="chip">Start</span></button>`).join('')}</div>
+      <div id="nb" class="stack"></div>`;
+    app.querySelectorAll('[data-k]').forEach(b => b.onclick = () => {
+      const k = b.dataset.k;
+      const keys = Object.keys(GEN);
+      const items = Array.from({ length: 10 }, () => GEN[k === 'mix' ? pick(keys) : k]());
+      document.getElementById('nk').hidden = true;
+      const box = document.getElementById('nb');
+      runSet({ box, items, mode: 'drill', track: false, onFinish: (r) => {
+        addXP(5);
+        results(box, r, { pass: 70, drill: true, title: 'Numbers and spelling', again: () => viewNumbers(), next: { href: '#/voice', label: 'Back to Voice' } });
+      } });
+    });
   }
 
   /* ================= Daily session ================= */
