@@ -45,6 +45,7 @@ Every unit has a **Lesson** (with Egyptian Arabic notes), unlimited **Practice**
 - **Practice for my job:** 28 Claude voice role-plays for 8 common jobs (retail, medical office, warehouse, office, restaurant, childcare, housekeeping, phone customer service), picked from her job setting.
 - **My progress:** unit mastery grid, words learned, 4-week practice calendar, and reading-speed history.
 - **Weekly family report:** a summary she can send to family (days practiced, units passed, words, stories, reading speed, recordings to grade, and ways to help).
+- **Notes tab:** her own notes with a name and date, searchable, sortable (newest, oldest, A–Z), with a **Review later** flag that pins a note to the top; she can start a note from any lesson, and notes are included in the backup code.
 - **Grammar guide:** every grammar rule, table, and tip from the lessons in one searchable page, with links to practice.
 - **My writing:** all her saved writing in one place, with word counts and copy-for-Claude grading.
 - **Check yourself:** two quick retrieval questions at the end of every lesson.

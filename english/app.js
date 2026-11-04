@@ -52,7 +52,7 @@
   const fresh = () => ({
     name: '', created: today(), xp: 0, days: {}, streak: { count: 0, last: '' },
     units: {}, tests: {}, placement: null, cards: {}, writing: {}, drafts: {},
-    miss: {}, session: {}, fluency: {}, read: {}, storyDay: {}, myWords: {},
+    miss: {}, session: {}, fluency: {}, read: {}, storyDay: {}, myWords: {}, notes: [],
     settings: { size: 'l', arabic: true, rate: 0.85, voice: '', theme: '', goal: 30, job: '' }
   });
   let S;
@@ -167,6 +167,8 @@
     else if (a === 'words') { tab = 'words'; viewWords(b); }
     else if (a === 'voice') { tab = 'voice'; viewVoice(); }
     else if (a === 'me') { tab = 'me'; viewMe(); }
+    else if (a === 'notes') { tab = 'notes'; viewNotes(); }
+    else if (a === 'note') { tab = 'notes'; viewNote(b || 'new'); }
     else if (a === 'cert' && LEVEL[b]) { tab = 'me'; viewCert(LEVEL[b]); }
     else viewHome();
     setTab(tab);
@@ -313,6 +315,7 @@
       ${tips.map(([n, t, d, a]) => `<div class="row" style="align-items:flex-start;flex-wrap:nowrap;gap:12px"><span class="chip" style="flex:none">${n}</span><div class="stack" style="gap:2px;min-width:0"><b>${t}</b><span class="small">${d}</span>${S.settings.arabic ? `<span class="ar small muted" lang="ar">${a}</span>` : ''}</div></div>`).join('')}
     </div>`;
   }
+  document.addEventListener('click', (e) => { const nb = e.target.closest && e.target.closest('[data-note-from]'); if (nb) { S.noteFrom = nb.dataset.noteFrom; location.hash = '#/note/new-unit'; } });
   document.addEventListener('click', (e) => { if (e.target.id === 'tour-x') { S.toured = true; save(); const t = document.getElementById('tour'); if (t) t.remove(); } });
   function levelBlock(L) {
     const p = levelProgress(L);
@@ -395,6 +398,7 @@
         <div class="row">
           ${s.lesson ? '' : '<button class="btn primary" id="ldone">I finished the lesson</button>'}
           ${(u.items || []).length ? `<a class="btn ${s.lesson ? 'primary' : ''}" href="#/unit/${u.id}/practice">Practice</a><a class="btn" href="#/unit/${u.id}/quiz">Quiz</a>` : ''}
+          <button class="btn ghost" data-note-from="${u.id}">Write a note</button>
         </div>
       </div>`;
     const ld = document.getElementById('ldone');
@@ -1458,6 +1462,7 @@ Start now by saying your first line in character.`;
       `Stories read this week: ${storiesWeek}`,
       flu.length ? `Timed reading: ${flu.map(h => `${h[0].wcpm}→${h[h.length - 1].wcpm} wpm`).join(', ')}` : null,
       `Old mistakes waiting for review: ${dueMisses().length}`,
+      `Notes marked to review: ${(S.notes || []).filter(n => n.review).length}`,
       `Recordings waiting for your grade: ${ungraded}`,
       `Speaking challenge recordings this week: ${challenges}`,
       next ? `Working on now: ${next.title} (${next.sub})` : 'Working on now: all levels finished',
@@ -1841,6 +1846,105 @@ Start now by saying your first line in character.`;
       addXP(5);
     };
     onLeave(() => { clearInterval(timer); if (rec) rec.stop(); });
+  }
+
+  /* ================= Notes ================= */
+  const fmtDate = (ts) => new Date(ts).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+  function noteList() { return Array.isArray(S.notes) ? S.notes : (S.notes = []); }
+  function viewNotes() {
+    S.notes = noteList().filter(n => (n.title || '').trim() || (n.body || '').trim()); save();
+    const sort = S.settings.noteSort || 'new';
+    app.innerHTML = `${brand()}
+      <div class="spread"><div class="stack" style="gap:6px"><span class="eyebrow">Notes</span><h1>My notes</h1></div>
+        <a class="btn primary" href="#/note/new">+ New note</a></div>
+      <p class="muted">Write down anything you want to remember: new words, rules, phrases from work, questions for your teacher.</p>
+      <p class="ar small muted" lang="ar">اكتبي أي حاجة عايزة تفتكريها: كلمات جديدة، قواعد، جمل من الشغل، أسئلة.</p>
+      <div class="row" style="flex-wrap:nowrap">
+        <input class="input" id="nt-q" placeholder="Search my notes" autocomplete="off" style="flex:1;min-width:0">
+        <select class="input" id="nt-sort" style="width:auto" aria-label="Sort notes">
+          <option value="new" ${sort === 'new' ? 'selected' : ''}>Newest</option>
+          <option value="old" ${sort === 'old' ? 'selected' : ''}>Oldest</option>
+          <option value="az" ${sort === 'az' ? 'selected' : ''}>Name A–Z</option>
+        </select>
+      </div>
+      <div id="nt-list" class="stack"></div>`;
+    const list = document.getElementById('nt-list');
+    const draw = () => {
+      const q = document.getElementById('nt-q').value.toLowerCase().trim();
+      const s = document.getElementById('nt-sort').value;
+      let notes = noteList().filter(n => !q || (n.title || '').toLowerCase().includes(q) || (n.body || '').toLowerCase().includes(q));
+      notes.sort(s === 'az' ? (a, b) => (a.title || '').localeCompare(b.title || '') : s === 'old' ? (a, b) => a.created - b.created : (a, b) => b.updated - a.updated);
+      const card = (n) => `<a class="unit-link note-link" href="#/note/${n.id}">
+        <span class="t"><b>${esc(n.title || 'Untitled note')}</b><span>${esc(fmtDate(n.updated))}${n.updated - n.created > 60000 ? ' · edited' : ''}${n.unit && UNIT[n.unit] ? ' · ' + esc(UNIT[n.unit].title) : ''}</span>
+        ${n.body ? `<span class="note-prev">${esc(n.body.slice(0, 90))}${n.body.length > 90 ? '…' : ''}</span>` : ''}</span>
+        ${n.review ? '<span class="chip gold">Review</span>' : ''}</a>`;
+      const rev = notes.filter(n => n.review), rest = notes.filter(n => !n.review);
+      if (!noteList().length) {
+        list.innerHTML = `<div class="card flat stack" style="text-align:center;align-items:center"><b>No notes yet</b><p class="small muted">Tap <b>+ New note</b> to write your first one. You can also start a note from any lesson.</p></div>`;
+      } else if (!notes.length) {
+        list.innerHTML = '<p class="muted">No notes match your search.</p>';
+      } else {
+        list.innerHTML = (rev.length ? `<h3>To review</h3><div class="units">${rev.map(card).join('')}</div>` : '')
+          + (rest.length ? `${rev.length ? '<h3>All other notes</h3>' : ''}<div class="units">${rest.map(card).join('')}</div>` : '');
+      }
+    };
+    draw();
+    document.getElementById('nt-q').oninput = draw;
+    document.getElementById('nt-sort').onchange = (e) => { S.settings.noteSort = e.target.value; save(); draw(); };
+  }
+  function viewNote(id) {
+    let n;
+    if (id === 'new' || id === 'new-unit') {
+      const from = id === 'new-unit' && S.noteFrom && UNIT[S.noteFrom] ? UNIT[S.noteFrom] : null;
+      n = { id: 'n' + Date.now().toString(36), title: from ? from.title : '', body: '', created: Date.now(), updated: Date.now(), review: false, unit: from ? from.id : '' };
+      delete S.noteFrom;
+      noteList().unshift(n); save();
+      history.replaceState(null, '', '#/note/' + n.id);
+    } else {
+      n = noteList().find(x => x.id === id);
+      if (!n) { location.hash = '#/notes'; return; }
+    }
+    app.innerHTML = `<a class="back" href="#/notes">${I.back} My notes</a>
+      <div class="stack" style="gap:6px">
+        <label class="small muted" for="nt-title">Name</label>
+        <input class="input note-title" id="nt-title" placeholder="Name this note (for example: Past tense verbs)" value="${esc(n.title)}" autocomplete="off">
+        <span class="small muted" id="nt-dates">Written ${esc(fmtDate(n.created))}${n.updated - n.created > 60000 ? ' · last edited ' + esc(fmtDate(n.updated)) : ''}${n.unit && UNIT[n.unit] ? ` · from <a href="#/unit/${n.unit}/lesson">${esc(UNIT[n.unit].title)}</a>` : ''}</span>
+      </div>
+      <label class="small muted" for="nt-body">Note</label>
+      <textarea class="input" id="nt-body" placeholder="Write here. Your note saves by itself." style="min-height:260px">${esc(n.body)}</textarea>
+      <label class="switch" for="nt-rev" style="border:0"><span><b>Review later</b><span class="small muted" style="display:block">Keeps this note at the top of your list until you are done with it.</span></span>
+        <input type="checkbox" id="nt-rev" ${n.review ? 'checked' : ''} style="width:24px;height:24px;accent-color:var(--nile)"></label>
+      <div class="row">
+        <button class="btn" id="nt-say">${I.speak} Listen</button>
+        <a class="btn primary" id="nt-done" href="#/notes">Done</a>
+        <button class="btn ghost" id="nt-del" style="color:var(--bad)">Delete</button>
+      </div>
+      <p class="small muted" id="nt-saved" aria-live="polite"></p>`;
+    const title = document.getElementById('nt-title'), body = document.getElementById('nt-body'), saved = document.getElementById('nt-saved');
+    let t;
+    const persist = () => {
+      n.title = title.value.trim(); n.body = body.value; n.updated = Date.now(); save();
+      saved.textContent = 'Saved.';
+    };
+    const later = () => { clearTimeout(t); saved.textContent = ''; t = setTimeout(persist, 500); };
+    title.oninput = later; body.oninput = later;
+    onLeave(() => {
+      clearTimeout(t);
+      if (title.isConnected) { n.title = title.value.trim(); n.body = body.value; }
+      // drop a brand-new note left completely empty
+      const list = noteList(), i = list.indexOf(n);
+      if (i >= 0 && !n.title && !n.body.trim()) list.splice(i, 1);
+      save();
+    });
+    document.getElementById('nt-rev').onchange = (e) => { n.review = e.target.checked; n.updated = Date.now(); save(); toast(n.review ? 'Marked to review.' : 'Removed from review.'); };
+    document.getElementById('nt-say').onclick = () => { const text = [title.value, body.value].filter(Boolean).join('. '); if (text.trim()) say(text); };
+    const del = document.getElementById('nt-del');
+    del.onclick = () => {
+      if (del.dataset.sure) { const list = noteList(); const i = list.indexOf(n); if (i >= 0) list.splice(i, 1); save(); toast('Note deleted.'); location.hash = '#/notes'; return; }
+      del.dataset.sure = '1'; del.textContent = 'Tap again to delete'; del.classList.add('confirm');
+      setTimeout(() => { if (del.isConnected) { delete del.dataset.sure; del.textContent = 'Delete'; del.classList.remove('confirm'); } }, 3000);
+    };
+    if (!n.title && !n.body) setTimeout(() => title.focus({ preventScroll: true }), 50);
   }
 
   /* ================= Daily session ================= */
