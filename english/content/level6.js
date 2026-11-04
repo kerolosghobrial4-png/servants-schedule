@@ -1,82 +1,80 @@
 window.SEKKA_LEVELS = window.SEKKA_LEVELS || [];
 window.SEKKA_LEVELS.push({
-  id: 'L6', n: 6, title: 'MCAT Reading (CARS) and Science English', ar: 'قراءة الـ MCAT وإنجليزي العلوم', grade: 'Pre-med / MCAT', cefr: 'CEFR C1',
+  id: 'L6', n: 6, title: 'Advanced: Career and College', ar: 'متقدم: الشغل والجامعة', grade: 'Advanced · college & career', cefr: 'CEFR C1',
+  cando: 'Lead conversations and meetings, read difficult college texts, and argue a point clearly in writing.',
   units: [
     {
-      id: 'L6U1', kind: 'strategy', title: 'How CARS Works', ar: 'إزاي قسم CARS بيشتغل',
+      id: 'L6U1', kind: 'strategy', title: 'Reading Hard Texts: A College Method', ar: 'طريقة لقراءة النصوص الصعبة',
       lesson: [
-        { p: 'The MCAT has four sections. One of them is **CARS: Critical Analysis and Reasoning Skills**. It has **9 passages and 53 questions in 90 minutes**, about 10 minutes per passage. The passages are about humanities and social sciences (art, philosophy, history, ethics, culture). You do **not** need outside knowledge. Everything you need is in the passage.' },
-        { ar: 'قسم CARS: ٩ قطع، ٥٣ سؤال، ٩٠ دقيقة. يعني حوالي ١٠ دقايق لكل قطعة. المواضيع فن وفلسفة وتاريخ وأخلاق. **مش محتاجة معلومات من برّه**، كل حاجة موجودة في القطعة.' },
-        { h: 'The three question families' },
-        { table: [['Family', 'About', 'Sounds like'], ['**Foundations of Comprehension** (about 30%)', 'What the passage says and means', '"The author\'s main point is…", "As used in paragraph 3, the word X means…"'], ['**Reasoning Within the Text** (about 30%)', 'How the argument is built and supported', '"Which claim is least supported?", "The author mentions X in order to…"'], ['**Reasoning Beyond the Text** (about 40%)', 'Applying the ideas to a new situation', '"Which new finding would most weaken…?", "The author would most likely agree that…"']] },
-        { h: 'A 4-step method for each passage' },
-        { ex: ['1. Read actively. After each paragraph, say its point in five words or less.', '2. Find the author\'s voice. Separate the author\'s opinion from other people\'s opinions.', '3. Before the answers, predict. What would a good answer say?', '4. Eliminate. Cross out answers that are too extreme, off-topic, or opposite.'] },
+        { p: 'College courses, placement tests, and professional reports all ask the same thing: understand a difficult text and reason about it. This method works for any hard reading, from a textbook chapter to a company policy.' },
+        { ar: 'الطريقة دي بتنفع لأي نص صعب: كتاب الجامعة، امتحان تحديد المستوى، أو تقرير في الشغل.' },
+        { h: 'Three kinds of questions' },
+        { table: [['Kind', 'About', 'Sounds like'], ['**Understanding**', 'What the text says and means', '"The author\'s main point is…", "In paragraph 3, the word X means…"'], ['**Reasoning inside the text**', 'How the argument is built', '"The author mentions X in order to…", "Which claim has the least support?"'], ['**Reasoning beyond the text**', 'Applying the ideas to a new situation', '"Which new fact would weaken…?", "The author would probably agree that…"']] },
+        { h: 'A 4-step method' },
+        { ex: ['1. Read actively. After each paragraph, say its point in five words or less.', '2. Find the author\'s voice. Separate the author\'s opinion from other people\'s opinions.', '3. Before the answers, predict. What would a good answer say?', '4. Eliminate. Cross out answers that are too extreme, off-topic, or the opposite.'] },
         { h: 'Signs of a wrong answer' },
-        { table: [['Trap', 'Example'], ['Too extreme', 'Words like **always, never, all, only, completely** when the author was careful'], ['Out of scope', 'True in real life, but the passage never discusses it'], ['Half right', 'The first half matches; the second half twists it'], ['Opposite', 'The view of someone the author argues against']] },
-        { tip: 'CARS rewards patience more than speed. Your English level matters most. That is why the earlier levels are the real MCAT preparation.' }
+        { table: [['Trap', 'Example'], ['Too extreme', 'Words like **always, never, all, only, completely** when the author was careful'], ['Out of scope', 'True in real life, but the text never discusses it'], ['Half right', 'The first half matches; the second half twists it'], ['Opposite', 'The view of someone the author argues against']] },
+        { tip: 'The same skill helps at work: when you read an email or a policy, ask "What does the writer want, and what is the evidence?"' }
       ],
       items: [
-        { t: 'mc', q: 'How many questions are in the CARS section?', o: ['53', '59', '30', '100'], a: 0 },
-        { t: 'mc', q: 'How much outside knowledge does CARS require?', o: ['None. All information is in the passage.', 'A lot of biology', 'Some history facts', 'Chemistry formulas'], a: 0 },
-        { t: 'mc', q: 'About how long should you spend on one CARS passage?', o: ['About 10 minutes', 'About 2 minutes', 'About 30 minutes', 'About 1 hour'], a: 0 },
-        { t: 'mc', q: '"Which of the following findings would most weaken the author\'s argument?" This is a…', o: ['Reasoning Beyond the Text question', 'Foundations of Comprehension question', 'vocabulary question', 'math question'], a: 0 },
-        { t: 'mc', q: '"As used in paragraph 2, the word *novel* most nearly means…" This is a…', o: ['Foundations of Comprehension question', 'Reasoning Beyond the Text question', 'science question', 'trick question'], a: 0 },
-        { t: 'mc', q: '"The author mentions the 1920s exhibition primarily in order to…" This is a…', o: ['Reasoning Within the Text question', 'Reasoning Beyond the Text question', 'Foundations of Comprehension question'], a: 0 },
-        { t: 'mc', q: 'An author writes: "Some evidence suggests that urban gardens may reduce stress." Which answer choice is **too extreme**?', o: ['Urban gardens always eliminate stress.', 'Urban gardens might lower stress.', 'There is some support for gardens reducing stress.', 'Gardens may have psychological benefits.'], a: 0, why: '**always** and **eliminate** are much stronger than "some evidence" and "may reduce".' },
-        { t: 'mc', q: 'The passage argues that a painter was underappreciated in her lifetime. An answer says "She was the most famous painter of her century." This is…', o: ['the opposite of the passage', 'a correct inference', 'out of scope', 'half right'], a: 0 },
-        { t: 'mc', q: 'The author discusses music education in schools. An answer choice says "Music lessons increase test scores in math." The passage never mentions math. This answer is…', o: ['out of scope', 'too extreme', 'the main idea', 'the author\'s assumption'], a: 0 },
-        { t: 'mc', q: 'What is the best first step after reading a question?', o: ['Predict the answer in your own words before reading the choices', 'Choose the longest answer', 'Read the choices quickly and pick one', 'Skip to the next passage'], a: 0 },
-        { t: 'mc', q: 'An author writes: "Critics claim the novel is sentimental. This view misses the book\'s quiet irony." The author\'s own view is that the novel…', o: ['contains irony that critics overlook', 'is sentimental', 'is badly written', 'has no irony'], a: 0, why: 'Separate the author\'s voice ("This view misses…") from the critics\' view.' },
-        { t: 'tf', q: 'In CARS, an answer that is true in real life is always correct.', a: false, why: 'The answer must be supported by **the passage**.' }
+        { t: 'mc', q: '"Which of the following findings would most weaken the author\'s argument?" This question asks you to…', o: ['reason beyond the text', 'find a word meaning', 'summarize paragraph 1', 'find a date'], a: 0 },
+        { t: 'mc', q: '"As used in paragraph 2, the word *novel* most nearly means…" This is a…', o: ['understanding question', 'reasoning beyond the text question', 'math question', 'trick question'], a: 0 },
+        { t: 'mc', q: '"The author mentions the 1920s exhibition mainly in order to…" This asks about…', o: ['how the argument is built (reasoning inside the text)', 'applying ideas to a new situation', 'vocabulary only'], a: 0 },
+        { t: 'mc', q: 'An author writes: "Some evidence suggests that urban gardens may reduce stress." Which answer is **too extreme**?', o: ['Urban gardens always eliminate stress.', 'Urban gardens might lower stress.', 'There is some support for gardens reducing stress.', 'Gardens may have psychological benefits.'], a: 0, why: '**always** and **eliminate** are much stronger than "some evidence" and "may reduce".' },
+        { t: 'mc', q: 'The text argues that a painter was underappreciated in her lifetime. An answer says "She was the most famous painter of her century." This answer is…', o: ['the opposite of the text', 'a correct inference', 'out of scope', 'half right'], a: 0 },
+        { t: 'mc', q: 'The author discusses music education. An answer says "Music lessons increase math scores." The text never mentions math. This answer is…', o: ['out of scope', 'too extreme', 'the main idea', 'the author\'s assumption'], a: 0 },
+        { t: 'mc', q: 'What is the best first step after reading a question?', o: ['Predict the answer in your own words before reading the choices', 'Choose the longest answer', 'Read the choices quickly and pick one', 'Skip to the next text'], a: 0 },
+        { t: 'mc', q: '"Critics claim the novel is sentimental. This view misses the book\'s quiet irony." The author thinks the novel…', o: ['has irony that critics overlook', 'is sentimental', 'is badly written', 'has no irony'], a: 0, why: 'Separate the author\'s voice ("This view misses…") from the critics\' view.' },
+        { t: 'mc', q: 'A company email says: "While the new schedule has some drawbacks, it will reduce overtime costs." The writer most likely…', o: ['supports the new schedule despite its problems', 'opposes the new schedule', 'thinks the schedule is perfect', 'has no opinion'], a: 0 },
+        { t: 'mc', q: 'Countries that eat more chocolate win more Nobel Prizes. The best conclusion is:', o: ['This is a correlation that other factors, such as wealth, may explain.', 'Chocolate makes people smarter.', 'Nobel Prizes cause chocolate sales.', 'The data must be false.'], a: 0, why: '**Correlation** (two things happen together) is not **causation** (one causes the other).' },
+        { t: 'tf', q: 'In a reading test, an answer that is true in real life is always correct.', a: false, why: 'The answer must be supported by **the text**.' }
       ]
     },
     {
-      id: 'L6U2', kind: 'vocab', title: 'Medical and Science Word Parts', ar: 'مقاطع الكلمات الطبية والعلمية',
+      id: 'L6U2', kind: 'vocab', title: 'Workplace Idioms and Professional Expressions', ar: 'تعبيرات الشغل',
       lesson: [
-        { p: 'The science sections of the MCAT and every medical textbook use Greek and Latin parts. With about 30 parts, you can understand hundreds of medical terms.' },
-        { table: [['Part', 'Meaning', 'Example'], ['cardi(o)', 'heart', 'cardiology'], ['neur(o)', 'nerve, brain', 'neuron, neurology'], ['hepat(o)', 'liver', 'hepatitis'], ['nephr(o) / ren', 'kidney', 'nephron, renal'], ['gastr(o)', 'stomach', 'gastric'], ['derm', 'skin', 'dermatology'], ['hem(at)', 'blood', 'hemoglobin, hematology'], ['oste(o)', 'bone', 'osteoporosis'], ['-itis', 'inflammation', 'arthritis'], ['-ectomy', 'surgical removal', 'appendectomy'], ['-ology', 'study of', 'biology'], ['hypo-', 'below, too little', 'hypoglycemia'], ['hyper-', 'above, too much', 'hypertension'], ['endo-', 'inside', 'endocrine'], ['exo-', 'outside', 'exocrine'], ['-lysis', 'breaking down', 'glycolysis, hydrolysis']] },
-        { ar: '**hyper** = زيادة، **hypo** = نقص. **hypertension** = ضغط عالي، **hypoglycemia** = سكر واطي. **itis** = التهاب: **hepatitis** = التهاب الكبد.' },
-        { tip: 'Break a long word into parts: **gastro + enter + itis** = inflammation of the stomach and intestines.' }
+        { p: 'Coworkers and managers use many **idioms**: expressions whose meaning is different from the separate words. Understanding them is a big step toward following fast conversations at work.' },
+        { ar: 'الـ idioms تعبيرات معناها مختلف عن معنى كل كلمة لوحدها. زي ما بنقول في العربي «على راسي» ومش قصدنا الراس فعلاً.' },
+        { tip: 'You don\'t need to use every idiom yourself. First, learn to **understand** them. Then use the ones you like.' }
       ],
       words: [
-        { w: 'homeostasis', ar: 'الاتزان الداخلي للجسم', d: 'The body keeping its inside conditions (temperature, sugar, water) stable.', ex: 'Sweating helps maintain homeostasis.' },
-        { w: 'enzyme', ar: 'إنزيم', d: 'A protein that speeds up a chemical reaction in the body.', ex: 'Enzymes in saliva begin to digest starch.' },
-        { w: 'metabolism', ar: 'التمثيل الغذائي / الأيض', d: 'All the chemical reactions that keep a living thing alive.', ex: 'Thyroid hormones affect metabolism.' },
-        { w: 'catalyst', ar: 'عامل مساعد (محفّز)', d: 'Something that speeds up a reaction without being used up.', ex: 'An enzyme is a biological catalyst.' },
-        { w: 'variable', ar: 'متغيّر', d: 'Something that can change in an experiment. The independent variable is what you change; the dependent variable is what you measure.', ex: 'Temperature was the independent variable.' },
-        { w: 'correlation', ar: 'ارتباط / علاقة', d: 'When two things change together.', ex: 'There is a correlation between smoking and lung disease.' },
-        { w: 'causation', ar: 'سببية', d: 'When one thing actually causes another. Correlation is not always causation.', ex: 'The study could not prove causation.' },
-        { w: 'hypertension', ar: 'ضغط الدم العالي', d: 'High blood pressure. (hyper = too much)', ex: 'Too much salt can worsen hypertension.' },
-        { w: 'hypoglycemia', ar: 'هبوط السكر في الدم', d: 'Low blood sugar. (hypo = too little, glyc = sugar, emia = blood)', ex: 'Skipping meals can cause hypoglycemia in diabetics.' },
-        { w: 'inflammation', ar: 'التهاب', d: 'Redness, swelling, heat, and pain as the body reacts to injury or infection.', ex: 'Ice reduces inflammation.' },
-        { w: 'renal', ar: 'كلوي (خاص بالكلى)', d: 'Related to the kidneys.', ex: 'Renal failure means the kidneys stop working.' },
-        { w: 'cardiac', ar: 'قلبي (خاص بالقلب)', d: 'Related to the heart.', ex: 'He had cardiac surgery.' },
-        { w: 'neuron', ar: 'خلية عصبية', d: 'A nerve cell that sends electrical signals.', ex: 'Neurons connect at synapses.' },
-        { w: 'control group', ar: 'المجموعة الضابطة', d: 'The group in an experiment that does not get the treatment, used for comparison.', ex: 'The control group received a placebo.' },
-        { w: 'placebo', ar: 'دوا وهمي', d: 'A fake treatment with no active medicine.', ex: 'Some patients felt better even on the placebo.' },
-        { w: 'chronic', ar: 'مزمن', d: 'Lasting a long time. Opposite: acute (sudden and short).', ex: 'Diabetes is a chronic disease.' }
+        { w: 'touch base', ar: 'نتواصل / نطمّن على بعض', d: 'To contact someone briefly to share an update.', ex: 'Let\'s touch base on Friday about the project.' },
+        { w: 'on the same page', ar: 'متفقين / فاهمين نفس الحاجة', d: 'Agreeing or understanding something the same way.', ex: 'Before we start, let\'s make sure we\'re on the same page.' },
+        { w: 'get the ball rolling', ar: 'نبدأ', d: 'To start an activity or process.', ex: 'I\'ll send the first email to get the ball rolling.' },
+        { w: 'heads-up', ar: 'تنبيه مسبق', d: 'A warning or notice in advance.', ex: 'Thanks for the heads-up about the meeting change.' },
+        { w: 'follow up', ar: 'يتابع', d: 'To contact someone again to continue or check on something.', ex: 'I\'ll follow up with the client tomorrow.' },
+        { w: 'bottom line', ar: 'الخلاصة / أهم نقطة', d: 'The most important fact or result.', ex: 'The bottom line is that we need more staff.' },
+        { w: 'behind schedule', ar: 'متأخرين عن الميعاد', d: 'Later than planned.', ex: 'The project is two weeks behind schedule.' },
+        { w: 'take the lead', ar: 'ياخد القيادة / يمسك الموضوع', d: 'To be in charge of something.', ex: 'Can you take the lead on this task?' },
+        { w: 'a learning curve', ar: 'فترة تعلّم', d: 'The time it takes to learn something new.', ex: 'The new system has a steep learning curve.' },
+        { w: 'go the extra mile', ar: 'يعمل أكتر من المطلوب', d: 'To do more than is expected.', ex: 'She always goes the extra mile for customers.' },
+        { w: 'think outside the box', ar: 'يفكر بطريقة جديدة', d: 'To think in a new, creative way.', ex: 'We need to think outside the box to solve this.' },
+        { w: 'on short notice', ar: 'على السريع / من غير ميعاد كافي', d: 'With very little warning.', ex: 'Sorry to ask on short notice, but can you cover my shift?' },
+        { w: 'run late', ar: 'يتأخر', d: 'To be later than expected.', ex: 'The meeting is running late.' },
+        { w: 'up to speed', ar: 'متابع وعارف آخر التطورات', d: 'Having the newest information.', ex: 'Can you bring me up to speed on what I missed?' },
+        { w: 'a win-win', ar: 'كل الأطراف كسبانة', d: 'A situation good for everyone.', ex: 'Flexible hours are a win-win for staff and the company.' },
+        { w: 'drop the ball', ar: 'يقصّر / ينسى حاجة مهمة', d: 'To make a mistake by not doing something you should.', ex: 'I dropped the ball on that email. I\'ll send it now.' }
       ],
       items: [
-        { t: 'mc', q: '**Nephritis** means inflammation of the…', o: ['kidney', 'heart', 'liver', 'skin'], a: 0, why: '**nephr** = kidney, **-itis** = inflammation.' },
-        { t: 'mc', q: '**Hepatology** is the study of the…', o: ['liver', 'heart', 'stomach', 'bones'], a: 0 },
-        { t: 'mc', q: 'A **gastrectomy** is…', o: ['surgical removal of (part of) the stomach', 'inflammation of the stomach', 'a stomach doctor', 'a stomach X-ray'], a: 0 },
-        { t: 'mc', q: '**Hyperthermia** means body temperature that is…', o: ['too high', 'too low', 'normal', 'changing'], a: 0 },
-        { t: 'mc', q: '**Hypoglycemia** means…', o: ['low blood sugar', 'high blood sugar', 'low blood pressure', 'high heart rate'], a: 0 },
-        { t: 'mc', q: '**Osteoporosis** affects the…', o: ['bones', 'kidneys', 'skin', 'nerves'], a: 0 },
-        { t: 'mc', q: 'The body keeping a stable inner temperature is an example of…', o: ['homeostasis', 'inflammation', 'causation', 'a placebo'], a: 0 },
-        { t: 'mc', q: 'An **enzyme** works as a…', o: ['biological catalyst', 'type of fat', 'hormone receptor', 'blood cell'], a: 0 },
-        { t: 'mc', q: 'Ice cream sales and drowning both rise in summer. This shows…', o: ['correlation, not necessarily causation', 'that ice cream causes drowning', 'homeostasis', 'a control group'], a: 0, why: 'Both are caused by a third factor: hot weather.' },
-        { t: 'mc', q: 'In an experiment testing a new drug, the group that receives a sugar pill is the…', o: ['control group', 'independent variable', 'catalyst', 'hypothesis'], a: 0 },
-        { t: 'mc', q: 'Researchers change the dose of a drug and measure blood pressure. Blood pressure is the…', o: ['dependent variable', 'independent variable', 'control group', 'placebo'], a: 0 },
-        { t: 'mc', q: 'The opposite of **chronic** is…', o: ['acute', 'renal', 'cardiac', 'empirical'], a: 0 },
-        { t: 'fill', q: '**Cardi** means heart, so a heart doctor is a ___logist.', a: ['cardio', 'cardiologist'] },
-        { t: 'listen', say: 'hypertension', o: ['hypertension', 'hypotension', 'hyperventilation', 'tension'], a: 0 }
+        { t: 'mc', q: '"Let\'s touch base next week." The speaker wants to…', o: ['talk briefly to share updates', 'play a ball game', 'end the project', 'meet at a baseball field'], a: 0 },
+        { t: 'mc', q: '"Thanks for the heads-up." Someone gave you…', o: ['a warning in advance', 'a new hat', 'a promotion', 'a complaint'], a: 0 },
+        { t: 'mc', q: '"I dropped the ball on that report." The speaker…', o: ['made a mistake by not doing it', 'finished it early', 'gave it to someone', 'lost a ball'], a: 0 },
+        { t: 'mc', q: 'Your manager says: "Can you bring me up to speed?" You should…', o: ['tell her the latest updates', 'walk faster', 'drive her to work', 'repeat your question'], a: 0 },
+        { t: 'mc', q: '"The project is behind schedule." It is…', o: ['late', 'early', 'cancelled', 'finished'], a: 0 },
+        { t: 'mc', q: 'Before we decide, let\'s make sure we\'re all ___.', o: ['on the same page', 'behind schedule', 'a win-win', 'on short notice'], a: 0 },
+        { t: 'mc', q: '"The bottom line is we can\'t afford it." "Bottom line" means…', o: ['the most important point', 'the last line of a page', 'the lowest price', 'a long list'], a: 0 },
+        { t: 'mc', q: 'Which phrase means "do more than expected"?', o: ['go the extra mile', 'run late', 'touch base', 'follow up'], a: 0 },
+        { t: 'mc', q: 'Your coworker asks you to work tomorrow, and it\'s already 8 p.m. She is asking ___.', o: ['on short notice', 'on the same page', 'up to speed', 'outside the box'], a: 0 },
+        { t: 'mc', q: '"I\'ll follow up with the customer." The speaker will…', o: ['contact the customer again', 'walk behind the customer', 'forget the customer', 'cancel the order'], a: 0 },
+        { t: 'fill', q: 'Working from home on Fridays is a ___-___: we save time and the company saves money. (two words: win…)', a: ['win-win', 'win win'] },
+        { t: 'tf', q: '"There is a learning curve" means it takes time to learn something new.', a: true },
+        { t: 'listen', say: 'Let\'s touch base on Friday to get the ball rolling.', o: ['Let\'s touch base on Friday to get the ball rolling.', 'Let\'s touch the base on Friday and roll the ball.', 'Let\'s talk Friday about the rolling ball.', 'Let\'s touch face on Friday.'], a: 0 }
       ]
     },
     {
-      id: 'L6U3', kind: 'reading', title: 'CARS Practice: Humanities', ar: 'تدريب CARS: إنسانيات',
+      id: 'L6U3', kind: 'reading', title: 'Critical Reading: Art and Authenticity', ar: 'قراءة نقدية: الفن والأصالة',
       lesson: [
-        { p: 'This is a full CARS-style passage. Give yourself **10 minutes** for the passage and all its questions. Use the 4-step method: read actively, find the author\'s voice, predict, eliminate.' },
+        { p: 'This is a long, college-level passage, like the readings in a first-year college course. Give yourself **10 minutes** for the passage and its questions. Use the 4-step method: read actively, find the author\'s voice, predict, eliminate.' },
         { ar: 'اديكي ١٠ دقايق للقطعة والأسئلة. بعد كل فقرة قولي فكرتها في كلمتين.' }
       ],
       passages: [
@@ -94,9 +92,9 @@ window.SEKKA_LEVELS.push({
       ]
     },
     {
-      id: 'L6U4', kind: 'reading', title: 'CARS Practice: Social Science', ar: 'تدريب CARS: علوم اجتماعية',
+      id: 'L6U4', kind: 'reading', title: 'Critical Reading: Doctors and Patients', ar: 'قراءة نقدية: الدكتور والمريض',
       lesson: [
-        { p: 'A second full passage. This one is about medicine and society, a common CARS topic. Again, about **10 minutes**. Watch for where the author agrees and disagrees with others.' },
+        { p: 'A second college-level passage, about how doctors and patients make decisions together. Again, about **10 minutes**. Watch for where the author agrees and disagrees with others.' },
         { tip: 'When an author says "This is true, but…" the part **after "but"** is usually the author\'s real view.' }
       ],
       passages: [
@@ -115,16 +113,16 @@ window.SEKKA_LEVELS.push({
       speak: [
         'Competent adults have the right to make decisions about their own bodies.',
         'Influence, in other words, is unavoidable.',
-        'Hypertension and hypoglycemia require careful monitoring.',
-        'The control group received a placebo instead of the medication.'
+        'Let\'s touch base on Friday to make sure we\'re on the same page.',
+        'The bottom line is that we need a clear plan.'
       ],
       write: [
-        { task: '**CARS reflection:** In 5–6 sentences, explain the author\'s argument in "Choosing for Patients" and say whether you agree. Use at least two transition words (however, therefore, nevertheless…).', ar: 'في ٥-٦ جمل اشرحي رأي الكاتب وقولي انتي موافقة ولا لأ. استخدمي كلمتين ربط على الأقل.' }
+        { task: '**Reflection:** In 5–6 sentences, explain the author\'s argument in "Choosing for Patients" and say whether you agree. Use at least two transition words (however, therefore, nevertheless…).', ar: 'في ٥-٦ جمل اشرحي رأي الكاتب وقولي انتي موافقة ولا لأ. استخدمي كلمتين ربط على الأقل.' }
       ]
     }
   ],
   test: [
     { t: 'mc', q: 'An author writes: "While the policy has flaws, abandoning it would be worse." The author most likely:', o: ['supports keeping the policy despite its problems', 'wants to abandon the policy', 'thinks the policy is perfect', 'has no opinion'], a: 0 },
-    { t: 'mc', q: '**Pericarditis** is inflammation around the…', o: ['heart', 'liver', 'kidney', 'stomach'], a: 0, why: '**peri** = around, **card** = heart, **itis** = inflammation.' }
+    { t: 'mc', q: 'Your manager says: "I\'m running late. Can you get the ball rolling?" She wants you to…', o: ['start the meeting without her', 'cancel the meeting', 'wait for her', 'go home'], a: 0 }
   ]
 });

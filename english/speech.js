@@ -38,7 +38,8 @@
     const u = new SpeechSynthesisUtterance(text);
     u.lang = 'en-US';
     u.rate = opts.rate || 0.9;
-    const v = Speech.pickVoice(opts.voice);
+    if (opts.pitch) u.pitch = opts.pitch;
+    const v = opts.voiceObj || Speech.pickVoice(opts.voice);
     if (v) u.voice = v;
     let done = false;
     const finish = () => { if (!done) { done = true; clearTimeout(t); resolve(true); } };

@@ -1,17 +1,17 @@
 # Sekka English (سكة)
 
-An installable web app (PWA) that takes an Egyptian-Arabic-speaking adult from about a 4th–5th grade English level to college reading and MCAT CARS.
+An installable web app (PWA) that takes an Egyptian-Arabic-speaking adult from about a 4th–5th grade English level to holding full conversations at work and succeeding in college.
 
 ## What's inside
 
-| Level | Grade / CEFR | Grammar | Vocabulary | Reading | Speaking & Writing |
-|---|---|---|---|---|---|
-| 1 Strong Roots | 4–6 · A2 | be, do/does, -s rule | 16 everyday words | 2 short stories | P/B, F/V, ship/sheep |
-| 2 Building Blocks | 6–7 · A2+ | past simple, a/an/the | feelings + phrasal verbs | informational + letter | TH, -ed endings, stress |
-| 3 Growing Stronger | 8–9 · B1 | present perfect, comparisons, future | Latin/Greek roots | sleep science + biography | clusters, linking, paragraphs |
-| 4 High School Ready | 10–12 · B2 | passive, relative clauses, conditionals | Academic Word List 1 | argument + science history | punctuation, persuasive writing |
-| 5 College English | College · B2+/C1 | agreement, parallelism, modifiers | AWL 2 + transitions | academic essays | thesis, summary, formal register |
-| 6 MCAT CARS | Pre-med · C1 | CARS strategy | medical word parts | 2 full CARS-style passages | reflection writing |
+| Level | Grade / CEFR | Talk at Work | Grammar | Vocabulary | Reading | Speaking & Writing |
+|---|---|---|---|---|---|---|
+| 1 Strong Roots | 4–6 · A2 | introductions, small talk, asking to repeat | be, do/does, -s rule | 16 everyday words | 2 short stories | P/B, F/V, ship/sheep |
+| 2 Building Blocks | 6–7 · A2+ | asking for help, calling in late/sick | past simple, a/an/the | feelings + phrasal verbs | informational + letter | TH, -ed endings, stress |
+| 3 Growing Stronger | 8–9 · B1 | instructions, phone messages, checking understanding | present perfect, comparisons, future | Latin/Greek roots | sleep science + biography | clusters, linking, paragraphs |
+| 4 High School Ready | 10–12 · B2 | meetings: opinions, polite disagreement | passive, relative clauses, conditionals | Academic Word List 1 | argument + science history | punctuation, persuasive writing |
+| 5 College English | College · B2+/C1 | emails, feedback, schedule/raise requests | agreement, parallelism, modifiers | AWL 2 + transitions | academic essays | thesis, summary, formal register |
+| 6 Career & College | Advanced · C1 | interviews (STAR), presentations, hard conversations | reading hard texts | workplace idioms | 2 college-level passages | reflection writing |
 
 ## How it teaches (evidence-based)
 
@@ -26,6 +26,10 @@ An installable web app (PWA) that takes an Egyptian-Arabic-speaking adult from a
 - A **How you can help** guide for family (recasts, teach-back, a daily 10 minutes of English).
 
 Every unit has a **Lesson** (with Egyptian Arabic notes), unlimited **Practice** with explanations, and a **Quiz** (80% to pass). Each level ends with a **20-question test** (80% to pass), which earns a printable certificate. There's also an 18-question **placement check**, a **spaced-repetition word deck**, and a **Voice** tab.
+
+## Talk at Work (conversation)
+
+Each level has a conversation unit: ready-made work phrases, politeness and culture notes for Arabic speakers, a two-voice model dialogue she can practice as "her part" (speech-checked), and role-play scenarios. Each scenario copies a prompt for **Claude voice mode**: Claude plays the coworker, manager, customer, or interviewer, corrects her by naturally repeating her sentence back the right way, and gives feedback at the end. Set her job in **Me → Settings** so role-plays match her workplace.
 
 ## Grading speech
 
