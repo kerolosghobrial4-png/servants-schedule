@@ -992,6 +992,7 @@ Please:
         <button class="qk" id="freeconv" type="button"><b>Talk with Claude</b><span>Free chat about your day</span></button>
         <a href="#/unit/${(() => { const L = LEVELS[Math.max(0, curLevelN() - 1)]; const t = L.units.find(u => u.kind === 'conversation'); return t ? t.id : LEVELS[0].units[1].id; })()}/lesson" class="qk"><b>Talk at Work</b><span>Your level's conversation</span></a>
       </div>
+      <div class="card stack" id="chbox"></div>
       <div class="card stack" id="jobbox"></div>
       <div class="stack" style="gap:8px"><h2>Read out loud</h2><div id="free"></div></div>
       <details class="card flat"><summary><b>How to practice with Claude voice</b></summary>
@@ -1007,6 +1008,7 @@ Please:
     extra.innerHTML = `<button class="btn small" id="newsent">Give me another sentence</button><button class="btn small ghost" id="mysent">Use my own sentence</button>`;
     free.after(extra);
     renderJobs(document.getElementById('jobbox'));
+    renderChallenge(document.getElementById('chbox'));
     document.getElementById('freeconv').onclick = () => {
       const L = S.placement ? LEVELS[S.placement.level - 1] : LEVELS[0];
       copy(claudeRoleplayPrompt(L, { setup: 'We are friendly coworkers on a lunch break. Ask me about my day, my family, my work, and my plans. Share a little about yourself too, so it feels like a real conversation.', role: 'a friendly coworker', goal: 'Have a natural 10-minute conversation and speak in full sentences.' }));
@@ -1029,7 +1031,7 @@ Please:
       const u = UNIT[r.unitId];
       const g = r.grade || { stars: 0, note: '' };
       return `<div class="card stack" data-id="${r.id}">
-        <div class="spread"><span class="eyebrow">${new Date(r.at).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}${u ? ' · ' + esc(u.title) : ''}</span>
+        <div class="spread"><span class="eyebrow">${new Date(r.at).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}${u ? ' · ' + esc(u.title) : r.unitId === 'challenge' ? ' · Speaking challenge' : ''}</span>
           ${r.score !== null && r.score !== undefined ? `<span class="chip ${r.score >= 70 ? 'good' : 'bad'}">Auto ${r.score}%</span>` : ''}</div>
         <div class="say-text">${esc(r.text)}</div>
         <audio controls preload="metadata" src="${url}" style="width:100%"></audio>
@@ -1740,6 +1742,64 @@ Start now by saying your first line in character.`;
     const week = Math.floor((Date.now() / 86400000 + 3) / 7);
     const [t, d, a] = HOME_TIPS[week % HOME_TIPS.length];
     return `<div class="card flat stack" style="gap:6px"><span class="eyebrow">English at home · this week</span><b>${esc(t)}</b><span class="small">${esc(d)}</span>${S.settings.arabic ? `<span class="ar small muted" lang="ar">${esc(a)}</span>` : ''}</div>`;
+  }
+
+  /* ================= Speaking challenge of the week ================= */
+  const CHALLENGES = [
+    ['Talk about your job for one minute: what you do, when you work, and what you like about it.', 'Describe your job and one challenge you faced recently. Explain how you handled it.'],
+    ['Describe your family. Who are they, and what do they do?', 'Describe a family tradition from Egypt and why it matters to you.'],
+    ['Tell about your favorite food. How do you make it?', 'Explain how to cook your favorite dish, step by step, as if you were teaching a coworker.'],
+    ['Describe your morning routine, from waking up to arriving at work.', 'Compare your daily routine in Egypt with your routine in America.'],
+    ['Talk about your weekend. What did you do?', 'Tell a story about a weekend that did not go as planned.'],
+    ['Describe your neighborhood. What is near your home?', 'What would you change about your neighborhood, and why?'],
+    ['Talk about why you are learning English.', 'Explain your goals for the next five years and how English helps you reach them.'],
+    ['Describe a good day at work.', 'Describe a time you helped a coworker or customer. What happened, and what did you learn?'],
+    ['Talk about a holiday you love.', 'Compare how a holiday is celebrated in Egypt and in America.'],
+    ['Describe a person you admire.', 'Describe a person who changed your life, and explain how.'],
+    ['Talk about your favorite place in Egypt.', 'Persuade a friend to visit Egypt. Give three reasons.'],
+    ['What do you do to relax?', 'Should employers give workers more breaks? Give your opinion and two reasons.']
+  ];
+  function weeklyChallenge() {
+    const week = Math.floor((Date.now() / 86400000 + 3) / 7);
+    const pair = CHALLENGES[(week + 5) % CHALLENGES.length];
+    const hard = curLevelN() >= 4;
+    return { text: pair[hard ? 1 : 0], hard };
+  }
+  function renderChallenge(box) {
+    const ch = weeklyChallenge();
+    const L = LEVELS[Math.max(0, curLevelN() - 1)];
+    box.innerHTML = `<span class="eyebrow">Speaking challenge · this week</span>
+      <p class="say-text">${esc(ch.text)}</p>
+      <p class="small muted">Speak for ${ch.hard ? '1–2 minutes' : 'about 1 minute'}. Don't read from paper; just talk. Mistakes are fine.</p>
+      <div class="row">
+        ${Speech.canRecord ? `<button class="btn primary" id="ch-rec">${I.rec} Record my answer</button>` : ''}
+        <button class="btn" id="ch-claude">${I.copy} Practice with Claude</button>
+      </div>
+      <div class="small muted" id="ch-st" aria-live="polite"></div>`;
+    let rec = null, started = 0, timer = null;
+    const st = box.querySelector('#ch-st');
+    const rb = box.querySelector('#ch-rec');
+    if (rb) rb.onclick = async () => {
+      if (rec) {
+        clearInterval(timer);
+        const blob = await rec.stop(); rec = null;
+        rb.classList.remove('mic-on'); rb.innerHTML = `${I.rec} Record again`;
+        await Speech.saveRec({ id: 'r' + Date.now(), at: Date.now(), unitId: 'challenge', text: 'Challenge: ' + ch.text, blob, score: null, transcript: '', grade: null });
+        st.innerHTML = 'Saved. It is in <b>My recordings</b> below for your son to grade.';
+        addXP(10); markStep('speak');
+        return;
+      }
+      try {
+        rec = await Speech.record(); started = Date.now();
+        rb.classList.add('mic-on'); rb.innerHTML = `${I.stop} Stop and save`;
+        timer = setInterval(() => { const s = Math.round((Date.now() - started) / 1000); st.textContent = `Recording… ${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`; }, 500);
+      } catch (e) { st.textContent = 'Please allow the microphone to record.'; }
+    };
+    box.querySelector('#ch-claude').onclick = () => {
+      copy(claudeRoleplayPrompt(L, { setup: `This is a speaking practice. Ask me to talk about this topic: "${ch.text}" Then ask me 3 follow-up questions, one at a time, like a friendly interviewer.`, role: 'a friendly conversation partner', goal: 'Speak in full sentences for at least one minute and answer follow-up questions.' }));
+      addXP(5);
+    };
+    onLeave(() => { clearInterval(timer); if (rec) rec.stop(); });
   }
 
   /* ================= Daily session ================= */
