@@ -322,3 +322,10 @@ ol.steps { margin: 0; padding-left: 1.3em; display: flex; flex-direction: column
 .sparks div { flex: 1; max-width: 36px; height: 100%; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; gap: 2px; }
 .sparks i { width: 100%; background: var(--nile); border-radius: 4px 4px 2px 2px; min-height: 3px; }
 .sparks span { font-size: .68rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+
+.quick { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.qk { appearance: none; text-align: left; font: inherit; color: var(--ink); cursor: pointer; background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 14px; text-decoration: none; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.qk b { color: var(--nile); }
+.qk span { font-size: .8rem; color: var(--muted); }
+details.card > summary { cursor: pointer; list-style: none; }
+details.card > summary::-webkit-details-marker { display: none; }

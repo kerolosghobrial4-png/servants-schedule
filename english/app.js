@@ -242,6 +242,7 @@
         <a class="stat" href="#/words" style="text-decoration:none;color:inherit"><b>${due}</b><span>Words to review</span></a>
         <div class="stat"><b>${Object.keys(S.units).filter(unitDone).length}</b><span>Units passed</span></div>
       </div>
+      ${arabicNudge()}
       ${storyCard()}
       ${!S.placement ? `<a class="card flat spread" href="#/placement" style="text-decoration:none;color:inherit"><div><b>Find my level</b><div class="small muted">18 questions · about 10 minutes</div></div><span class="chip">Start</span></a>` : ''}
       <div class="stack">
@@ -249,6 +250,19 @@
         <div>${LEVELS.map(levelBlock).join('')}</div>
       </div>`;
   }
+  function arabicNudge() {
+    if (!S.settings.arabic || S.arNudged) return '';
+    const n = curLevelN();
+    if (n < 4) return '';
+    return `<div class="card flat stack" id="arn"><b>You are ready to think in English</b>
+      <p class="small">At Level ${n}, try turning off the Arabic notes. It feels harder at first, but your brain starts thinking in English faster. You can turn them back on any time in Me → Settings.</p>
+      <p class="ar small muted" lang="ar">انتي في المستوى ${n}. جرّبي تقفلي الشرح العربي عشان مخك يتعود يفكر بالإنجليزي. تقدري ترجّعيه في أي وقت.</p>
+      <div class="row"><button class="btn small primary" id="arn-off">Turn off Arabic notes</button><button class="btn small ghost" id="arn-keep">Keep them for now</button></div></div>`;
+  }
+  document.addEventListener('click', (e) => {
+    if (e.target.id === 'arn-off') { S.settings.arabic = false; S.arNudged = true; save(); toast('Arabic notes are off. You can do it!'); route(); }
+    if (e.target.id === 'arn-keep') { S.arNudged = true; save(); const c = document.getElementById('arn'); if (c) c.remove(); }
+  });
   function tourCard() {
     const tips = [
       ['1', 'Every day: Today\'s session', 'Four short steps, about 20 minutes. Do it every day, even on busy days.', 'كل يوم: جلسة النهارده. ٤ خطوات صغيرة، حوالي ٢٠ دقيقة. اعمليها كل يوم حتى لو مشغولة.'],
@@ -941,18 +955,18 @@ Please:
   async function viewVoice() {
     app.innerHTML = `${brand()}
       <div class="stack" style="gap:6px"><span class="eyebrow">Speaking</span><h1>Voice practice</h1>
-      <p class="muted">Your recordings are saved on this phone. Your son can listen and give stars, or you can practice with the Claude voice coach.</p></div>
-      <div id="free"></div>
-      <div class="card flat stack"><h3>How to practice with Claude voice</h3>
-        <ol class="steps"><li>Tap <b>Claude voice coach</b> under any sentence. It copies a message.</li><li>Open the Claude app and paste the message.</li><li>Tap the voice button and read the sentence out loud.</li><li>Claude tells you which words to fix and practices them with you.</li></ol>
-        <p class="ar small" lang="ar">دوسي «Claude voice coach»، افتحي تطبيق Claude والزقي الرسالة، وبعدين دوسي على زرار الصوت واقري الجملة.</p></div>
-      <div class="card flat stack"><h3>Conversation practice at work</h3>
-        <p class="small muted">Role-plays for every level are in the <b>Talk at Work</b> unit of each level.</p>
-        <div class="row">${LEVELS.map(L => { const t = L.units.find(u => u.kind === 'conversation'); return t ? `<a class="btn small" href="#/unit/${t.id}/lesson">Level ${L.n}</a>` : ''; }).join('')}</div>
-        <a class="btn small" href="#/phrases">Open the work phrasebook</a>
-        <a class="btn small" href="#/numbers">Numbers and spelling drill</a>
-        <button class="btn small ghost" id="freeconv">${I.copy} Free conversation with Claude about my day</button></div>
+      <p class="muted">Speak, listen, and practice real conversations. Your recordings stay on this phone so your son can listen and give stars.</p></div>
+      <div class="quick">
+        <a href="#/numbers" class="qk"><b>Numbers and spelling</b><span>Phone numbers, times, prices</span></a>
+        <a href="#/phrases" class="qk"><b>Work phrasebook</b><span>Phrases for calls and meetings</span></a>
+        <button class="qk" id="freeconv" type="button"><b>Talk with Claude</b><span>Free chat about your day</span></button>
+        <a href="#/unit/${(() => { const L = LEVELS[Math.max(0, curLevelN() - 1)]; const t = L.units.find(u => u.kind === 'conversation'); return t ? t.id : LEVELS[0].units[1].id; })()}/lesson" class="qk"><b>Talk at Work</b><span>Your level's conversation</span></a>
+      </div>
       <div class="card stack" id="jobbox"></div>
+      <div class="stack" style="gap:8px"><h2>Read out loud</h2><div id="free"></div></div>
+      <details class="card flat"><summary><b>How to practice with Claude voice</b></summary>
+        <ol class="steps" style="margin-top:10px"><li>Tap a <b>Copy</b> button or <b>Claude voice coach</b>. It copies a message.</li><li>Open the Claude app and paste the message.</li><li>Tap the voice button and talk.</li><li>Claude plays the other person and gives you feedback at the end.</li></ol>
+        <p class="ar small" lang="ar">دوسي «Copy» أو «Claude voice coach»، افتحي تطبيق Claude والزقي الرسالة، وبعدين دوسي على زرار الصوت واتكلمي.</p></details>
       <div class="stack"><h2>My recordings</h2><div id="recs"><p class="muted">Loading…</p></div></div>`;
     const free = document.getElementById('free');
     const drawFree = (text) => sayWidget(text, free, { unitId: 'free' });
