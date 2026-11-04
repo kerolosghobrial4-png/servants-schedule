@@ -238,6 +238,7 @@
     app.innerHTML = `
       ${brand()}
       ${S.toured ? '' : tourCard()}
+      ${welcomeBack()}
       <div class="hero">
         <span class="eyebrow">${greet}, ${esc(S.name)} · <span lang="ar">${greetAr}</span></span>
         <h2>Today's session</h2>
@@ -253,6 +254,7 @@
         <div class="stat"><b>${Object.keys(S.units).filter(unitDone).length}</b><span>Units passed</span></div>
       </div>
       ${arabicNudge()}
+      ${backupNudge()}
       ${dueMisses().length >= 8 ? `<a class="card flat spread" href="#/today/warm" style="text-decoration:none;color:inherit;border-color:var(--sun)"><div><b>${dueMisses().length} old mistakes are ready to fix</b><div class="small muted">A few minutes now turns mistakes into things you know.</div>${S.settings.arabic ? '<div class="ar small muted" lang="ar">دقايق قليلة تحوّل الغلط لحاجة انتي عارفاها.</div>' : ''}</div><span class="chip gold">Fix them</span></a>` : ''}
       ${storyCard()}
       ${homeTip()}
@@ -275,6 +277,26 @@
     if (e.target.id === 'arn-off') { S.settings.arabic = false; S.arNudged = true; save(); toast('Arabic notes are off. You can do it!'); route(); }
     if (e.target.id === 'arn-keep') { S.arNudged = true; save(); const c = document.getElementById('arn'); if (c) c.remove(); }
   });
+  function welcomeBack() {
+    const d = today();
+    if (S.days[d]) return '';
+    const past = Object.keys(S.days).filter(k => S.days[k] > 0 && k < d).sort();
+    if (!past.length) return '';
+    const last = past[past.length - 1];
+    const gap = Math.round((new Date(d + 'T12:00:00') - new Date(last + 'T12:00:00')) / 86400000);
+    if (gap < 3) return '';
+    return `<div class="card stack" style="border-color:var(--nile)"><b>Welcome back, ${esc(S.name)}!</b>
+      <p class="small">It has been ${gap} days. That's okay. Everyone takes breaks. Start small today: just the warm-up, about 3 minutes.</p>
+      ${S.settings.arabic ? `<p class="ar small muted" lang="ar">أهلاً بيكي تاني! عدّى ${gap} أيام، وده عادي. ابدئي بحاجة صغيرة: المراجعة بس، ٣ دقايق.</p>` : ''}
+      <div><a class="btn primary small" href="#/today/warm">Start the warm-up</a></div></div>`;
+  }
+  function backupNudge() {
+    if (S.xp < 200) return '';
+    const last = S.lastBackup || S.created;
+    const days = Math.round((new Date(today() + 'T12:00:00') - new Date(last + 'T12:00:00')) / 86400000);
+    if (days < 30) return '';
+    return `<a class="card flat spread" href="#/me" style="text-decoration:none;color:inherit"><div><b>Save a backup of your progress</b><div class="small muted">If your phone is lost or changed, a backup code brings everything back. Me → Backup.</div></div><span class="chip">Backup</span></a>`;
+  }
   function tourCard() {
     const tips = [
       ['1', 'Every day: Today\'s session', 'Four short steps, about 20 minutes. Do it every day, even on busy days.', 'كل يوم: جلسة النهارده. ٤ خطوات صغيرة، حوالي ٢٠ دقيقة. اعمليها كل يوم حتى لو مشغولة.'],
@@ -1142,7 +1164,7 @@ Please:
     document.getElementById('s-theme').onchange = (e) => set('theme', e.target.value);
     document.getElementById('s-rate').oninput = (e) => { set('rate', +e.target.value); document.getElementById('rate-v').textContent = e.target.value; };
     const sv = document.getElementById('s-voice'); if (sv) sv.onchange = (e) => set('voice', e.target.value);
-    document.getElementById('bk-copy').onclick = () => copy('SEKKA1:' + btoa(unescape(encodeURIComponent(JSON.stringify(S)))), 'Backup code copied. Keep it somewhere safe.');
+    document.getElementById('bk-copy').onclick = () => { S.lastBackup = today(); save(); copy('SEKKA1:' + btoa(unescape(encodeURIComponent(JSON.stringify(S)))), 'Backup code copied. Send it to yourself to keep it safe.'); }
     document.getElementById('bk-show').onclick = () => {
       const a = document.getElementById('bk-area');
       a.innerHTML = `<textarea class="input" id="bk-in" style="min-height:90px" placeholder="Paste the backup code"></textarea><button class="btn primary small" id="bk-go">Restore</button>`;
