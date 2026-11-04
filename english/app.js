@@ -200,7 +200,7 @@
     return `<div class="spread"><div class="brand">
       <svg viewBox="0 0 48 48" aria-hidden="true"><rect width="48" height="48" rx="12" fill="var(--nile)"/><path d="M10 36c6-2 8-9 14-11s9-8 14-13" fill="none" stroke="var(--nile-ink)" stroke-width="4" stroke-linecap="round"/><circle cx="10" cy="36" r="3.5" fill="var(--sun)"/><circle cx="38" cy="12" r="3.5" fill="var(--nile-ink)"/></svg>
       <div><b>Sekka</b> <span class="ar" lang="ar">سكة</span></div></div>
-      ${S.name ? `<span class="chip gold" title="Days in a row">${streakNow()} day streak</span>` : ''}</div>`;
+      ${S.name ? `<span class="chip gold" title="Days in a row">${streakNow() ? streakNow() + (streakNow() === 1 ? ' day streak' : ' day streak') : 'Start a streak today'}</span>` : ''}</div>`;
   }
 
   /* ================= Home ================= */
@@ -224,6 +224,7 @@
     const greetAr = hour < 12 ? 'صباح الخير' : 'مساء الخير';
     app.innerHTML = `
       ${brand()}
+      ${S.toured ? '' : tourCard()}
       <div class="hero">
         <span class="eyebrow">${greet}, ${esc(S.name)} · <span lang="ar">${greetAr}</span></span>
         <h2>Today's session</h2>
@@ -245,6 +246,19 @@
         <div>${LEVELS.map(levelBlock).join('')}</div>
       </div>`;
   }
+  function tourCard() {
+    const tips = [
+      ['1', 'Every day: Today\'s session', 'Four short steps, about 20 minutes. Do it every day, even on busy days.', 'كل يوم: جلسة النهارده. ٤ خطوات صغيرة، حوالي ٢٠ دقيقة. اعمليها كل يوم حتى لو مشغولة.'],
+      ['2', 'Listen to everything', 'Tap the speaker buttons, and tap any word in a story to hear it and see its meaning.', 'دوسي على زرار الصوت، ودوسي على أي كلمة في القصة عشان تسمعيها وتعرفي معناها.'],
+      ['3', 'Talk, don\'t just read', 'Each level has "Talk at Work". Practice your part, then talk with Claude voice like a real coworker.', 'كل مستوى فيه «Talk at Work». اتدربي على دورك، وبعدين اتكلمي مع Claude بالصوت كإنه زميلك في الشغل.'],
+      ['4', 'Mistakes are part of it', 'Wrong answers come back later so you can learn them. Your son can grade your recordings on the Voice tab.', 'الغلط جزء من التعلم. الأسئلة اللي بتغلطي فيها بترجعلك تاني. وابنك يقدر يقيّم تسجيلاتك من «Voice».']
+    ];
+    return `<div class="card stack" id="tour">
+      <div class="spread"><span class="eyebrow">How to use Sekka</span><button class="btn small ghost" id="tour-x">Got it</button></div>
+      ${tips.map(([n, t, d, a]) => `<div class="row" style="align-items:flex-start;flex-wrap:nowrap;gap:12px"><span class="chip" style="flex:none">${n}</span><div class="stack" style="gap:2px;min-width:0"><b>${t}</b><span class="small">${d}</span>${S.settings.arabic ? `<span class="ar small muted" lang="ar">${a}</span>` : ''}</div></div>`).join('')}
+    </div>`;
+  }
+  document.addEventListener('click', (e) => { if (e.target.id === 'tour-x') { S.toured = true; save(); const t = document.getElementById('tour'); if (t) t.remove(); } });
   function levelBlock(L) {
     const p = levelProgress(L);
     const passed = S.tests[L.id] && S.tests[L.id].passed;
@@ -900,7 +914,7 @@ Please:
       if (!flipFirst) say(w.w);
       const reveal = () => {
         const fl = document.getElementById('fl');
-        fl.innerHTML = `<div class="big">${esc(w.w)}</div>${w.ar && S.settings.arabic ? `<div class="ar" lang="ar" style="font-size:1.3rem;color:var(--sun)">${esc(w.ar)}</div>` : ''}<p>${md(w.d)}</p>${w.ex ? `<p class="muted" style="font-family:var(--f-read);font-style:italic">“${esc(w.ex)}”</p>` : ''}`;
+        fl.innerHTML = `<div class="big">${esc(w.w)}</div>${w.ar && S.settings.arabic ? `<div class="ar" lang="ar" style="font-size:1.3rem;color:var(--sun)">${esc(w.ar)}</div>` : ''}${/[\u0600-\u06FF]/.test(w.d) ? `<p class="ar" lang="ar" style="font-size:1.25rem">${esc(w.d)}</p>` : `<p>${md(w.d)}</p>`}${w.ex ? `<p class="muted" style="font-family:var(--f-read);font-style:italic">“${esc(w.ex)}”</p>` : ''}`;
         fl.onclick = null;
         if (flipFirst) say(w.w);
         document.getElementById('gr').innerHTML = `<div class="grade3"><button class="btn" data-g="0">I forgot</button><button class="btn" data-g="1">Hard</button><button class="btn primary" data-g="2">I knew it</button></div>`;
@@ -1354,7 +1368,13 @@ Start now by saying your first line in character.`;
   /* ================= Daily session ================= */
   function sess() { if (S.session.date !== today()) S.session = { date: today() }; return S.session; }
   function markStep(k) { sess()[k] = true; save(); }
-  function stepsDone() { const x = sess(); return ['warm', 'learn', 'words', 'speak'].filter(k => x[k]).length; }
+  function autoSteps() {
+    const x = sess();
+    const noWords = dueCards().length === 0, noWarm = warmItems(1).length === 0;
+    if (!x.words && noWords) x.words = 'auto'; else if (x.words === 'auto' && !noWords) x.words = false;
+    if (!x.warm && noWarm) x.warm = 'auto'; else if (x.warm === 'auto' && !noWarm) x.warm = false;
+  }
+  function stepsDone() { autoSteps(); const x = sess(); return ['warm', 'learn', 'words', 'speak'].filter(k => x[k]).length; }
   function warmItems(n) {
     const misses = dueMisses().slice(0, n).map(id => ITEM[id]);
     const ids = new Set(misses.map(x => x.id));
@@ -1401,10 +1421,11 @@ Start now by saying your first line in character.`;
     const next = nextStep();
     const due = dueCards().length;
     const misses = dueMisses().length;
+    autoSteps();
     const step = (key, n, title, sub, href, label, mins) => `<div class="unit-link" style="grid-template-columns:38px 1fr auto">
       <span class="k" style="${x[key] ? 'background:var(--nile);color:var(--nile-ink)' : ''}">${x[key] ? '✓' : n}</span>
       <span class="t"><b>${title}</b><span>${sub} · ${mins} min</span></span>
-      ${x[key] ? '<span class="chip good">Done</span>' : `<a class="btn small primary" href="${href}">${label}</a>`}</div>`;
+      ${x[key] === 'auto' ? '<span class="chip plain">Nothing due</span>' : x[key] ? '<span class="chip good">Done</span>' : `<a class="btn small primary" href="${href}">${label}</a>`}</div>`;
     app.innerHTML = `<a class="back" href="#/">${I.back} Home</a>
       <div class="stack" style="gap:6px"><span class="eyebrow">${new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}</span><h1>Today's session</h1>
       <p class="muted">Four short steps, about 20 minutes. Doing a little every day works much better than a lot once a week.</p>
