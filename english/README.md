@@ -38,7 +38,7 @@ Every unit has a **Lesson** (with Egyptian Arabic notes), unlimited **Practice**
 
 ## More practice tools
 
-- **Story library (35 stories):** original graded stories for every level, about adult life, work, college, and family. Read-along audio, 3-question checks, and a daily **Story of the day**.
+- **Story library (37 stories):** original graded stories for every level, about adult life, work, college, and family. Read-along audio, 3-question checks, and a daily **Story of the day**.
 - **Tap any word:** in stories and reading passages, tap a word to hear it, see its meaning and Arabic translation, hear its sentence, and save it to the review deck. Unknown words can be saved with her own meaning. Meanings are hidden during quizzes and tests.
 - **Work phrasebook:** every Talk at Work phrase (68 across 18 situations) in one searchable list with audio.
 - **Numbers and spelling drills:** endless generated practice with phone numbers, appointment times, prices, 13-vs-30, dates, and spelled names.
