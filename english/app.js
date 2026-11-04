@@ -1887,6 +1887,15 @@ Start now by saying your first line in character.`;
   applySettings();
   route();
   if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
+    const hadController = !!navigator.serviceWorker.controller;
     window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (!hadController || document.getElementById('upd')) return;
+      const bar = document.createElement('button');
+      bar.id = 'upd'; bar.className = 'update-bar'; bar.type = 'button';
+      bar.innerHTML = '<b>A new version of Sekka is ready.</b> Tap to refresh. <span lang="ar">نسخة جديدة جاهزة، دوسي للتحديث</span>';
+      bar.onclick = () => location.reload();
+      document.body.appendChild(bar);
+    });
   }
 })();
