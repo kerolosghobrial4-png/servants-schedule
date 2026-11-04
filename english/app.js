@@ -1135,10 +1135,14 @@ Please:
     return { A: other ? { voiceObj: other } : { voiceObj: main, pitch: 1.25 }, B: { voiceObj: main, pitch: 0.95 } };
   }
   function renderDialogue(u, box) {
-    const d = u.dialogue;
+    const all = [u.dialogue].concat(u.dialogues || []).filter(Boolean);
+    box.innerHTML = all.map((_, i) => `<div class="stack" data-dlg="${i}"></div>`).join('');
+    all.forEach((d, i) => renderOneDialogue(d, box.querySelector(`[data-dlg="${i}"]`), i));
+  }
+  function renderOneDialogue(d, box, idx) {
     const me = d.me;
-    box.innerHTML = `<h3>Listen to the conversation: ${esc(d.title)}</h3>
-      <p class="small muted">First listen to the whole conversation. Then practice it: the app plays the other person, and you say your lines out loud.</p>
+    box.innerHTML = `<h3>${idx ? 'Another conversation' : 'Listen to the conversation'}: ${esc(d.title)}</h3>
+      ${idx ? '' : '<p class="small muted">First listen to the whole conversation. Then practice it: the app plays the other person, and you say your lines out loud.</p>'}
       <div class="card stack" id="dlg">
         ${d.lines.map(([w, t], k) => `<div class="dl ${w === me ? 'mine' : ''}" data-l="${k}"><span class="who">${esc(d.roles[w])}</span><span class="line">${esc(t)}</span></div>`).join('')}
         <div class="row"><button class="btn" id="dl-all">${I.speak} Listen to all</button><button class="btn primary" id="dl-me">${I.mic} Practice my part</button><button class="btn ghost small" id="dl-stop" hidden>Stop</button></div>
