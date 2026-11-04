@@ -119,6 +119,7 @@ window.SEKKA_LEVELS.push({
         { ar: 'الـ **th** زي حرف **ث** في think و thank، وزي حرف **ذ** في this و mother. طلّعي طرف لسانك بين سنانك. متقوليهاش «س» أو «ز» أو «ت».' },
         { pairs: [['think', 'sink'], ['three', 'tree'], ['thank', 'tank'], ['they', 'day'], ['then', 'zen'], ['mouth', 'mouse']] },
         { h: 'Three ways to say -ed' },
+        { tip: 'A **syllable** is one beat in a word. Clap it: **cook** (1 clap), **cook-ing** (2 claps), **ba-na-na** (3 claps).' },
         { table: [['Sound', 'When', 'Examples'], ['/t/', 'after p, k, s, sh, ch, f', 'helped, cooked, washed'], ['/d/', 'after most voiced sounds', 'played, lived, cleaned'], ['/id/ (extra syllable)', 'after t or d', 'wanted, needed, visited']] },
         { ex: ['I cooked dinner.', 'She cleaned the house.', 'We wanted to help.'] },
         { ar: 'متقوليش «كوكيد» في cooked. قوليها «كوكت». الـ ed بتبقى مقطع زيادة (إد) بس بعد حرف t أو d زي wanted و needed.' },

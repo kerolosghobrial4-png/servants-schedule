@@ -1838,6 +1838,17 @@ Start now by saying your first line in character.`;
     const own = [].concat(...L.units.map(u => u.speak || []));
     return sample(own.length ? own : [].concat(...LEVELS.map(x => [].concat(...x.units.map(u => u.speak || [])))), 3);
   }
+  function milestone() {
+    const n = streakNow();
+    const m = { 3: ['3 days in a row!', 'A great start. The first days are the hardest.', '٣ أيام ورا بعض! بداية حلوة.'],
+      7: ['One full week in a row!', 'This is becoming a real habit.', 'أسبوع كامل! ده بقى عادة.'],
+      14: ['Two weeks in a row!', 'Your brain is getting used to English every day.', 'أسبوعين ورا بعض! مخك بيتعود على الإنجليزي.'],
+      30: ['30 days in a row!', 'One month of daily English. Be proud of yourself.', 'شهر كامل كل يوم! افتخري بنفسك.'],
+      60: ['60 days in a row!', 'Two months. You are not the same English speaker you were.', 'شهرين! انتي مبقتيش زي الأول.'],
+      100: ['100 days in a row!', 'One hundred days. That is extraordinary.', '١٠٠ يوم! حاجة عظيمة.'] }[n];
+    if (!m) return n > 1 ? `<p><b>${n} days in a row.</b></p>` : '';
+    return `<div class="stack" style="gap:4px"><span class="eyebrow">Milestone</span><h3>${m[0]}</h3><p>${m[1]}</p><p class="ar small" lang="ar">${m[2]}</p></div>`;
+  }
   function viewToday(sub) {
     const x = sess();
     if (sub === 'warm') {
@@ -1889,7 +1900,7 @@ Start now by saying your first line in character.`;
       </div>
       <div class="stack" style="gap:6px"><span class="eyebrow">Bonus</span>${storyCard()}
         <a class="card flat spread" href="#/numbers" style="text-decoration:none;color:inherit"><div><b>Numbers and spelling</b><div class="small muted">Phone numbers, times, prices · 3 min</div></div><span class="chip">Practice</span></a></div>
-      ${stepsDone() === 4 ? '<div class="hero"><h2>All done for today!</h2><p>Come back tomorrow. Sleep helps your brain store what you learned.</p><p class="ar" lang="ar">برافو! النوم بيساعد المخ يحفظ اللي اتعلمتيه. نكمّل بكرة.</p></div>' : ''}
+      ${stepsDone() === 4 ? `<div class="hero"><h2>All done for today!</h2>${milestone()}<p>Come back tomorrow. Sleep helps your brain store what you learned.</p><p class="ar" lang="ar">برافو! النوم بيساعد المخ يحفظ اللي اتعلمتيه. نكمّل بكرة.</p></div>` : ''}
       <a class="small" href="#/method">Why it works this way</a>`;
   }
 

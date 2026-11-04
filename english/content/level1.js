@@ -16,6 +16,8 @@ window.SEKKA_LEVELS.push({
         { ex: ['I cook dinner every day.', 'She cooks dinner every day.', 'My husband works at night.', 'The bus leaves at eight.'] },
         { ar: 'مع **he / she / it** لازم نزوّد **s** في آخر الفعل: She work**s**. ده أكتر غلط بيقع فيه الناس، فركّزي عليه.' },
         { table: [['Verb ending', 'Add', 'Example'], ['most verbs', '-s', 'work → works'], ['-sh, -ch, -s, -x, -o', '-es', 'wash → washes, go → goes'], ['consonant + y', '-ies', 'study → studies'], ['have', 'has', 'She has two sons.']] },
+        { tip: 'The letters **a, e, i, o, u** are **vowels**. All the other letters are **consonants**. So **study** ends in d + y (consonant + y) → **studies**, but **play** ends in a + y (vowel + y) → **plays**.' },
+        { ar: 'الحروف **a, e, i, o, u** اسمها **vowels** (حروف متحركة). باقي الحروف اسمها **consonants**. لو الفعل آخره حرف ساكن + y زي study تبقى studies، لكن لو قبل الـ y حرف متحرك زي play تبقى plays.' },
         { h: 'Questions and negatives with do / does' },
         { p: 'Use **do** with I, you, we, they. Use **does** with he, she, it. After **does**, the verb has **no -s**.' },
         { ex: ['Do you like tea?', 'Does she speak English?', 'I do not (don\'t) drive.', 'He does not (doesn\'t) eat meat.'] },
