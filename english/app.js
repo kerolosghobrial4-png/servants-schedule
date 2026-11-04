@@ -149,6 +149,7 @@
     else if (a === 'placement-intro') viewPlacementIntro();
     else if (a === 'today') viewToday(b);
     else if (a === 'stories') viewStories();
+    else if (a === 'phrases') { tab = 'voice'; viewPhrases(); }
     else if (a === 'story' && STORY[b]) viewStory(STORY[b]);
     else if (a === 'method') { tab = 'me'; viewMethod(); }
     else if (a === 'words') { tab = 'words'; viewWords(b); }
@@ -943,6 +944,7 @@ Please:
       <div class="card flat stack"><h3>Conversation practice at work</h3>
         <p class="small muted">Role-plays for every level are in the <b>Talk at Work</b> unit of each level.</p>
         <div class="row">${LEVELS.map(L => { const t = L.units.find(u => u.kind === 'conversation'); return t ? `<a class="btn small" href="#/unit/${t.id}/lesson">Level ${L.n}</a>` : ''; }).join('')}</div>
+        <a class="btn small" href="#/phrases">Open the work phrasebook</a>
         <button class="btn small ghost" id="freeconv">${I.copy} Free conversation with Claude about my day</button></div>
       <div class="stack"><h2>My recordings</h2><div id="recs"><p class="muted">Loading…</p></div></div>`;
     const free = document.getElementById('free');
@@ -1175,7 +1177,7 @@ Start now by saying your first line in character.`;
   }
   function renderRoleplays(u, box) {
     const L = u.level;
-    box.innerHTML = `<h3>Real conversation practice with Claude</h3>
+    box.innerHTML = `<p class="small"><a href="#/phrases">All work phrases in one list →</a></p><h3>Real conversation practice with Claude</h3>
       <p class="small muted">Tap a scenario to copy it. Open the Claude app, paste it, then tap the voice button and talk. Claude plays the other person and gives you feedback at the end.</p>
       ${S.settings.arabic ? '<p class="ar small" lang="ar">دوسي على الموقف، افتحي تطبيق Claude والزقي الرسالة، ودوسي على زرار الصوت واتكلمي. Claude هيمثّل الشخص التاني ويقولك رأيه في الآخر.</p>' : ''}
       ${S.settings.job ? '' : '<p class="small">Tip: add your job in <a href="#/me">Me → Settings</a> so the conversations match your workplace.</p>'}
@@ -1363,6 +1365,45 @@ Start now by saying your first line in character.`;
       '- Speak only English with her for 10 minutes a day about real things.'
     ].filter(x => x !== null);
     return lines.join('\n');
+  }
+
+  /* ================= Work phrasebook ================= */
+  function phrasebook() {
+    const groups = [];
+    LEVELS.forEach(L => L.units.filter(u => u.kind === 'conversation').forEach(u => {
+      let cur = null;
+      (u.lesson || []).forEach(b => {
+        if (b.h) { cur = { level: L.n, unit: u, title: b.h, items: [] }; groups.push(cur); }
+        else if (b.ex && cur) b.ex.forEach(x => { const t = x.replace(/\*+/g, '').replace(/^(Situation|Task|Action|Result|Context|Request|Benefit|Flexibility): /, '').replace(/\s*\((context|request|benefit|flexibility|reason|time|plan|plan made|decision now|promise)\)\s*$/i, ''); if (!/^\d\./.test(t)) cur.items.push(t); });
+        else if (b.table && cur && /Polite|Formal/i.test(b.table[0].join(' '))) {
+          const col = b.table[0].findIndex(c => /Polite|Formal/i.test(c));
+          b.table.slice(1).forEach(r => cur.items.push(r[col].replace(/\*+/g, '')));
+        }
+      });
+    }));
+    return groups.filter(g => g.items.length);
+  }
+  function viewPhrases() {
+    const groups = phrasebook();
+    app.innerHTML = `<a class="back" href="#/voice">${I.back} Voice</a>
+      <div class="stack" style="gap:6px"><span class="eyebrow">Talk at Work</span><h1>Work phrasebook</h1>
+      <p class="muted">Every phrase from the Talk at Work lessons in one place. Look here before a phone call, a meeting, or a hard conversation. Tap to hear it.</p>
+      <p class="ar small muted" lang="ar">كل جمل الشغل في مكان واحد. بصّي هنا قبل مكالمة أو اجتماع.</p></div>
+      <input class="input" id="ph-q" placeholder="Search, for example: sick, meeting, phone" autocomplete="off">
+      <div id="ph-list" class="stack"></div>`;
+    const list = document.getElementById('ph-list');
+    const draw = (q) => {
+      q = (q || '').toLowerCase().trim();
+      const html = groups.map(g => {
+        const items = g.items.filter(x => !q || x.toLowerCase().includes(q) || g.title.toLowerCase().includes(q) || g.unit.title.toLowerCase().includes(q));
+        if (!items.length) return '';
+        return `<div class="stack" style="gap:8px"><div class="spread"><h3>${esc(g.title)}</h3><a class="small" href="#/unit/${g.unit.id}/lesson">Level ${g.level}</a></div>
+          <div class="ex">${items.map(x => `<div class="ex-line"><span>${esc(x)}</span>${speakBtn(x)}</div>`).join('')}</div></div>`;
+      }).join('');
+      list.innerHTML = html || '<p class="muted">No phrases match. Try a simpler word.</p>';
+    };
+    draw();
+    document.getElementById('ph-q').oninput = (e) => draw(e.target.value);
   }
 
   /* ================= Daily session ================= */
