@@ -298,3 +298,9 @@ ol.steps { margin: 0; padding-left: 1.3em; display: flex; flex-direction: column
 .sent { cursor: pointer; border-radius: 4px; transition: background .15s ease; }
 .sent:hover, .sent:focus-visible { background: var(--nile-soft); }
 .sent.hl { background: var(--sun-soft); }
+.w { cursor: pointer; border-radius: 3px; }
+.w:hover, .w:focus-visible { background: var(--nile-soft); outline: none; }
+.sheet { position: fixed; inset: 0; z-index: 40; background: rgba(10, 20, 22, .35); display: flex; align-items: flex-end; justify-content: center; }
+.sheet-in { background: var(--card); color: var(--ink); width: 100%; max-width: 720px; border-radius: 18px 18px 0 0; box-shadow: 0 -6px 24px rgba(0,0,0,.15);
+  padding: 18px max(16px, env(safe-area-inset-right, 0px)) calc(18px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); }
+.big-w { font-family: var(--f-read); font-size: 1.6rem; }

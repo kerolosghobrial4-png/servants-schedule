@@ -44,7 +44,7 @@
   const fresh = () => ({
     name: '', created: today(), xp: 0, days: {}, streak: { count: 0, last: '' },
     units: {}, tests: {}, placement: null, cards: {}, writing: {}, drafts: {},
-    miss: {}, session: {}, fluency: {}, read: {}, storyDay: {},
+    miss: {}, session: {}, fluency: {}, read: {}, storyDay: {}, myWords: {},
     settings: { size: 'l', arabic: true, rate: 0.85, voice: '', theme: '', goal: 30, job: '' }
   });
   let S;
@@ -352,7 +352,7 @@
   }
   function passageHTML(p, open) {
     return `<details class="passage" ${open ? 'open' : ''}><summary><span>${esc(p.title)}</span>${speakBtn(p.text.replace(/\n+/g, ' '), 'Listen to the passage')}</summary>
-      <div class="reading">${p.text.split(/\n\n+/).map(x => `<p>${md(x)}</p>`).join('')}${p.source ? `<p class="small muted">${esc(p.source)}</p>` : ''}</div></details>`;
+      <div class="reading">${p.text.split(/\n\n+/).map(x => `<p>${wrapWords(x)}</p>`).join('')}${p.source ? `<p class="small muted">${esc(p.source)}</p>` : ''}</div></details>`;
   }
 
   function quizIntro(u, box) {
@@ -402,7 +402,10 @@
     save();
   }
   const dueMisses = () => { const d = today(); return Object.keys(S.miss).filter(id => ITEM[id] && ITEM[id].t !== 'say' && S.miss[id].due <= d).sort((a, b) => S.miss[a].due < S.miss[b].due ? -1 : 1); };
+  let examMode = false;
   function runSet({ box, items, mode, onFinish, quiet, track = true }) {
+    examMode = mode === 'quiz' || mode === 'test';
+    onLeave(() => { examMode = false; });
     let i = 0, right = 0, counted = 0; const wrongs = [];
     const order = items.slice();
     const total = order.length;
@@ -428,7 +431,7 @@
         onNext() { i++; show(); }
       });
     }
-    function finish() { onFinish({ pct: counted ? Math.round(right / counted * 100) : 0, right, counted, wrongs }); }
+    function finish() { examMode = false; onFinish({ pct: counted ? Math.round(right / counted * 100) : 0, right, counted, wrongs }); }
     show();
   }
 
@@ -820,7 +823,12 @@ Please:
 
   /* ================= Words (spaced review) ================= */
   const BOXES = [0, 1, 3, 7, 16, 35];
-  function dueCards() { const d = today(); return Object.keys(S.cards).filter(w => ALL_WORDS[w] && S.cards[w].due <= d); }
+  function cardInfo(w) {
+    if (ALL_WORDS[w]) return ALL_WORDS[w];
+    const m = S.myWords[w];
+    return m ? { w, d: m.m || '(your saved word)', ex: m.ex, ar: '' } : null;
+  }
+  function dueCards() { const d = today(); return Object.keys(S.cards).filter(w => cardInfo(w) && S.cards[w].due <= d); }
   function viewWords(sub) {
     if (sub === 'review') return reviewSession();
     const due = dueCards();
@@ -832,9 +840,11 @@ Please:
         <p>${known} words in your deck · ${Object.values(S.cards).filter(c => c.box >= 4).length} learned well</p>
         <div>${due.length ? '<a class="btn" href="#/words/review">Review now</a>' : '<span class="small">Finish a vocabulary lesson to add words.</span>'}</div></div>
       ${dueMisses().length ? `<a class="card flat spread" href="#/today/warm" style="text-decoration:none;color:inherit"><div><b>${dueMisses().length} question${dueMisses().length === 1 ? '' : 's'} you missed before</b><div class="small muted">They come back after 1, 3, 7, and 16 days until you know them.</div></div><span class="chip">Review</span></a>` : ''}
+      ${Object.keys(S.myWords).length ? `<div class="card flat stack" style="gap:0"><h3>Words I saved</h3>${Object.entries(S.myWords).map(([w, m]) => `<div class="word-row"><b>${esc(w)}</b><div class="row" style="gap:6px">${speakBtn(w)}<button class="btn small ghost" data-delw="${esc(w)}">Remove</button></div><div class="d">${esc(m.m)}</div>${m.ex ? `<div class="e">“${esc(m.ex)}”</div>` : ''}</div>`).join('')}</div>` : ''}
       <div class="stack"><h2>All words</h2>
         <input class="input" id="wsearch" placeholder="Search a word" autocomplete="off">
         <div id="wlist"></div></div>`;
+    app.querySelectorAll('[data-delw]').forEach(b => b.onclick = () => { delete S.myWords[b.dataset.delw]; delete S.cards[b.dataset.delw]; save(); viewWords(); });
     const list = document.getElementById('wlist');
     const draw = (q) => {
       q = (q || '').toLowerCase();
@@ -866,7 +876,7 @@ Please:
         box.innerHTML = `<div class="card stack" style="text-align:center;align-items:center"><h2>Review finished</h2><p>You reviewed ${done} cards.</p><p class="ar" lang="ar">شاطرة! نكمّل بكرة.</p><a class="btn primary" href="#/today">Back to today's session</a></div>`;
         return;
       }
-      const w = ALL_WORDS[queue[0]];
+      const w = cardInfo(queue[0]);
       const flipFirst = Math.random() < 0.35 && w.ar;
       box.innerHTML = `<div class="qhead"><span class="eyebrow">${queue.length} left</span>${speakBtn(w.w)}</div>
         <div class="card flash" id="fl" tabindex="0" role="button" aria-label="Show answer">
@@ -1166,8 +1176,8 @@ Start now by saying your first line in character.`;
     const lv = curLevelN();
     app.innerHTML = `<a class="back" href="#/">${I.back} Home</a>
       <div class="stack" style="gap:6px"><span class="eyebrow">Reading for pleasure</span><h1>Story library</h1>
-      <p class="muted">Reading a lot of easy, interesting English is one of the best ways to learn. Pick stories at your level or a little below. Tap any sentence to hear it.</p>
-      <p class="ar small muted" lang="ar">اقري حكايات سهلة وممتعة كتير. ده من أحسن الطرق لتعلم اللغة. دوسي على أي جملة عشان تسمعيها.</p></div>
+      <p class="muted">Reading a lot of easy, interesting English is one of the best ways to learn. Pick stories at your level or a little below. Tap any word to hear it and see its meaning.</p>
+      <p class="ar small muted" lang="ar">اقري حكايات سهلة وممتعة كتير. ده من أحسن الطرق لتعلم اللغة. دوسي على أي كلمة عشان تسمعيها وتعرفي معناها.</p></div>
       ${LEVELS.map(L => {
         const list = STORIES.filter(x => x.lvl === L.n);
         if (!list.length) return '';
@@ -1181,8 +1191,8 @@ Start now by saying your first line in character.`;
     app.innerHTML = `<a class="back" href="#/stories">${I.back} Story library</a>
       <div class="stack" style="gap:6px"><span class="eyebrow">Level ${st.lvl} story${r ? ` · read ${r.n}×` : ''}</span><h1>${esc(st.title)}</h1></div>
       <div class="row"><button class="btn" id="st-all">${I.speak} Listen to the story</button><button class="btn ghost small" id="st-stop" hidden>Stop</button></div>
-      <div class="card reading story" id="st-text">${st.text.split(/\n\n+/).map(p => `<p>${sentences(p).map(x => `<span class="sent" role="button" tabindex="0" data-say="${esc(x)}">${esc(x)}</span>`).join(' ')}</p>`).join('')}</div>
-      <p class="small muted">Tap a sentence to hear it. Read the story once for the meaning. Don't stop for every new word: guess from the story.</p>
+      <div class="card reading story" id="st-text">${st.text.split(/\n\n+/).map(p => `<p>${sentences(p).map(x => `<span class="sent" data-sent="${esc(x)}">${wrapWords(x)}</span>`).join(' ')}</p>`).join('')}</div>
+      <p class="small muted">Tap any word to hear it and see what it means. Read once for the meaning first. Don't stop for every new word: guess from the story.</p>
       <div id="st-q" class="stack"><button class="btn primary" id="st-check">I finished reading · Quick check</button></div>`;
     const sents = [...app.querySelectorAll('.sent')];
     let run = 0;
@@ -1192,12 +1202,11 @@ Start now by saying your first line in character.`;
       for (const el of sents) {
         if (me !== run || !el.isConnected) break;
         sents.forEach(x => x.classList.toggle('hl', x === el));
-        await Speech.sayP(el.dataset.say, { rate: S.settings.rate, voice: S.settings.voice });
+        await Speech.sayP(el.dataset.sent, { rate: S.settings.rate, voice: S.settings.voice });
       }
       sents.forEach(x => x.classList.remove('hl')); stopB.hidden = true;
     };
     stopB.onclick = () => { run++; Speech.cancel(); sents.forEach(x => x.classList.remove('hl')); stopB.hidden = true; };
-    sents.forEach(el => el.onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); say(el.dataset.say); } });
     onLeave(() => { run++; Speech.cancel(); });
     document.getElementById('st-check').onclick = () => {
       const box = document.getElementById('st-q');
@@ -1214,6 +1223,71 @@ Start now by saying your first line in character.`;
       } });
     };
   }
+
+  /* ================= Tap-a-word ================= */
+  function wrapWords(text) {
+    return String(text).split(/([A-Za-z][A-Za-z'’]*(?:-[A-Za-z]+)*)/).map((t, k) => k % 2 ? `<span class="w" tabindex="0">${esc(t)}</span>` : md(t)).join('');
+  }
+  function lookupWord(raw) {
+    const w = raw.toLowerCase().replace(/[’]/g, "'").replace(/'s$/, '');
+    const tries = [w, w.replace(/ies$/, 'y'), w.replace(/es$/, ''), w.replace(/s$/, ''), w.replace(/ied$/, 'y'), w.replace(/ed$/, ''), w.replace(/d$/, ''), w.replace(/ing$/, ''), w.replace(/ing$/, 'e'), w.replace(/ly$/, '')];
+    for (const t of tries) { if (ALL_WORDS[t]) return { key: t, info: ALL_WORDS[t] }; if (S.myWords[t]) return { key: t, info: cardInfo(t) }; }
+    return { key: w, info: null };
+  }
+  function sentenceAround(el) {
+    const p = el.closest('p');
+    if (!p) return '';
+    const parts = p.textContent.match(/[^.!?]+[.!?]*/g) || [];
+    const word = el.textContent;
+    return (parts.find(x => x.includes(word)) || '').trim();
+  }
+  function closeSheet() { const sh = document.getElementById('sheet'); if (sh) sh.remove(); }
+  function openWordSheet(el) {
+    closeSheet();
+    const raw = el.textContent;
+    const found = lookupWord(raw);
+    const key = found.key, info = examMode ? null : found.info;
+    const shown = found.info ? key : raw.replace(/['’]s$/, '');
+    const sentEl = el.closest('[data-sent]');
+    const sentence = sentEl ? sentEl.dataset.sent : sentenceAround(el);
+    const inDeck = !!S.cards[key];
+    const sh = document.createElement('div');
+    sh.id = 'sheet'; sh.className = 'sheet'; sh.setAttribute('role', 'dialog'); sh.setAttribute('aria-label', 'Word: ' + key);
+    sh.innerHTML = `<div class="sheet-in stack">
+      <div class="spread"><div class="row" style="gap:8px"><b class="big-w">${esc(shown)}</b>${speakBtn(shown, 'Hear the word')}</div><button class="icon-btn" id="sh-x" aria-label="Close">✕</button></div>
+      ${examMode ? '<p class="small muted">Meanings are hidden during quizzes and tests. Use the sentence to guess.</p>' : info ? `${info.ar && S.settings.arabic ? `<div class="ar" lang="ar" style="color:var(--sun);font-size:1.15rem">${esc(info.ar)}</div>` : ''}<div>${md(info.d)}</div>${info.ex ? `<div class="muted" style="font-family:var(--f-read);font-style:italic">“${esc(info.ex)}”</div>` : ''}`
+        : `<p class="small muted">This word is not in your lessons yet. Guess the meaning from the sentence, then write it here to save it.</p>
+           <input class="input" id="sh-m" placeholder="Meaning in Arabic or English" autocomplete="off">`}
+      ${sentence ? `<div class="row" style="gap:8px"><button class="btn small" id="sh-sent">${I.speak} Hear the sentence</button></div>` : ''}
+      ${examMode ? '' : `<div class="row">${inDeck ? '<span class="chip good">In your review deck</span>' : `<button class="btn primary small" id="sh-save">Save to my words</button>`}</div>`}
+    </div>`;
+    document.body.appendChild(sh);
+    say(key);
+    sh.querySelector('#sh-x').onclick = closeSheet;
+    sh.onclick = (e) => { if (e.target === sh) closeSheet(); };
+    const sb = sh.querySelector('#sh-sent'); if (sb) sb.onclick = () => say(sentence);
+    const sv = sh.querySelector('#sh-save');
+    if (sv) sv.onclick = () => {
+      if (!info) {
+        const m = sh.querySelector('#sh-m').value.trim();
+        if (!m) { sh.querySelector('#sh-m').focus(); toast('Write what you think it means first.'); return; }
+        S.myWords[key] = { m, ex: sentence, added: today() };
+      }
+      S.cards[key] = { box: 0, due: today() };
+      save(); addXP(2); toast('Saved. It will come back in your word review.'); closeSheet();
+    };
+    const mi = sh.querySelector('#sh-m'); if (mi) setTimeout(() => mi.focus({ preventScroll: true }), 50);
+  }
+  document.addEventListener('click', (e) => {
+    const w = e.target.closest('.w');
+    if (w) { e.preventDefault(); e.stopPropagation(); openWordSheet(w); }
+  }, true);
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeSheet();
+    const w = e.target.closest && e.target.closest('.w');
+    if (w && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); openWordSheet(w); }
+  });
+  window.addEventListener('hashchange', closeSheet);
 
   /* ================= Daily session ================= */
   function sess() { if (S.session.date !== today()) S.session = { date: today() }; return S.session; }
