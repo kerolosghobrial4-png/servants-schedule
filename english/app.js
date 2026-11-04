@@ -351,6 +351,7 @@
       <div id="fluencybox" class="stack"></div>
       <div id="speakbox" class="stack"></div>
       <div id="writebox" class="stack"></div>
+      <div id="checkbox" class="stack"></div>
       <div class="card flat stack">
         ${s.lesson ? '<p><b>Lesson finished.</b> Practice as much as you like, then take the quiz.</p>' : '<p>When you have read everything above, mark the lesson as finished.</p>'}
         <div class="row">
@@ -370,6 +371,7 @@
     if (u.passages && u.passages.length) renderFluency(u, document.getElementById('fluencybox'));
     if (u.speak && u.speak.length) renderSpeakList(u, document.getElementById('speakbox'));
     if (u.write && u.write.length) renderWrite(u, document.getElementById('writebox'));
+    renderCheck(u, document.getElementById('checkbox'));
   }
 
   function blockHTML(b) {
@@ -1591,6 +1593,27 @@ Start now by saying your first line in character.`;
       copy(claudeRoleplayPrompt(L, cur.scenes[+b.dataset.sc]));
       addXP(5); markStep('speak');
     });
+  }
+
+  /* ================= Check yourself (retrieval right after the lesson) ================= */
+  function renderCheck(u, box) {
+    const pool = (u.items || []).filter(i => ['mc', 'fill', 'order', 'listen'].includes(i.t));
+    if (pool.length < 2) return;
+    box.innerHTML = `<div class="card stack" id="chk">
+      <h3>Check yourself</h3>
+      <p class="small muted">Answer 2 quick questions without looking back. Trying to remember is what makes a lesson stick.</p>
+      <p class="ar small muted" lang="ar">جاوبي على سؤالين من غير ما تبصّي فوق. محاولة التذكّر هي اللي بتثبّت الدرس.</p>
+      <div><button class="btn" id="chk-go">Check myself</button></div>
+    </div>`;
+    box.querySelector('#chk-go').onclick = () => {
+      const card = box.querySelector('#chk');
+      const qb = document.createElement('div'); qb.className = 'stack';
+      card.querySelector('#chk-go').parentElement.replaceWith(qb);
+      runSet({ box: qb, items: sample(pool, 2), mode: 'check', track: true, onFinish: (r) => {
+        qb.innerHTML = `<div class="feedback ${r.right === r.counted ? 'right' : 'info'}"><b class="v">${r.right} of ${r.counted} correct</b>
+          <div>${r.right === r.counted ? 'You remembered it. Now finish the lesson and practice.' : 'Good try. Read the part you missed again, then practice. Missed questions will come back later.'}</div></div>`;
+      } });
+    };
   }
 
   /* ================= Daily session ================= */
