@@ -280,3 +280,6 @@ ol.steps { margin: 0; padding-left: 1.3em; display: flex; flex-direction: column
 .blank { display: inline-block; width: 3.4em; border-bottom: 2px solid currentColor; margin: 0 .15em; transform: translateY(-.2em); }
 .units-wrap > summary { cursor: pointer; padding: 4px 0 8px; font-weight: 700; }
 .units-wrap[open] > summary { padding-bottom: 8px; }
+.say-text [data-ch] { border-radius: 6px; padding: 0 2px; transition: background .15s ease; }
+.say-text .hl { background: var(--nile-soft); }
+.say-text .turn { background: var(--sun-soft); outline: 2px solid var(--sun); }

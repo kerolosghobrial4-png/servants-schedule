@@ -19,6 +19,18 @@
       });
     });
   });
+  const ITEM = {};
+  const UNIT_ORDER = [];
+  LEVELS.forEach(L => {
+    L.units.forEach(u => { UNIT_ORDER.push(u); (u.items || []).forEach(it => { ITEM[it.id] = it; }); });
+    (L.test || []).forEach((x, k) => {
+      x.id = L.id + 'T' + k;
+      if (x.t === 'tf') { x.t = 'mc'; x.o = ['True', 'False']; x.a = x.a ? 0 : 1; }
+      ITEM[x.id] = x;
+    });
+  });
+  const PASS_UNIT = 80, PASS_TEST = 80;
+  const MISS_GAPS = [1, 3, 7, 16];
   const ALL_WORDS = {};
   LEVELS.forEach(L => L.units.forEach(u => (u.words || []).forEach(w => { ALL_WORDS[w.w] = Object.assign({ unit: u.id, level: L.id }, w); })));
 
@@ -29,6 +41,7 @@
   const fresh = () => ({
     name: '', created: today(), xp: 0, days: {}, streak: { count: 0, last: '' },
     units: {}, tests: {}, placement: null, cards: {}, writing: {}, drafts: {},
+    miss: {}, session: {}, fluency: {},
     settings: { size: 'l', arabic: true, rate: 0.85, voice: '', theme: '', goal: 30 }
   });
   let S;
@@ -47,7 +60,7 @@
     save();
   }
   const U = (id) => (S.units[id] = S.units[id] || { lesson: false, best: null, tries: 0, practiced: 0 });
-  const unitDone = (id) => { const s = S.units[id]; return !!(s && s.best !== null && s.best >= 70); };
+  const unitDone = (id) => { const s = S.units[id]; return !!(s && s.best !== null && s.best >= PASS_UNIT); };
   const levelProgress = (L) => {
     const n = L.units.length + 1;
     let d = L.units.filter(u => unitDone(u.id)).length;
@@ -114,9 +127,10 @@
   }
 
   /* ================= Router ================= */
-  let cleanup = null;
+  let cleanups = [];
+  const onLeave = (fn) => cleanups.push(fn);
   function route() {
-    if (cleanup) { try { cleanup(); } catch (e) {} cleanup = null; }
+    cleanups.forEach(f => { try { f(); } catch (e) {} }); cleanups = [];
     if (window.speechSynthesis) speechSynthesis.cancel();
     const parts = (location.hash.replace(/^#\/?/, '') || '').split('/').filter(Boolean);
     const [a, b, c] = parts;
@@ -128,6 +142,8 @@
     else if (a === 'test' && LEVEL[b]) viewTest(LEVEL[b]);
     else if (a === 'placement') viewPlacement();
     else if (a === 'placement-intro') viewPlacementIntro();
+    else if (a === 'today') viewToday(b);
+    else if (a === 'method') { tab = 'me'; viewMethod(); }
     else if (a === 'words') { tab = 'words'; viewWords(b); }
     else if (a === 'voice') { tab = 'voice'; viewVoice(); }
     else if (a === 'me') { tab = 'me'; viewMe(); }
@@ -200,9 +216,10 @@
       ${brand()}
       <div class="hero">
         <span class="eyebrow">${greet}, ${esc(S.name)} · <span lang="ar">${greetAr}</span></span>
-        ${next ? `<h2>${esc(next.title)}</h2><p>${esc(next.sub)}</p>
-          <div><a class="btn" href="${next.href}">${next.u && U(next.u.id).lesson ? 'Take the quiz' : 'Continue'}</a></div>`
-        : `<h2>You finished every level.</h2><p>Keep your words fresh in Review, and practice CARS passages again.</p>`}
+        <h2>Today's session</h2>
+        <p>${stepsDone()} of 4 steps done · about 20 minutes</p>
+        <div class="row"><a class="btn" href="#/today">${stepsDone() ? 'Continue today\'s session' : 'Start today\'s session'}</a></div>
+        ${next ? `<p class="small">Next lesson: ${esc(next.title)} · ${esc(next.sub)}</p>` : '<p class="small">You finished every level. Keep reviewing to keep it strong.</p>'}
         <div class="stack" style="gap:6px"><div class="spread small"><span>Today's goal</span><span>${Math.min(xpToday, goal)} / ${goal} points</span></div>
         <div class="bar"><i style="width:${Math.min(100, xpToday / goal * 100)}%"></i></div></div>
       </div>
@@ -231,7 +248,7 @@
         <details class="units-wrap" ${cur || rec ? 'open' : ''}><summary class="small muted">${L.units.length} units and a test · ${Math.round(p * 100)}% done</summary>
         <div class="units">
           ${L.units.map(unitLink).join('')}
-          <a class="unit-link" href="#/test/${L.id}"><span class="k">${I.test}</span><span class="t"><b>Level ${L.n} Test</b><span>20 questions · pass with 75%</span></span>
+          <a class="unit-link" href="#/test/${L.id}"><span class="k">${I.test}</span><span class="t"><b>Level ${L.n} Test</b><span>20 questions · pass with ${PASS_TEST}%</span></span>
             ${passed ? `<span class="chip good">${S.tests[L.id].best}%</span>` : (S.tests[L.id] ? `<span class="chip bad">${S.tests[L.id].best}%</span>` : '<span class="chip plain">Test</span>')}</a>
         </div></details>
       </div></div>`;
@@ -240,7 +257,7 @@
   function unitLink(u) {
     const s = S.units[u.id];
     let chip = '<span class="chip plain">New</span>';
-    if (s && s.best !== null) chip = s.best >= 70 ? `<span class="chip good">${s.best}%</span>` : `<span class="chip bad">${s.best}%</span>`;
+    if (s && s.best !== null) chip = s.best >= PASS_UNIT ? `<span class="chip good">${s.best}%</span>` : `<span class="chip bad">${s.best}%</span>`;
     else if (s && s.lesson) chip = '<span class="chip">Quiz next</span>';
     return `<a class="unit-link" href="#/unit/${u.id}/lesson"><span class="k">${kindIcon(u.kind)}</span>
       <span class="t"><b>${esc(u.title)}</b><span>${kindName[u.kind]}</span></span>${chip}</a>`;
@@ -286,6 +303,7 @@
       passages = `<h3>Read</h3>` + u.passages.map((p, i) => passageHTML(p, i === 0)).join('');
     }
     box.innerHTML = `<div class="lesson">${blocks}${words}${passages}</div>
+      <div id="fluencybox" class="stack"></div>
       <div id="speakbox" class="stack"></div>
       <div id="writebox" class="stack"></div>
       <div class="card flat stack">
@@ -297,11 +315,12 @@
       </div>`;
     const ld = document.getElementById('ldone');
     if (ld) ld.onclick = () => {
-      s.lesson = true; addXP(20);
+      s.lesson = true; addXP(20); markStep('learn');
       (u.words || []).forEach(w => { if (!S.cards[w.w]) S.cards[w.w] = { box: 0, due: today() }; });
       save(); toast('+20 points. Nice work!');
       location.hash = `#/unit/${u.id}/practice`;
     };
+    if (u.passages && u.passages.length) renderFluency(u, document.getElementById('fluencybox'));
     if (u.speak && u.speak.length) renderSpeakList(u, document.getElementById('speakbox'));
     if (u.write && u.write.length) renderWrite(u, document.getElementById('writebox'));
   }
@@ -324,23 +343,32 @@
   function quizIntro(u, box) {
     const s = U(u.id);
     const n = Math.min(10, u.items.filter(x => x.t !== 'say' || Speech.canHear).length);
+    const earlier = earlierItems(u);
     box.innerHTML = `<div class="card stack">
       <h2>Unit quiz</h2>
-      <p>${n} questions. Pass with 70% or more. You can take it again as many times as you want. Your best score is kept.</p>
+      <p>${n} questions. Pass with ${PASS_UNIT}% or more to master this unit. You can take it again as many times as you want. Your best score is kept.</p>
+      ${earlier.length ? '<p class="small muted">2 questions come from earlier units. Mixing old and new topics makes memory last longer.</p>' : ''}
       ${s.best !== null ? `<p>Your best: <b>${s.best}%</b> (${s.tries} ${s.tries === 1 ? 'try' : 'tries'})</p>` : ''}
       <div class="row"><button class="btn primary" id="qs">Start quiz</button>${!s.lesson ? `<a class="btn ghost" href="#/unit/${u.id}/lesson">Read the lesson first</a>` : ''}</div>
     </div>`;
     document.getElementById('qs').onclick = () => {
       const pool = u.items.filter(x => x.t !== 'say' || Speech.canHear);
+      const mixed = earlier.length ? shuffle(sample(pool, n - 2).concat(sample(earlier, 2))) : sample(pool, n);
       runSet({
-        box, items: sample(pool, n), mode: 'quiz',
+        box, items: mixed, mode: 'quiz',
         onFinish: (r) => {
           s.tries++; if (s.best === null || r.pct > s.best) s.best = r.pct;
-          if (r.pct >= 70) addXP(30); save();
-          results(box, r, { pass: 70, again: () => viewUnit(u, 'quiz'), next: nextUnitHref(u), backHref: `#/unit/${u.id}/lesson` });
+          if (r.pct >= PASS_UNIT) addXP(30);
+          markStep('learn'); save();
+          results(box, r, { pass: PASS_UNIT, again: () => viewUnit(u, 'quiz'), next: nextUnitHref(u), backHref: `#/unit/${u.id}/lesson` });
         }
       });
     };
+  }
+  function studied(u) { const x = S.units[u.id]; return !!(x && (x.lesson || x.best !== null)); }
+  function earlierItems(u) {
+    const k = UNIT_ORDER.indexOf(u);
+    return [].concat(...UNIT_ORDER.slice(0, k).filter(studied).map(x => (x.items || []).filter(i => i.t !== 'say')));
   }
   function nextUnitHref(u) {
     const L = u.level; const nu = L.units[u.index + 1];
@@ -348,7 +376,18 @@
   }
 
   /* ================= Question runner ================= */
-  function runSet({ box, items, mode, onFinish, quiet }) {
+  function trackItem(item, c, mode) {
+    if (!item.id || !ITEM[item.id] || c === null) return;
+    const m = S.miss[item.id];
+    if (c === false) S.miss[item.id] = { box: 0, due: addDays(today(), MISS_GAPS[0]) };
+    else if (m && mode === 'review') {
+      m.box++;
+      if (m.box >= MISS_GAPS.length) delete S.miss[item.id]; else m.due = addDays(today(), MISS_GAPS[m.box]);
+    }
+    save();
+  }
+  const dueMisses = () => { const d = today(); return Object.keys(S.miss).filter(id => ITEM[id] && ITEM[id].t !== 'say' && S.miss[id].due <= d).sort((a, b) => S.miss[a].due < S.miss[b].due ? -1 : 1); };
+  function runSet({ box, items, mode, onFinish, quiet, track = true }) {
     let i = 0, right = 0, counted = 0; const wrongs = [];
     const order = items.slice();
     const total = order.length;
@@ -365,6 +404,7 @@
         quiet,
         onResult(c) {
           if (c === null) return;
+          if (track) trackItem(item, c, mode);
           counted++;
           if (c) { right++; addXP(mode === 'practice' ? 2 : 3); } else wrongs.push(item);
           if (mode === 'practice' && !c) order.push(item);
@@ -508,13 +548,26 @@ ${heard !== undefined ? `Speech recognition heard: "${heard || '(nothing)'}"\nWo
     return `I'm practicing English pronunciation. My first language is Egyptian Arabic. In voice mode, I will read this sentence aloud: "${text}". Listen carefully. Tell me which words I said wrong, show me how to say them slowly, and make me repeat each one until it is right. Use simple English, and explain in Egyptian Arabic if I'm confused. Be kind and encouraging.`;
   }
 
-  function sayWidget(text, box, { unitId, onScore, onSkip, compact }) {
+  function chunkText(text) {
+    const parts = text.match(/[^,;:.!?]+[,;:.!?]*/g) || [text];
+    const out = [];
+    parts.forEach(p => {
+      const w = p.trim().split(/\s+/).filter(Boolean);
+      if (!w.length) return;
+      if (w.length <= 5) { out.push(w.join(' ')); return; }
+      const groups = Math.ceil(w.length / 4), size = Math.ceil(w.length / groups);
+      for (let i = 0; i < w.length; i += size) out.push(w.slice(i, i + size).join(' '));
+    });
+    return out;
+  }
+  function sayWidget(text, box, { unitId, onScore, onSkip, onShadow, compact }) {
     const id = 'sw' + Math.random().toString(36).slice(2, 8);
     box.innerHTML = `<div class="card stack" id="${id}">
       <div class="spread"><span class="eyebrow">Read this out loud</span><div class="row" style="gap:6px">${speakBtn(text, 'Hear it')}<button class="icon-btn" data-slow="1" aria-label="Hear it slowly">${I.slow}</button></div></div>
-      <div class="say-text">${esc(text)}</div>
+      <div class="say-text">${chunkText(text).map((c, k) => `<span data-ch="${k}">${esc(c)}</span>`).join(' ')}</div>
       <div class="heard" hidden></div>
       <div class="row">
+        <button class="btn" data-act="shadow">${I.speak} Listen and repeat</button>
         ${Speech.canHear ? `<button class="btn primary" data-act="check">${I.mic} Check my reading</button>` : ''}
         ${Speech.canRecord ? `<button class="btn" data-act="rec">${I.rec} Record for grading</button>` : ''}
         <button class="btn ghost small" data-act="claude">${I.copy} Claude voice coach</button>
@@ -528,6 +581,34 @@ ${heard !== undefined ? `Speech recognition heard: "${heard || '(nothing)'}"\nWo
     const heardEl = root.querySelector('.heard');
     let last = null;
     root.querySelector('[data-slow]').onclick = () => Speech.say(text, { rate: 0.6, voice: S.settings.voice });
+    let shadowRun = 0;
+    const sh = root.querySelector('[data-act="shadow"]');
+    sh.onclick = async () => {
+      const run = ++shadowRun;
+      const chunks = chunkText(text);
+      const spans = root.querySelectorAll('[data-ch]');
+      const live = () => run === shadowRun && root.isConnected;
+      sh.disabled = true;
+      for (let k = 0; k < chunks.length && live(); k++) {
+        spans.forEach(x => x.classList.toggle('hl', +x.dataset.ch === k));
+        status.textContent = 'Listen…';
+        await Speech.sayP(chunks[k], { rate: S.settings.rate, voice: S.settings.voice });
+        if (!live()) break;
+        status.textContent = 'Your turn. Say it out loud.';
+        spans.forEach(x => x.classList.toggle('turn', +x.dataset.ch === k));
+        await new Promise(r => setTimeout(r, 900 + chunks[k].split(/\s+/).length * 600));
+        spans.forEach(x => x.classList.remove('turn'));
+      }
+      spans.forEach(x => x.classList.remove('hl', 'turn'));
+      if (live()) {
+        status.textContent = 'Now listen to the whole sentence, then say it all together.';
+        await Speech.sayP(text, { rate: S.settings.rate, voice: S.settings.voice });
+        if (live()) status.textContent = Speech.canHear ? 'Your turn: say the whole sentence. Tap "Check my reading" to get a score.' : 'Your turn: say the whole sentence.';
+        addXP(2);
+        if (onShadow) onShadow();
+      }
+      sh.disabled = false;
+    };
     const chk = root.querySelector('[data-act="check"]');
     if (chk) chk.onclick = async () => {
       if (chk.classList.contains('mic-on')) { Speech.stopListening(); return; }
@@ -568,7 +649,7 @@ ${heard !== undefined ? `Speech recognition heard: "${heard || '(nothing)'}"\nWo
     };
     const sk = root.querySelector('[data-act="skip"]');
     if (sk) sk.onclick = () => onSkip();
-    cleanup = () => { if (recorder) recorder.stop(); Speech.stopListening(); };
+    onLeave(() => { shadowRun++; Speech.cancel(); if (recorder) recorder.stop(); Speech.stopListening(); });
   }
 
   function renderSpeakList(u, box) {
@@ -637,8 +718,8 @@ Please:
       <div id="tbody" class="stack"></div>`;
     const box = document.getElementById('tbody');
     box.innerHTML = `<div class="card stack">
-      <p>20 questions from every unit in this level. Pass with <b>75%</b> to finish the level and earn your certificate.</p>
-      <p class="ar small" lang="ar">٢٠ سؤال من كل الوحدات. لازم ٧٥٪ عشان تعدّي المستوى وتاخدي الشهادة.</p>
+      <p>20 questions from every unit in this level. Pass with <b>${PASS_TEST}%</b> to finish the level and earn your certificate.</p>
+      <p class="ar small" lang="ar">٢٠ سؤال من كل الوحدات. لازم ٨٠٪ عشان تعدّي المستوى وتاخدي الشهادة.</p>
       ${t ? `<p>Your best: <b>${t.best}%</b>${t.passed ? ' · Passed' : ''}</p>` : ''}
       <div class="row"><button class="btn primary" id="ts">Start test</button>${t && t.passed ? `<a class="btn" href="#/cert/${L.id}">See certificate</a>` : ''}</div></div>`;
     document.getElementById('ts').onclick = () => {
@@ -652,11 +733,12 @@ Please:
         onFinish: (r) => {
           const prev = S.tests[L.id] || { best: 0, passed: false };
           prev.best = Math.max(prev.best, r.pct);
-          if (r.pct >= 75 && !prev.passed) { prev.passed = true; prev.date = today(); addXP(100); }
+          if (r.pct >= PASS_TEST && !prev.passed) { prev.passed = true; prev.date = today(); addXP(100); }
+          markStep('learn');
           S.tests[L.id] = prev; save();
           const nl = LEVELS[LEVELS.indexOf(L) + 1];
-          results(box, r, { pass: 75, title: `Level ${L.n} Test`, again: () => viewTest(L), next: r.pct >= 75 ? { href: `#/cert/${L.id}`, label: 'Get my certificate' } : null });
-          if (r.pct >= 75 && nl) {
+          results(box, r, { pass: PASS_TEST, title: `Level ${L.n} Test`, again: () => viewTest(L), next: r.pct >= PASS_TEST ? { href: `#/cert/${L.id}`, label: 'Get my certificate' } : null });
+          if (r.pct >= PASS_TEST && nl) {
             const a = document.createElement('a'); a.className = 'btn block'; a.href = `#/unit/${nl.units[0].id}/lesson`; a.textContent = `Start Level ${nl.n}: ${nl.title}`;
             box.querySelector('.card').appendChild(a);
           }
@@ -733,6 +815,7 @@ Please:
       <div class="hero"><h2>${due.length ? `${due.length} word${due.length === 1 ? '' : 's'} ready to review` : 'Nothing to review right now'}</h2>
         <p>${known} words in your deck · ${Object.values(S.cards).filter(c => c.box >= 4).length} learned well</p>
         <div>${due.length ? '<a class="btn" href="#/words/review">Review now</a>' : '<span class="small">Finish a vocabulary lesson to add words.</span>'}</div></div>
+      ${dueMisses().length ? `<a class="card flat spread" href="#/today/warm" style="text-decoration:none;color:inherit"><div><b>${dueMisses().length} question${dueMisses().length === 1 ? '' : 's'} you missed before</b><div class="small muted">They come back after 1, 3, 7, and 16 days until you know them.</div></div><span class="chip">Review</span></a>` : ''}
       <div class="stack"><h2>All words</h2>
         <input class="input" id="wsearch" placeholder="Search a word" autocomplete="off">
         <div id="wlist"></div></div>`;
@@ -763,7 +846,8 @@ Please:
     const box = document.getElementById('rv');
     const show = () => {
       if (!queue.length) {
-        box.innerHTML = `<div class="card stack" style="text-align:center;align-items:center"><h2>Review finished</h2><p>You reviewed ${done} cards.</p><p class="ar" lang="ar">شاطرة! نكمّل بكرة.</p><a class="btn primary" href="#/">Back to my path</a></div>`;
+        markStep('words');
+        box.innerHTML = `<div class="card stack" style="text-align:center;align-items:center"><h2>Review finished</h2><p>You reviewed ${done} cards.</p><p class="ar" lang="ar">شاطرة! نكمّل بكرة.</p><a class="btn primary" href="#/today">Back to today's session</a></div>`;
         return;
       }
       const w = ALL_WORDS[queue[0]];
@@ -838,7 +922,7 @@ Please:
         <input class="input" data-note placeholder="Teacher's note (for example: practice the P sound)" value="${esc(g.note)}">
       </div>`;
     }).join('');
-    cleanup = () => urls.forEach(u => URL.revokeObjectURL(u));
+    onLeave(() => urls.forEach(u => URL.revokeObjectURL(u)));
     box.querySelectorAll('[data-id]').forEach(card => {
       const r = list.find(x => x.id === card.dataset.id);
       const persist = () => Speech.saveRec(r);
@@ -882,6 +966,7 @@ Please:
       </div>
       <div class="card stack"><div class="spread"><h3>This week</h3><span class="small muted">points per day</span></div>
         <div class="week">${days.map(([d, v]) => `<div><i style="height:${Math.max(3, v / max * 70)}px" title="${v} points"></i><span>${new Date(d + 'T12:00:00').toLocaleDateString(undefined, { weekday: 'short' })}</span></div>`).join('')}</div></div>
+      <a class="card flat spread" href="#/method" style="text-decoration:none;color:inherit"><div><b>How Sekka teaches, and how family can help</b><div class="small muted">The learning methods behind the app</div></div><span class="chip">Read</span></a>
       <div class="card stack"><h3>Certificates</h3>
         ${passed.length ? passed.map(L => `<a class="unit-link" href="#/cert/${L.id}"><span class="k">${I.test}</span><span class="t"><b>Level ${L.n}: ${esc(L.title)}</b><span>${S.tests[L.id].best}%</span></span><span class="chip gold">View</span></a>`).join('') : '<p class="muted">Pass a level test to earn your first certificate.</p>'}</div>
       <div class="card stack"><h3>Settings</h3>
@@ -932,6 +1017,162 @@ Please:
       rs.dataset.sure = '1'; rs.textContent = 'Tap again to erase everything'; rs.classList.add('confirm');
       setTimeout(() => { if (rs.isConnected) { delete rs.dataset.sure; rs.textContent = 'Erase all progress'; rs.classList.remove('confirm'); } }, 4000);
     };
+  }
+
+
+  /* ================= Daily session ================= */
+  function sess() { if (S.session.date !== today()) S.session = { date: today() }; return S.session; }
+  function markStep(k) { sess()[k] = true; save(); }
+  function stepsDone() { const x = sess(); return ['warm', 'learn', 'words', 'speak'].filter(k => x[k]).length; }
+  function warmItems(n) {
+    const misses = dueMisses().slice(0, n).map(id => ITEM[id]);
+    const ids = new Set(misses.map(x => x.id));
+    const pool = [].concat(...UNIT_ORDER.filter(studied).map(u => (u.items || []).filter(i => i.t !== 'say' && !ids.has(i.id))));
+    return misses.concat(sample(pool, Math.max(0, n - misses.length)));
+  }
+  function todaySentences() {
+    const n = nextStep();
+    const L = n && n.u ? n.u.level : (S.placement ? LEVELS[S.placement.level - 1] : LEVELS[0]);
+    const own = [].concat(...L.units.map(u => u.speak || []));
+    return sample(own.length ? own : [].concat(...LEVELS.map(x => [].concat(...x.units.map(u => u.speak || [])))), 3);
+  }
+  function viewToday(sub) {
+    const x = sess();
+    if (sub === 'warm') {
+      const items = warmItems(dueMisses().length > 5 ? Math.min(10, dueMisses().length) : 5);
+      app.innerHTML = `<a class="back" href="#/today">${I.back} Today's session</a><div class="stack" style="gap:6px"><span class="eyebrow">Step 1 · Warm-up</span><h1>Remember first</h1></div><div id="wb" class="stack"></div>`;
+      const box = document.getElementById('wb');
+      if (!items.length) { markStep('warm'); box.innerHTML = '<div class="card stack"><p>Nothing to review yet. After your first lesson, this step will bring back old questions so you don\'t forget them.</p><a class="btn primary" href="#/today">Back to today\'s session</a></div>'; return; }
+      box.innerHTML = `<div class="card stack"><p>${items.length} questions from earlier lessons and questions you missed before. Try to remember the answer <b>before</b> you look at the choices.</p>
+        <p class="ar small" lang="ar">حاولي تفتكري الإجابة الأول قبل ما تبصي على الاختيارات. محاولة التذكّر نفسها هي اللي بتثبّت المعلومة.</p>
+        <button class="btn primary" id="wgo">Start warm-up</button></div>`;
+      document.getElementById('wgo').onclick = () => runSet({ box, items, mode: 'review', onFinish: (r) => {
+        markStep('warm');
+        results(box, r, { pass: 0, title: 'Warm-up', again: () => viewToday('warm'), next: { href: '#/today', label: 'Next step' } });
+      } });
+      return;
+    }
+    if (sub === 'speak') {
+      const list = todaySentences();
+      let k = 0;
+      app.innerHTML = `<a class="back" href="#/today">${I.back} Today's session</a><div class="stack" style="gap:6px"><span class="eyebrow">Step 4 · Speak</span><h1>Listen and repeat</h1>
+        <p class="muted">Tap <b>Listen and repeat</b>. The voice says a short piece, then you say it. Copying a native speaker closely is one of the fastest ways to improve your accent and rhythm.</p></div>
+        <div id="sb"></div><div class="row" id="snav"></div>`;
+      const draw = () => {
+        sayWidget(list[k], document.getElementById('sb'), { unitId: 'today' });
+        document.getElementById('snav').innerHTML = `<span class="small muted">Sentence ${k + 1} of ${list.length}</span>` + (k < list.length - 1 ? '<button class="btn primary" id="sn">Next sentence</button>' : '<button class="btn primary" id="sn">Finish</button>');
+        document.getElementById('sn').onclick = () => { if (k < list.length - 1) { k++; draw(); } else { markStep('speak'); addXP(5); location.hash = '#/today'; } };
+      };
+      draw();
+      return;
+    }
+    const next = nextStep();
+    const due = dueCards().length;
+    const misses = dueMisses().length;
+    const step = (key, n, title, sub, href, label, mins) => `<div class="unit-link" style="grid-template-columns:38px 1fr auto">
+      <span class="k" style="${x[key] ? 'background:var(--nile);color:var(--nile-ink)' : ''}">${x[key] ? '✓' : n}</span>
+      <span class="t"><b>${title}</b><span>${sub} · ${mins} min</span></span>
+      ${x[key] ? '<span class="chip good">Done</span>' : `<a class="btn small primary" href="${href}">${label}</a>`}</div>`;
+    app.innerHTML = `<a class="back" href="#/">${I.back} Home</a>
+      <div class="stack" style="gap:6px"><span class="eyebrow">${new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}</span><h1>Today's session</h1>
+      <p class="muted">Four short steps, about 20 minutes. Doing a little every day works much better than a lot once a week.</p>
+      <p class="ar small muted" lang="ar">٢٠ دقيقة كل يوم أحسن بكتير من ساعتين مرة في الأسبوع.</p></div>
+      <div class="units">
+        ${step('warm', 1, 'Warm-up review', misses ? `${misses} old mistake${misses === 1 ? '' : 's'} to fix + earlier lessons` : 'Questions from earlier lessons', '#/today/warm', 'Start', 3)}
+        ${step('learn', 2, next ? esc(next.title) : 'Review any level', next ? esc(next.sub) : 'You finished the path', next ? next.href : '#/', 'Open', 10)}
+        ${step('words', 3, 'Word review', due ? `${due} word${due === 1 ? '' : 's'} ready` : 'No words due today', due ? '#/words/review' : '#/words', due ? 'Review' : 'Open', 4)}
+        ${step('speak', 4, 'Listen and repeat', '3 sentences, out loud', '#/today/speak', 'Start', 3)}
+      </div>
+      ${stepsDone() === 4 ? '<div class="hero"><h2>All done for today!</h2><p>Come back tomorrow. Sleep helps your brain store what you learned.</p><p class="ar" lang="ar">برافو! النوم بيساعد المخ يحفظ اللي اتعلمتيه. نكمّل بكرة.</p></div>' : ''}
+      <a class="small" href="#/method">Why it works this way</a>`;
+  }
+
+  /* ================= Repeated reading (fluency) ================= */
+  function renderFluency(u, box) {
+    const paras = [];
+    u.passages.forEach((p, pi) => p.text.split(/\n\n+/).forEach((t, k) => { if (t.split(/\s+/).length >= 25) paras.push({ key: `${u.id}:${pi}:${k}`, label: `${p.title} · paragraph ${k + 1}`, text: t.replace(/\n/g, ' ') }); }));
+    if (!paras.length) return;
+    let cur = 0;
+    box.innerHTML = `<h3>Fluency practice: repeated reading</h3>
+      <p class="small muted">Reading the same paragraph aloud 3 or 4 times this week builds speed and confidence. Each try is timed so you can see your progress.</p>
+      <div class="card stack">
+        <select class="input" id="fl-sel">${paras.map((p, k) => `<option value="${k}">${esc(p.label)}</option>`).join('')}</select>
+        <ol class="steps small"><li><b>Listen</b> while you follow the words with your finger.</li><li><b>Read along</b> with the voice.</li><li><b>Read alone</b>, timed. Don't rush: correct words matter more than speed.</li></ol>
+        <div class="reading" id="fl-text"></div>
+        <div class="row"><button class="btn" id="fl-listen">${I.speak} Listen</button>
+          ${Speech.canHear ? `<button class="btn primary" id="fl-go">${I.mic} Read alone, timed</button>` : ''}</div>
+        ${Speech.canHear ? '' : '<p class="small muted">Timed reading needs Chrome on Android or a computer. You can still listen and read along here.</p>'}
+        <div id="fl-out" class="stack" aria-live="polite"></div>
+      </div>`;
+    const sel = box.querySelector('#fl-sel'), txt = box.querySelector('#fl-text'), out = box.querySelector('#fl-out');
+    const history = () => {
+      const h = S.fluency[paras[cur].key] || [];
+      if (!h.length) return '<p class="small muted">No timed tries yet for this paragraph.</p>';
+      return `<div class="small"><b>Your tries:</b> ${h.slice(-6).map(x => `${x.wcpm} wpm · ${x.acc}%`).join(' → ')}</div>`;
+    };
+    const draw = () => { txt.innerHTML = `<p>${esc(paras[cur].text)}</p>`; out.innerHTML = history(); };
+    sel.onchange = () => { cur = +sel.value; draw(); };
+    draw();
+    box.querySelector('#fl-listen').onclick = () => say(paras[cur].text);
+    const go = box.querySelector('#fl-go');
+    let ctl = null;
+    if (go) go.onclick = async () => {
+      if (ctl) {
+        go.disabled = true; go.textContent = 'Checking…';
+        const r = await ctl.stop(); ctl = null;
+        go.disabled = false; go.classList.remove('mic-on'); go.innerHTML = `${I.mic} Read again, timed`;
+        if (r.error) { out.innerHTML = '<p>Please allow the microphone, then try again.</p>'; return; }
+        const c = Speech.compare(paras[cur].text, r.text);
+        const matched = c.hit.filter(Boolean).length;
+        const wcpm = Math.round(matched / (r.ms / 60000));
+        const rec = { d: today(), wcpm, acc: c.score };
+        (S.fluency[paras[cur].key] = S.fluency[paras[cur].key] || []).push(rec);
+        addXP(5); save();
+        txt.innerHTML = `<p class="heard">${c.words.map((w, k) => `<span class="${c.hit[k] ? 'ok' : 'miss'}">${esc(w)}</span>`).join(' ')}</p>`;
+        out.innerHTML = `<div class="feedback ${c.score >= 95 ? 'right' : 'info'}"><b class="v">${wcpm} words correct per minute · ${c.score}% accurate</b>
+          <div>${c.score >= 95 ? 'Very accurate! Next time, try to read a little more smoothly, like you are talking.' : c.score >= 85 ? 'Good. Practice the red words, then read the paragraph again.' : 'Listen to the paragraph again and read along with the voice first, then try alone.'}</div>
+          <div class="small muted">A strong goal is 95% accuracy at 110 or more words per minute. Speed grows when you read the same text again.</div></div>${history()}`;
+        return;
+      }
+      try {
+        ctl = Speech.listenLong();
+        go.classList.add('mic-on'); go.innerHTML = `${I.stop} I finished reading`;
+        out.innerHTML = '<p class="small muted">Read the paragraph out loud now. Tap the button when you finish.</p>';
+      } catch (e) { out.innerHTML = '<p>Timed reading is not available in this browser.</p>'; }
+    };
+    onLeave(() => { if (ctl) ctl.stop(); });
+  }
+
+  /* ================= Teaching method ================= */
+  function viewMethod() {
+    const rows = [
+      ['A little every day', 'Short daily practice beats long, rare study. Your brain stores learning between sessions, especially during sleep.', 'شوية كل يوم أحسن من كتير مرة واحدة. المخ بيثبّت المعلومة بين المرّات وخصوصاً وانتي نايمة.'],
+      ['Remember before you look', 'Quizzes are not only tests. Pulling an answer out of your memory is what makes it stay. That is why every session starts with a warm-up.', 'الامتحان مش بس تقييم. لما تحاولي تفتكري الإجابة، المعلومة بتثبت أكتر.'],
+      ['Mistakes come back', 'A question you miss returns after 1, 3, 7, and 16 days until you know it. Words in your deck work the same way.', 'السؤال اللي بتغلطي فيه بيرجعلك بعد يوم، ٣ أيام، أسبوع، وأسبوعين لحد ما تحفظيه.'],
+      ['Mix old and new', 'Every quiz includes questions from earlier units. Mixing topics feels harder, but you remember longer.', 'كل امتحان فيه أسئلة من الدروس القديمة. ده أصعب شوية بس بيخلّي المعلومة تعيش أطول.'],
+      ['Master it, then move on', 'You need 80% to finish a unit. A strong base makes every next level easier.', 'لازم ٨٠٪ عشان تخلصي الوحدة. الأساس القوي بيسهّل اللي بعده.'],
+      ['Understand a lot of English', 'We learn a language mostly by understanding messages, reading and listening to things that are a little easy. Read and listen as much as you can.', 'بنتعلم اللغة أكتر من إننا نسمع ونقرا حاجات فاهمين معظمها. اسمعي واقري كتير.'],
+      ['Listen, then copy', 'Listening to a short piece and repeating it right away trains your mouth and ear together. Adults can improve pronunciation at any age with this kind of practice.', 'اسمعي حتة صغيرة وكرريها على طول. ده بيدرّب ودنك وبقك مع بعض. النطق بيتحسن في أي سن.'],
+      ['Read it again', 'Reading the same paragraph aloud several times is a proven way to build reading speed and confidence.', 'لما تقري نفس الفقرة بصوت عالي كذا مرة، سرعتك وثقتك بيزيدوا.'],
+      ['Your life is the lesson', 'Adults learn best when the topic matters to them. Write and speak about your family, your work, and your day.', 'الكبار بيتعلموا أحسن لما الموضوع يخصّهم. اكتبي واتكلمي عن عيلتك وشغلك ويومك.'],
+      ['Arabic is a bridge', 'Comparing English with Arabic helps you understand why mistakes happen. As you grow, turn Arabic help off in settings and think more in English.', 'المقارنة بالعربي بتفهّمك سبب الغلط. ولما تتقدمي، اقفلي الشرح العربي من الإعدادات وفكّري بالإنجليزي.']
+    ];
+    const help = [
+      ['Ask her to teach you', 'Once a day, ask: "What did you learn today? Teach me." Explaining a lesson is one of the strongest ways to learn it.'],
+      ['Correct by repeating, not by stopping', 'If she says "Yesterday I go to the store," answer naturally: "Oh, you went to the store? What did you buy?" She hears the right form and the conversation keeps going.'],
+      ['Ten minutes of English a day', 'Pick one daily moment, like dinner or a drive, to speak only English about real things.'],
+      ['Praise effort and specific progress', 'Say "Your TH sound is much clearer" rather than "You\'re smart." Specific praise builds the habit.'],
+      ['Grade one thing at a time', 'When you listen to her recordings, give one thing to fix, not ten. Use the stars and the note on the Voice tab.'],
+      ['Surround her with easy English', 'English labels on things at home, a favorite show with English audio and English subtitles, and simple news such as VOA Learning English.'],
+      ['Make it a routine', 'Same time every day, linked to an existing habit, like right after morning tea.']
+    ];
+    app.innerHTML = `<a class="back" href="#/me">${I.back} Me</a>
+      <div class="stack" style="gap:6px"><span class="eyebrow">The method</span><h1>How Sekka teaches</h1>
+      <p class="muted">These methods come from research on how adults learn and remember. Age 40 is a great age to learn: adults learn grammar and vocabulary faster than children when they practice the right way.</p>
+      <p class="ar muted" lang="ar">سن الأربعين سن ممتاز للتعلّم. الكبار بيتعلموا القواعد والكلمات أسرع من الأطفال لما يذاكروا بالطريقة الصح.</p></div>
+      <div class="stack">${rows.map(([t, d, a]) => `<div class="card flat stack" style="gap:6px"><h3>${esc(t)}</h3><p>${esc(d)}</p>${S.settings.arabic ? `<p class="ar small" lang="ar">${esc(a)}</p>` : ''}</div>`).join('')}</div>
+      <div class="stack" style="gap:6px"><span class="eyebrow">For family</span><h2>How you can help</h2></div>
+      <div class="stack">${help.map(([t, d]) => `<div class="card flat stack" style="gap:6px"><h3>${esc(t)}</h3><p>${esc(d)}</p></div>`).join('')}</div>`;
   }
 
   /* ================= Boot ================= */

@@ -13,7 +13,19 @@ An installable web app (PWA) that takes an Egyptian-Arabic-speaking adult from a
 | 5 College English | College · B2+/C1 | agreement, parallelism, modifiers | AWL 2 + transitions | academic essays | thesis, summary, formal register |
 | 6 MCAT CARS | Pre-med · C1 | CARS strategy | medical word parts | 2 full CARS-style passages | reflection writing |
 
-Every unit has a **Lesson** (with Egyptian Arabic notes), unlimited **Practice** with explanations, and a **Quiz** (70% to pass). Each level ends with a **20-question test** (75% to pass), which earns a printable certificate. There's also an 18-question **placement check**, a **spaced-repetition word deck**, and a **Voice** tab.
+## How it teaches (evidence-based)
+
+- **Daily 20-minute session** (spaced practice): warm-up review → new lesson → word review → listen and repeat.
+- **Retrieval practice:** every session opens with questions from earlier lessons.
+- **Mistakes return** after 1, 3, 7, and 16 days until answered correctly (spaced repetition for questions, not just words).
+- **Interleaving:** each unit quiz mixes in 2 questions from earlier units.
+- **Mastery learning:** 80% to pass a unit or level test.
+- **Shadowing:** listen to a short chunk, repeat it, then the whole sentence.
+- **Repeated reading:** timed read-aloud of the same paragraph, scored in words correct per minute and accuracy.
+- **Explicit L1 contrast:** Egyptian Arabic notes explain *why* each mistake happens; they can be turned off as she advances.
+- A **How you can help** guide for family (recasts, teach-back, a daily 10 minutes of English).
+
+Every unit has a **Lesson** (with Egyptian Arabic notes), unlimited **Practice** with explanations, and a **Quiz** (80% to pass). Each level ends with a **20-question test** (80% to pass), which earns a printable certificate. There's also an 18-question **placement check**, a **spaced-repetition word deck**, and a **Voice** tab.
 
 ## Grading speech
 

@@ -32,6 +32,22 @@
     return true;
   };
 
+  /* Speak and resolve when finished (with a time-based fallback for browsers that skip onend). */
+  Speech.sayP = (text, opts = {}) => new Promise((resolve) => {
+    if (!window.speechSynthesis) return resolve(false);
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = 'en-US';
+    u.rate = opts.rate || 0.9;
+    const v = Speech.pickVoice(opts.voice);
+    if (v) u.voice = v;
+    let done = false;
+    const finish = () => { if (!done) { done = true; clearTimeout(t); resolve(true); } };
+    const t = setTimeout(finish, 1500 + text.split(/\s+/).length * 700 / u.rate);
+    u.onend = finish; u.onerror = finish;
+    speechSynthesis.speak(u);
+  });
+  Speech.cancel = () => { try { speechSynthesis.cancel(); } catch (e) {} };
+
   /* ---------- Speech recognition ---------- */
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   Speech.canHear = !!SR;
@@ -58,6 +74,34 @@
     try { r.start(); } catch (e) { reject('start'); }
   });
   Speech.stopListening = () => { if (active) try { active.stop(); } catch (e) {} };
+
+  /* Long listening for reading a whole paragraph. Restarts if the browser stops on a pause.
+     Returns a controller whose stop() resolves { text, ms }. */
+  Speech.listenLong = (onProgress) => {
+    if (!SR) throw new Error('unsupported');
+    let stopped = false, finals = [], rec = null, startAt = Date.now(), lastHeard = startAt;
+    let resolveStop;
+    const ended = new Promise(r => { resolveStop = r; });
+    const start = () => {
+      rec = new SR();
+      active = rec;
+      rec.lang = 'en-US'; rec.continuous = true; rec.interimResults = false; rec.maxAlternatives = 1;
+      rec.onresult = (e) => {
+        for (let i = e.resultIndex; i < e.results.length; i++) {
+          if (e.results[i].isFinal) { finals.push(e.results[i][0].transcript); lastHeard = Date.now(); }
+        }
+        if (onProgress) onProgress(finals.join(' '));
+      };
+      rec.onerror = (e) => { if (e.error === 'not-allowed' || e.error === 'service-not-allowed') { stopped = true; resolveStop({ text: '', ms: 0, error: e.error }); } };
+      rec.onend = () => {
+        if (stopped) resolveStop({ text: finals.join(' '), ms: Math.max(1000, lastHeard - startAt) });
+        else { try { start(); } catch (e) { stopped = true; resolveStop({ text: finals.join(' '), ms: lastHeard - startAt }); } }
+      };
+      rec.start();
+    };
+    start();
+    return { stop: () => { stopped = true; try { rec.stop(); } catch (e) {} setTimeout(() => resolveStop({ text: finals.join(' '), ms: Math.max(1000, lastHeard - startAt) }), 2500); return ended; } };
+  };
 
   const norm = (s) => s.toLowerCase()
     .replace(/[’‘]/g, "'")
