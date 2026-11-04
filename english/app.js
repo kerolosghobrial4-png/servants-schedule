@@ -152,6 +152,7 @@
     else if (a === 'phrases') { tab = 'voice'; viewPhrases(); }
     else if (a === 'numbers') { tab = 'voice'; viewNumbers(); }
     else if (a === 'progress') { tab = 'me'; viewProgress(); }
+    else if (a === 'writing') { tab = 'me'; viewWriting(); }
     else if (a === 'story' && STORY[b]) viewStory(STORY[b]);
     else if (a === 'method') { tab = 'me'; viewMethod(); }
     else if (a === 'words') { tab = 'words'; viewWords(b); }
@@ -861,6 +862,7 @@ Please:
       box.innerHTML = `<div class="card stack">
         <span class="eyebrow">Your result</span>
         <h2>Start at Level ${level}: ${esc(L.title)}</h2>
+        ${level === LEVELS.length && got[LEVELS.length] && got[LEVELS.length][0] / got[LEVELS.length][1] >= 0.67 ? '<p><b>You already read at an advanced level.</b> Use Level 6 and the Talk at Work units to polish your speaking and writing for work and college.</p>' : ''}
         <p>${esc(L.grade)} · ${esc(L.cefr)}</p>
         <div class="tbl-wrap"><table><thead><tr><th>Level</th><th>Correct</th></tr></thead><tbody>
         ${LEVELS.map(x => `<tr><td>${x.n}. ${esc(x.title)}</td><td>${got[x.n] ? got[x.n][0] + ' / ' + got[x.n][1] : '—'}</td></tr>`).join('')}</tbody></table></div>
@@ -1054,6 +1056,7 @@ Please:
       </div>
       <div class="card stack"><div class="spread"><h3>This week</h3><span class="small muted">points per day</span></div>
         <div class="week">${days.map(([d, v]) => `<div><i style="height:${Math.max(3, v / max * 70)}px" title="${v} points"></i><span>${new Date(d + 'T12:00:00').toLocaleDateString(undefined, { weekday: 'short' })}</span></div>`).join('')}</div></div>
+      <a class="card flat spread" href="#/writing" style="text-decoration:none;color:inherit"><div><b>My writing</b><div class="small muted">${(n => n === 1 ? '1 piece saved' : n + ' pieces saved')(Object.values(S.writing).filter(t => t && t.trim()).length)}</div></div><span class="chip">Open</span></a>
       <a class="card flat spread" href="#/progress" style="text-decoration:none;color:inherit"><div><b>My progress</b><div class="small muted">Units mastered, words learned, reading speed</div></div><span class="chip">Open</span></a>
       <a class="card flat spread" href="#/method" style="text-decoration:none;color:inherit"><div><b>How Sekka teaches, and how family can help</b><div class="small muted">The learning methods behind the app</div></div><span class="chip">Read</span></a>
       <div class="card stack"><h3>Weekly report for family</h3>
@@ -1614,6 +1617,30 @@ Start now by saying your first line in character.`;
           <div>${r.right === r.counted ? 'You remembered it. Now finish the lesson and practice.' : 'Good try. Read the part you missed again, then practice. Missed questions will come back later.'}</div></div>`;
       } });
     };
+  }
+
+  /* ================= My writing ================= */
+  function viewWriting() {
+    const entries = Object.entries(S.writing).filter(([, t]) => t && t.trim()).map(([key, text]) => {
+      const [uid, k] = key.split(':');
+      const u = UNIT[uid];
+      const task = u && u.write && u.write[+k] ? u.write[+k].task : '';
+      return { key, u, task, text, words: (text.match(/\b[\w']+\b/g) || []).length };
+    }).filter(e => e.u).sort((a, b) => UNIT_ORDER.indexOf(a.u) - UNIT_ORDER.indexOf(b.u));
+    const total = entries.reduce((a, e) => a + e.words, 0);
+    app.innerHTML = `<a class="back" href="#/me">${I.back} Me</a>
+      <div class="stack" style="gap:6px"><span class="eyebrow">Writing</span><h1>My writing</h1>
+      <p class="muted">${entries.length ? `${entries.length} piece${entries.length === 1 ? '' : 's'} · ${total} words in total. Look how your writing grows.` : 'Your writing assignments will appear here.'}</p></div>
+      ${entries.length ? entries.map((e, i) => `<div class="card stack">
+        <div class="spread"><span class="eyebrow">Level ${e.u.level.n} · ${esc(e.u.title)}</span><span class="chip plain">${e.words} words</span></div>
+        <p class="small"><b>${md(e.task)}</b></p>
+        <div class="reading" style="white-space:pre-wrap">${esc(e.text)}</div>
+        <div class="row"><button class="btn small primary" data-wcopy="${i}">${I.copy} Copy for Claude to grade</button><a class="btn small" href="#/unit/${e.u.id}/lesson">Edit</a></div>
+      </div>`).join('') : `<div class="card flat stack"><p>Each Speaking &amp; Writing unit has a writing task. Your writing is saved automatically as you type.</p><a class="btn primary" href="#/unit/${(UNIT_ORDER.find(u => u.write && u.write.length) || UNIT_ORDER[0]).id}/lesson">Go to the first writing task</a></div>`}`;
+    app.querySelectorAll('[data-wcopy]').forEach(b => b.onclick = () => {
+      const e = entries[+b.dataset.wcopy];
+      copy(claudeWritingPrompt(e.u.level, e.task, e.text));
+    });
   }
 
   /* ================= Daily session ================= */

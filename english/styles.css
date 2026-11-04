@@ -329,3 +329,6 @@ ol.steps { margin: 0; padding-left: 1.3em; display: flex; flex-direction: column
 .qk span { font-size: .8rem; color: var(--muted); }
 details.card > summary { cursor: pointer; list-style: none; }
 details.card > summary::-webkit-details-marker { display: none; }
+
+.unit-link:focus-visible, .qk:focus-visible, .cell:focus-visible, .opt:focus-visible, .tile:focus-visible { outline: 3px solid var(--nile); outline-offset: 2px; }
+.unit-link:hover, .qk:hover { border-color: var(--nile); }
