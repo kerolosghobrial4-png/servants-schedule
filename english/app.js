@@ -253,12 +253,7 @@
         <a class="stat" href="#/words" style="text-decoration:none;color:inherit"><b>${due}</b><span>Words to review</span></a>
         <div class="stat"><b>${Object.keys(S.units).filter(unitDone).length}</b><span>Units passed</span></div>
       </div>
-      ${arabicNudge()}
-      ${backupNudge()}
-      ${dueMisses().length >= 8 ? `<a class="card flat spread" href="#/today/warm" style="text-decoration:none;color:inherit;border-color:var(--sun)"><div><b>${dueMisses().length} old mistakes are ready to fix</b><div class="small muted">A few minutes now turns mistakes into things you know.</div>${S.settings.arabic ? '<div class="ar small muted" lang="ar">دقايق قليلة تحوّل الغلط لحاجة انتي عارفاها.</div>' : ''}</div><span class="chip gold">Fix them</span></a>` : ''}
-      ${storyCard()}
-      ${homeTip()}
-      ${!S.placement ? `<a class="card flat spread" href="#/placement" style="text-decoration:none;color:inherit"><div><b>Find my level</b><div class="small muted">18 questions · about 10 minutes</div></div><span class="chip">Start</span></a>` : ''}
+      ${homeCards()}
       <div class="stack">
         <div class="spread"><h2>Your path</h2><span class="small"><a href="#/stories">Story library</a> · <a href="#/grammar">Grammar guide</a></span></div>
         <div>${LEVELS.map(levelBlock).join('')}</div>
@@ -277,6 +272,15 @@
     if (e.target.id === 'arn-off') { S.settings.arabic = false; S.arNudged = true; save(); toast('Arabic notes are off. You can do it!'); route(); }
     if (e.target.id === 'arn-keep') { S.arNudged = true; save(); const c = document.getElementById('arn'); if (c) c.remove(); }
   });
+  function homeCards() {
+    const nudges = [
+      !S.placement ? `<a class="card flat spread" href="#/placement" style="text-decoration:none;color:inherit"><div><b>Find my level</b><div class="small muted">18 questions · about 10 minutes</div></div><span class="chip">Start</span></a>` : '',
+      dueMisses().length >= 8 ? `<a class="card flat spread" href="#/today/warm" style="text-decoration:none;color:inherit;border-color:var(--sun)"><div><b>${dueMisses().length} old mistakes are ready to fix</b><div class="small muted">A few minutes now turns mistakes into things you know.</div>${S.settings.arabic ? '<div class="ar small muted" lang="ar">دقايق قليلة تحوّل الغلط لحاجة انتي عارفاها.</div>' : ''}</div><span class="chip gold">Fix them</span></a>` : '',
+      arabicNudge(),
+      backupNudge()
+    ].filter(Boolean).slice(0, 2);
+    return nudges.join('') + storyCard() + (nudges.length < 2 ? homeTip() : '');
+  }
   function welcomeBack() {
     const d = today();
     if (S.days[d]) return '';
