@@ -33,7 +33,7 @@ Every unit has a **Lesson** (with Egyptian Arabic notes), unlimited **Practice**
 - **Tap any word:** in stories and reading passages, tap a word to hear it, see its meaning and Arabic translation, hear its sentence, and save it to the review deck. Unknown words can be saved with her own meaning. Meanings are hidden during quizzes and tests.
 - **Work phrasebook:** every Talk at Work phrase (68 across 18 situations) in one searchable list with audio.
 - **Numbers and spelling drills:** endless generated practice with phone numbers, appointment times, prices, 13-vs-30, dates, and spelled names.
-- **Practice for my job:** 29 Claude voice role-plays for 8 common jobs (retail, medical office, warehouse, office, restaurant, childcare, housekeeping, phone customer service), picked from her job setting.
+- **Practice for my job:** 28 Claude voice role-plays for 8 common jobs (retail, medical office, warehouse, office, restaurant, childcare, housekeeping, phone customer service), picked from her job setting.
 - **My progress:** unit mastery grid, words learned, 4-week practice calendar, and reading-speed history.
 - **Weekly family report:** a summary she can send to family (days practiced, units passed, words, stories, reading speed, recordings to grade, and ways to help).
 - **Grammar guide:** every grammar rule, table, and tip from the lessons in one searchable page, with links to practice.
@@ -48,7 +48,7 @@ Every unit has a **Lesson** (with Egyptian Arabic notes), unlimited **Practice**
 - A reminder card when 8+ old mistakes are due, a **Check my level again** option, and an **update notice** ("A new version is ready") when a new version is published.
 - Tested at 320px phone width with extra-large text, in light and dark mode; all text colors meet 4.5:1 contrast.
 
-About 640 practice and quiz questions in total (`content/levelN.js` plus `content/extra*.js`).
+About 660 practice and quiz questions (`content/levelN.js` plus `content/extra*.js`), 112 story questions, 132 vocabulary words with Arabic, and 12 model dialogues across 31 units.
 
 ## Talk at Work (conversation)
 
