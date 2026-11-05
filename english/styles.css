@@ -365,3 +365,5 @@ details.more > .stack + .stack { margin-top: 18px; }
 .stepbar a .n { width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; background: var(--card); color: var(--nile); font-size: .78rem; border: 1.5px solid var(--nile); }
 .stepbar a.done .n { background: var(--nile); color: var(--nile-ink); }
 .stepbar a.on { background: var(--card); color: var(--ink); box-shadow: var(--shadow); }
+
+.unit-link .k.avatar { width: 44px; height: 44px; border-radius: 50%; font-family: var(--f-read); font-weight: 700; font-size: 1.2rem; background: var(--nile); color: var(--nile-ink); }
