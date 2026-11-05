@@ -157,18 +157,18 @@
     else if (a === 'placement-intro') viewPlacementIntro();
     else if (a === 'today') viewToday(b);
     else if (a === 'stories') viewStories();
-    else if (a === 'phrases') { tab = 'voice'; viewPhrases(); }
-    else if (a === 'numbers') { tab = 'voice'; viewNumbers(); }
+    else if (a === 'phrases') { tab = 'me'; viewPhrases(); }
+    else if (a === 'numbers') { tab = 'me'; viewNumbers(); }
     else if (a === 'progress') { tab = 'me'; viewProgress(); }
     else if (a === 'writing') { tab = 'me'; viewWriting(); }
     else if (a === 'grammar') viewGrammar();
     else if (a === 'story' && STORY[b]) viewStory(STORY[b]);
     else if (a === 'method') { tab = 'me'; viewMethod(); }
-    else if (a === 'words') { tab = 'words'; viewWords(b); }
-    else if (a === 'voice') { tab = 'voice'; viewVoice(); }
+    else if (a === 'words') { tab = 'me'; if (b === 'review') reviewSession(); else viewWords(b); }
+    else if (a === 'voice') { tab = 'me'; viewVoice(); }
     else if (a === 'me') { tab = 'me'; viewMe(); }
-    else if (a === 'notes') { tab = 'notes'; viewNotes(); }
-    else if (a === 'note') { tab = 'notes'; viewNote(b || 'new'); }
+    else if (a === 'notes') { tab = 'me'; viewNotes(); }
+    else if (a === 'note') { tab = 'me'; viewNote(b || 'new'); }
     else if (a === 'cert' && LEVEL[b]) { tab = 'me'; viewCert(LEVEL[b]); }
     else viewHome();
     setTab(tab);
@@ -219,11 +219,47 @@
   }
 
   /* ================= Home ================= */
+  /* ----- unit steps: Learn → Words → Speak → Story → Quiz ----- */
+  const STEP_NAME = { lesson: 'Learn', words: 'Words', speak: 'Speak', story: 'Story', quiz: 'Quiz' };
+  function unitStory(u) {
+    const list = (window.SEKKA_STORIES || []).filter(x => x.lvl === u.level.n);
+    return list.length ? list[u.index % list.length] : null;
+  }
+  function unitSpeakLines(u) {
+    if (u.speak && u.speak.length) return u.speak;
+    const out = [];
+    (u.lesson || []).forEach(b => (b.ex || []).forEach(x => {
+      const t = x.replace(/\*+/g, '').replace(/_{3,}/g, '').replace(/\s*\([^)]*\)\s*$/, '').trim();
+      const n = t.split(/\s+/).length;
+      if (n >= 3 && n <= 14 && /[.!?]$/.test(t) && !/[:→]/.test(t) && !/^\d/.test(t)) out.push(t);
+    }));
+    if (out.length < 3) (u.words || []).forEach(w => { if (w.ex && out.length < 5) out.push(w.ex); });
+    return out.slice(0, 5);
+  }
+  function unitSteps(u) {
+    const st = U(u.id), d = st.steps || {};
+    const steps = [{ k: 'lesson', done: !!st.lesson }];
+    if (u.words && u.words.length) steps.push({ k: 'words', done: !!d.words });
+    if (unitSpeakLines(u).length) steps.push({ k: 'speak', done: !!d.speak });
+    if (unitStory(u)) steps.push({ k: 'story', done: !!d.story });
+    if ((u.items || []).length) steps.push({ k: 'quiz', done: unitDone(u.id) });
+    return steps;
+  }
+  function nextUnitStep(u) { const n = unitSteps(u).find(x => !x.done); return n ? n.k : 'quiz'; }
+  function markUnitStep(u, k) { const st = U(u.id); st.steps = st.steps || {}; if (!st.steps[k]) { st.steps[k] = true; addXP(5); } markStep('learn'); save(); }
+  function nextStepButton(u, fromKey) {
+    const steps = unitSteps(u);
+    const i = steps.findIndex(x => x.k === fromKey);
+    const nx = steps.slice(i + 1).find(x => !x.done) || steps.slice(i + 1)[0];
+    if (nx) return `<a class="btn primary" href="#/unit/${u.id}/${nx.k}">Next: ${STEP_NAME[nx.k]}</a>`;
+    const nu = nextUnitHref(u);
+    return `<a class="btn primary" href="${nu.href}">${esc(nu.label)}</a>`;
+  }
   function nextStep() {
     const start = S.placement ? S.placement.level : 1;
     for (const L of LEVELS) {
       if (L.n < start) continue;
-      for (const u of L.units) if (!unitDone(u.id)) return { href: `#/unit/${u.id}/${U(u.id).lesson ? 'quiz' : 'lesson'}`, title: u.title, sub: `Level ${L.n} · ${kindName[u.kind]}`, u };
+      for (const u of L.units) if (!unitDone(u.id)) { const k = nextUnitStep(u); return { href: `#/unit/${u.id}/${k}`, title: u.title, sub: `Level ${L.n} · Step: ${STEP_NAME[k]}`, u }; }
       if (!(S.tests[L.id] && S.tests[L.id].passed)) return { href: `#/test/${L.id}`, title: `Level ${L.n} Test`, sub: L.title };
     }
     return null;
@@ -246,7 +282,7 @@
       <div class="stack">
         <h2>Your path</h2>
         <div>${LEVELS.map(levelBlock).join('')}</div>
-        <p class="small muted">More: <a href="#/stories">Story library</a> · <a href="#/grammar">Grammar guide</a> · <a href="#/progress">My progress</a></p>
+
       </div>`;
   }
   function arabicNudge() {
@@ -324,7 +360,7 @@
       ['1', 'Every day: Today\'s session', 'Four short steps, about 20 minutes. Do it every day, even on busy days.', 'كل يوم: جلسة النهارده. ٤ خطوات صغيرة، حوالي ٢٠ دقيقة. اعمليها كل يوم حتى لو مشغولة.'],
       ['2', 'Listen to everything', 'Tap the speaker buttons, and tap any word in a story to hear it and see its meaning.', 'دوسي على زرار الصوت، ودوسي على أي كلمة في القصة عشان تسمعيها وتعرفي معناها.'],
       ['3', 'Talk, don\'t just read', 'Each level has "Talk at Work". Practice your part, then talk with Claude voice like a real coworker.', 'كل مستوى فيه «Talk at Work». اتدربي على دورك، وبعدين اتكلمي مع Claude بالصوت كإنه زميلك في الشغل.'],
-      ['4', 'Mistakes are part of it', 'Wrong answers come back later so you can learn them. Your son can grade your recordings on the Voice tab.', 'الغلط جزء من التعلم. الأسئلة اللي بتغلطي فيها بترجعلك تاني. وابنك يقدر يقيّم تسجيلاتك من «Voice».']
+      ['4', 'Mistakes are part of it', 'Wrong answers come back later so you can learn them. Your son can grade your recordings in Me → My recordings.', 'الغلط جزء من التعلم. الأسئلة اللي بتغلطي فيها بترجعلك تاني. وابنك يقدر يقيّم تسجيلاتك من «Me».']
     ];
     return `<div class="card stack" id="tour">
       <div class="spread"><span class="eyebrow">How to use Sekka</span><button class="btn small ghost" id="tour-x">Got it</button></div>
@@ -369,7 +405,7 @@
     const L = u.level;
     const s = U(u.id);
     const hasItems = (u.items || []).length > 0;
-    const tabs = [['lesson', 'Lesson'], ['practice', 'Practice'], ['quiz', 'Quiz']];
+    const steps = unitSteps(u);
     app.innerHTML = `
       <a class="back" href="#/">${I.back} Level ${L.n} · ${esc(L.title)}</a>
       <div class="stack" style="gap:6px">
@@ -377,10 +413,13 @@
         <h1>${esc(u.title)}</h1>
         ${u.ar ? `<div class="ar muted" lang="ar">${esc(u.ar)}</div>` : ''}
       </div>
-      ${hasItems ? `<nav class="seg">${tabs.map(([k, n]) => `<a href="#/unit/${u.id}/${k}" class="${k === tab ? 'on' : ''}">${n}</a>`).join('')}</nav>` : ''}
+      <nav class="stepbar" aria-label="Steps in this unit">${steps.map((x, i) => `<a href="#/unit/${u.id}/${x.k}" class="${x.k === tab || (tab === 'practice' && x.k === 'quiz') ? 'on' : ''} ${x.done ? 'done' : ''}"><span class="n">${x.done ? '✓' : i + 1}</span>${STEP_NAME[x.k]}</a>`).join('')}</nav>
       <div id="ubody" class="stack"></div>`;
     const body = document.getElementById('ubody');
-    if (tab === 'lesson' || !hasItems) renderLesson(u, body);
+    if (tab === 'words' && u.words && u.words.length) renderWordsStep(u, body);
+    else if (tab === 'speak' && unitSpeakLines(u).length) renderSpeakStep(u, body);
+    else if (tab === 'story' && unitStory(u)) renderStoryInto(unitStory(u), body, () => markUnitStep(u, 'story'), u);
+    else if (tab === 'lesson' || !hasItems) renderLesson(u, body);
     else if (tab === 'practice') {
       runSet({ box: body, items: shuffle(u.items), mode: 'practice', onFinish: (r) => { s.practiced += r.counted; save(); location.hash = `#/unit/${u.id}/quiz`; } });
     } else if (tab === 'quiz') {
@@ -402,7 +441,7 @@
     if (u.passages && u.passages.length) {
       passages = `<h3>Read</h3>` + u.passages.map((p, i) => passageHTML(p, i === 0)).join('');
     }
-    box.innerHTML = `<div class="lesson">${blocks}${words}${passages}</div>
+    box.innerHTML = `<div class="lesson">${blocks}${passages}</div>
       <div id="dialoguebox" class="stack"></div>
       <div id="speakbox" class="stack"></div>
       <div id="checkbox" class="stack"></div>
@@ -412,10 +451,9 @@
         <div id="writebox" class="stack"></div>
       </details>
       <div class="card flat stack">
-        ${s.lesson ? '<p><b>Lesson finished.</b> Practice as much as you like, then take the quiz.</p>' : '<p>When you have read everything above, mark the lesson as finished.</p>'}
+        ${s.lesson ? '<p><b>Lesson finished.</b></p>' : '<p>When you have read everything above, tap the button.</p>'}
         <div class="row">
-          ${s.lesson ? '' : '<button class="btn primary" id="ldone">I finished the lesson</button>'}
-          ${(u.items || []).length ? `<a class="btn ${s.lesson ? 'primary' : ''}" href="#/unit/${u.id}/practice">Practice</a><a class="btn" href="#/unit/${u.id}/quiz">Quiz</a>` : ''}
+          ${s.lesson ? nextStepButton(u, 'lesson') : '<button class="btn primary" id="ldone">I finished the lesson</button>'}
           <button class="btn ghost" data-note-from="${u.id}">Write a note</button>
         </div>
       </div>`;
@@ -424,12 +462,14 @@
       s.lesson = true; addXP(20); markStep('learn');
       (u.words || []).forEach(w => { if (!S.cards[w.w]) S.cards[w.w] = { box: 0, due: today() }; });
       save(); toast('+20 points. Nice work!');
-      location.hash = `#/unit/${u.id}/practice`;
+      const st = unitSteps(u); const nx = st[1];
+      location.hash = `#/unit/${u.id}/${nx ? nx.k : 'quiz'}`;
     };
     if (u.dialogue) renderDialogue(u, document.getElementById('dialoguebox'));
     if (u.roleplays && u.roleplays.length) renderRoleplays(u, document.getElementById('roleplaybox'));
     if (u.passages && u.passages.length) renderFluency(u, document.getElementById('fluencybox'));
-    if (u.speak && u.speak.length) renderSpeakList(u, document.getElementById('speakbox'));
+    const myNotes = noteList().filter(n => n.unit === u.id && ((n.title || '').trim() || (n.body || '').trim()));
+    if (myNotes.length) document.getElementById('speakbox').innerHTML = `<h3>My notes for this unit</h3><div class="units">${myNotes.map(n => `<a class="unit-link note-link" href="#/note/${n.id}"><span class="t"><b>${esc(n.title || 'Untitled note')}</b><span>${esc(fmtDate(n.updated))}</span></span>${n.review ? '<span class="chip gold">Review</span>' : ''}</a>`).join('')}</div>`;
     if (u.write && u.write.length) renderWrite(u, document.getElementById('writebox'));
     renderCheck(u, document.getElementById('checkbox'));
     const mb = document.getElementById('morebox');
@@ -463,7 +503,7 @@
       <p>${n} questions. Pass with ${PASS_UNIT}% or more to master this unit. You can take it again as many times as you want. Your best score is kept.</p>
       ${earlier.length ? '<p class="small muted">2 questions come from earlier units. Mixing old and new topics makes memory last longer.</p>' : ''}
       ${s.best !== null ? `<p>Your best: <b>${s.best}%</b> (${s.tries} ${s.tries === 1 ? 'try' : 'tries'})</p>` : ''}
-      <div class="row"><button class="btn primary" id="qs">Start quiz</button>${!s.lesson ? `<a class="btn ghost" href="#/unit/${u.id}/lesson">Read the lesson first</a>` : ''}</div>
+      <div class="row"><button class="btn primary" id="qs">Start quiz</button><a class="btn" href="#/unit/${u.id}/practice">Practice first</a>${!s.lesson ? `<a class="btn ghost" href="#/unit/${u.id}/lesson">Read the lesson first</a>` : ''}</div>
     </div>`;
     document.getElementById('qs').onclick = () => {
       const pool = u.items.filter(x => x.t !== 'say' || Speech.canHear);
@@ -786,15 +826,16 @@ ${heard !== undefined ? `Speech recognition heard: "${heard || '(nothing)'}"\nWo
     onLeave(() => { shadowRun++; Speech.cancel(); if (recorder) recorder.stop(); Speech.stopListening(); });
   }
 
-  function renderSpeakList(u, box) {
+  function renderSpeakList(u, box, lines) {
+    lines = lines || u.speak;
     box.innerHTML = `<h3>Say it out loud</h3><p class="small muted">Listen first, then read each sentence. Red words need more practice.</p><div id="spk-one"></div>
       <div class="row" id="spk-nav"></div>`;
     let k = 0;
     const draw = () => {
-      sayWidget(u.speak[k], box.querySelector('#spk-one'), { unitId: u.id });
+      sayWidget(lines[k], box.querySelector('#spk-one'), { unitId: u.id });
       box.querySelector('#spk-nav').innerHTML = `<button class="btn small" id="sp-prev" ${k === 0 ? 'disabled' : ''}>Previous</button>
-        <span class="small muted">${k + 1} of ${u.speak.length}</span>
-        <button class="btn small" id="sp-next" ${k === u.speak.length - 1 ? 'disabled' : ''}>Next sentence</button>`;
+        <span class="small muted">${k + 1} of ${lines.length}</span>
+        <button class="btn small" id="sp-next" ${k === lines.length - 1 ? 'disabled' : ''}>Next sentence</button>`;
       box.querySelector('#sp-prev').onclick = () => { k--; draw(); };
       box.querySelector('#sp-next').onclick = () => { k++; draw(); };
     };
@@ -955,11 +996,10 @@ Please:
   }
   function dueCards() { const d = today(); return Object.keys(S.cards).filter(w => cardInfo(w) && S.cards[w].due <= d); }
   function viewWords(sub) {
-    if (sub === 'review') return reviewSession();
     const due = dueCards();
     const known = Object.keys(S.cards).length;
-    app.innerHTML = `${brand()}
-      <div class="stack" style="gap:6px"><span class="eyebrow">Spaced review</span><h1>My words</h1>
+    app.innerHTML = `<a class="back" href="#/me">${I.back} Me</a>
+      <div class="stack" style="gap:6px"><span class="eyebrow">All my words</span><h1>My words</h1>
       <p class="muted">Words come back right before you forget them. A few minutes a day is enough.</p></div>
       <div class="hero"><h2>${due.length ? `${due.length} word${due.length === 1 ? '' : 's'} ready to review` : 'Nothing to review right now'}</h2>
         <p>${known} words in your deck · ${Object.values(S.cards).filter(c => c.box >= 4).length} learned well</p>
@@ -991,12 +1031,13 @@ Please:
     draw();
     document.getElementById('wsearch').oninput = (e) => draw(e.target.value);
   }
-  function reviewSession() {
-    let queue = shuffle(dueCards()).slice(0, 20);
+  function reviewSession(custom) {
+    let queue = custom ? custom.words.slice() : shuffle(dueCards()).slice(0, 20);
     let done = 0;
-    app.innerHTML = `<a class="back" href="#/words">${I.back} My words</a><div id="rv" class="stack"></div>`;
+    app.innerHTML = `<a class="back" href="${custom ? custom.back : '#/today'}">${I.back} ${custom ? esc(custom.title) : "Today's session"}</a><div id="rv" class="stack"></div>`;
     const box = document.getElementById('rv');
     const show = () => {
+      if (!queue.length && custom) { custom.onDone(box, done); return; }
       if (!queue.length) {
         markStep('words');
         box.innerHTML = `<div class="card stack" style="text-align:center;align-items:center"><h2>Review finished</h2><p>You reviewed ${done} cards.</p><p class="ar" lang="ar">شاطرة! نكمّل بكرة.</p><a class="btn primary" href="#/today">Back to today's session</a></div>`;
@@ -1045,8 +1086,8 @@ Please:
 
   /* ================= Voice (recordings) ================= */
   async function viewVoice() {
-    app.innerHTML = `${brand()}
-      <div class="stack" style="gap:6px"><span class="eyebrow">Speaking</span><h1>Voice practice</h1>
+    app.innerHTML = `<a class="back" href="#/me">${I.back} Me</a>
+      <div class="stack" style="gap:6px"><span class="eyebrow">Speaking</span><h1>Recordings and speaking</h1>
       <p class="muted">Speak, listen, and practice real conversations. Your recordings stay on this phone so your son can listen and give stars.</p></div>
       <div class="quick">
         <a href="#/numbers" class="qk"><b>Numbers and spelling</b><span>Phone numbers, times, prices</span></a>
@@ -1140,6 +1181,14 @@ Please:
     const installed = !!(window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true;
     app.innerHTML = `${brand()}
       <div class="stack" style="gap:6px"><span class="eyebrow">Profile</span><h1>${esc(S.name || 'Me')}</h1></div>
+      <div class="quick">
+        <a href="#/notes" class="qk"><b>My notes</b><span>${noteList().filter(n => (n.title || '').trim() || (n.body || '').trim()).length} notes</span></a>
+        <a href="#/words" class="qk"><b>My words</b><span>${Object.keys(S.cards).length} words saved</span></a>
+        <a href="#/voice" class="qk"><b>My recordings</b><span>Speaking tools and grades</span></a>
+        <a href="#/stories" class="qk"><b>Story library</b><span>${STORIES.length} stories</span></a>
+        <a href="#/grammar" class="qk"><b>Grammar guide</b><span>All the rules</span></a>
+        <a href="#/progress" class="qk"><b>My progress</b><span>Units and reading speed</span></a>
+      </div>
       <div class="stats">
         <div class="stat"><b>${S.xp}</b><span>Points</span></div>
         <div class="stat"><b>${streakNow()}</b><span>Day streak</span></div>
@@ -1149,7 +1198,6 @@ Please:
         <div class="week">${days.map(([d, v]) => `<div><i style="height:${Math.max(3, v / max * 70)}px" title="${v} points"></i><span>${new Date(d + 'T12:00:00').toLocaleDateString(undefined, { weekday: 'short' })}</span></div>`).join('')}</div></div>
       <a class="card flat spread" href="#/placement" style="text-decoration:none;color:inherit"><div><b>Check my level again</b><div class="small muted">${S.placement ? 'Last check: ' + esc(new Date(S.placement.date + 'T12:00:00').toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' })) + '. Good to redo every few months.' : '18 questions to find your level'}</div></div><span class="chip">Start</span></a>
       <a class="card flat spread" href="#/writing" style="text-decoration:none;color:inherit"><div><b>My writing</b><div class="small muted">${(n => n === 1 ? '1 piece saved' : n + ' pieces saved')(Object.values(S.writing).filter(t => t && t.trim()).length)}</div></div><span class="chip">Open</span></a>
-      <a class="card flat spread" href="#/progress" style="text-decoration:none;color:inherit"><div><b>My progress</b><div class="small muted">Units mastered, words learned, reading speed</div></div><span class="chip">Open</span></a>
       <a class="card flat spread" href="#/method" style="text-decoration:none;color:inherit"><div><b>How Sekka teaches, and how family can help</b><div class="small muted">The learning methods behind the app</div></div><span class="chip">Read</span></a>
       <div class="card stack"><h3>Weekly report for family</h3>
         <p class="small muted">A short summary of this week to send to your son or whoever helps you study.</p>
@@ -1339,7 +1387,7 @@ Start now by saying your first line in character.`;
   }
   function viewStories() {
     const lv = curLevelN();
-    app.innerHTML = `<a class="back" href="#/">${I.back} Home</a>
+    app.innerHTML = `<a class="back" href="#/me">${I.back} Me</a>
       <div class="stack" style="gap:6px"><span class="eyebrow">Reading for pleasure</span><h1>Story library</h1>
       <p class="muted">Reading a lot of easy, interesting English is one of the best ways to learn. Pick stories at your level or a little below. Tap any word to hear it and see its meaning.</p>
       <p class="ar small muted" lang="ar">اقري حكايات سهلة وممتعة كتير. ده من أحسن الطرق لتعلم اللغة. دوسي على أي كلمة عشان تسمعيها وتعرفي معناها.</p></div>
@@ -1351,18 +1399,21 @@ Start now by saying your first line in character.`;
       }).join('')}`;
   }
   function viewStory(st) {
+    app.innerHTML = `<a class="back" href="#/stories">${I.back} Story library</a><div id="stbody" class="stack"></div>`;
+    renderStoryInto(st, document.getElementById('stbody'), null, null);
+  }
+  function renderStoryInto(st, mount, onDone, unit) {
     const r = S.read[st.id];
     const sentences = (p) => (p.match(/[^.!?]+[.!?]+["”’']?\s*|[^.!?]+$/g) || [p]).map(x => x.trim()).filter(Boolean);
-    app.innerHTML = `<a class="back" href="#/stories">${I.back} Story library</a>
-      <div class="stack" style="gap:6px"><span class="eyebrow">Level ${st.lvl} story${r ? ` · read ${r.n}×` : ''}</span><h1>${esc(st.title)}</h1></div>
+    mount.innerHTML = `<div class="stack" style="gap:6px"><span class="eyebrow">${unit ? 'Story for this unit' : 'Level ' + st.lvl + ' story'}${r ? ` · read ${r.n}×` : ''}</span><h2>${esc(st.title)}</h2></div>
       <div class="row"><button class="btn" id="st-all">${I.speak} Listen to the story</button><button class="btn ghost small" id="st-stop" hidden>Stop</button></div>
       <div class="card reading story" id="st-text">${st.text.split(/\n\n+/).map(p => `<p>${sentences(p).map(x => `<span class="sent" data-sent="${esc(x)}">${wrapWords(x)}</span>`).join(' ')}</p>`).join('')}</div>
-      <p class="small muted">Tap any word to hear it and see what it means. Read once for the meaning first. Don't stop for every new word: guess from the story.</p>
+      <p class="small muted">Tap any word to hear it and see what it means. Read once for the meaning first.</p>
       <div id="st-q" class="stack"><button class="btn primary" id="st-check">I finished reading · Quick check</button></div>`;
-    const sents = [...app.querySelectorAll('.sent')];
+    const sents = [...mount.querySelectorAll('.sent')];
     let run = 0;
-    const stopB = document.getElementById('st-stop');
-    document.getElementById('st-all').onclick = async () => {
+    const stopB = mount.querySelector('#st-stop');
+    mount.querySelector('#st-all').onclick = async () => {
       const me = ++run; stopB.hidden = false;
       for (const el of sents) {
         if (me !== run || !el.isConnected) break;
@@ -1373,18 +1424,19 @@ Start now by saying your first line in character.`;
     };
     stopB.onclick = () => { run++; Speech.cancel(); sents.forEach(x => x.classList.remove('hl')); stopB.hidden = true; };
     onLeave(() => { run++; Speech.cancel(); });
-    document.getElementById('st-check').onclick = () => {
-      const box = document.getElementById('st-q');
+    mount.querySelector('#st-check').onclick = () => {
+      const box = mount.querySelector('#st-q');
       runSet({ box, items: st.qs.map(q => Object.assign({}, q, { passage: null })), mode: 'story', track: true, onFinish: (res) => {
         const rec = S.read[st.id] || { n: 0 };
         rec.n++; rec.last = today(); rec.best = Math.max(rec.best || 0, res.pct);
         S.read[st.id] = rec; addXP(10); save();
+        if (onDone) onDone(res);
         const lvStories = STORIES.filter(x => x.lvl === st.lvl);
         const nx = lvStories[(lvStories.indexOf(st) + 1) % lvStories.length];
         box.innerHTML = `<div class="card stack"><h3>${res.right} of ${res.counted} correct</h3>
           <p>${res.pct >= 67 ? 'You understood the story. Great reading!' : 'Read the story one more time, then try the questions again.'}</p>
           <p class="ar small" lang="ar">${res.pct >= 67 ? 'فهمتي القصة. برافو!' : 'اقري القصة تاني وجرّبي الأسئلة.'}</p>
-          <div class="row">${nx && nx !== st ? `<a class="btn primary" href="#/story/${nx.id}">Next story: ${esc(nx.title)}</a>` : ''}<a class="btn" href="#/stories">Story library</a></div></div>`;
+          <div class="row">${unit ? nextStepButton(unit, 'story') : `${nx && nx !== st ? `<a class="btn primary" href="#/story/${nx.id}">Next story: ${esc(nx.title)}</a>` : ''}<a class="btn" href="#/stories">Story library</a>`}</div></div>`;
       } });
     };
   }
@@ -1491,7 +1543,7 @@ Start now by saying your first line in character.`;
       next ? `Working on now: ${next.title} (${next.sub})` : 'Working on now: all levels finished',
       '',
       'How you can help this week:',
-      ungraded ? `- Open the Voice tab on her phone and grade her ${ungraded} recording${ungraded === 1 ? '' : 's'}. Give one thing to fix.` : '- Ask her to record one sentence for you to grade on the Voice tab.',
+      ungraded ? `- Open Me → My recordings on her phone and grade her ${ungraded} recording${ungraded === 1 ? '' : 's'}. Give one thing to fix.` : '- Ask her to record one sentence for you to grade (Me → My recordings).',
       active < 4 ? '- Help her pick a fixed daily time for the 20-minute session (for example, right after morning tea).' : '- Tell her you noticed she practiced most days this week. Specific praise keeps the habit going.',
       '- Ask her: "What did you learn this week? Teach me."',
       '- Speak only English with her for 10 minutes a day about real things.'
@@ -1517,7 +1569,7 @@ Start now by saying your first line in character.`;
   }
   function viewPhrases() {
     const groups = phrasebook();
-    app.innerHTML = `<a class="back" href="#/voice">${I.back} Voice</a>
+    app.innerHTML = `<a class="back" href="#/voice">${I.back} Recordings and speaking</a>
       <div class="stack" style="gap:6px"><span class="eyebrow">Talk at Work</span><h1>Work phrasebook</h1>
       <p class="muted">Every phrase from the Talk at Work lessons in one place. Look here before a phone call, a meeting, or a hard conversation. Tap to hear it.</p>
       <p class="ar small muted" lang="ar">كل جمل الشغل في مكان واحد. بصّي هنا قبل مكالمة أو اجتماع.</p></div>
@@ -1611,7 +1663,7 @@ Start now by saying your first line in character.`;
   };
   function viewNumbers() {
     const kinds = [['mix', 'Mixed practice'], ['phone', 'Phone numbers'], ['time', 'Times'], ['price', 'Prices'], ['teens', '13 or 30?'], ['date', 'Dates'], ['spell', 'Spelled names']];
-    app.innerHTML = `<a class="back" href="#/voice">${I.back} Voice</a>
+    app.innerHTML = `<a class="back" href="#/voice">${I.back} Recordings and speaking</a>
       <div class="stack" style="gap:6px"><span class="eyebrow">Listening at work</span><h1>Numbers and spelling</h1>
       <p class="muted">Phone numbers, appointment times, prices, dates, and spelled names come up every day at work. Each drill is new every time. Tap the big button to hear it again.</p>
       <p class="ar small muted" lang="ar">أرقام التليفون والمواعيد والأسعار وتهجية الأسامي بتيجي كل يوم في الشغل. كل تمرين جديد كل مرة.</p></div>
@@ -1876,7 +1928,7 @@ Start now by saying your first line in character.`;
   function viewNotes() {
     S.notes = noteList().filter(n => (n.title || '').trim() || (n.body || '').trim()); save();
     const sort = S.settings.noteSort || 'new';
-    app.innerHTML = `${brand()}
+    app.innerHTML = `<a class="back" href="#/me">${I.back} Me</a>
       <div class="spread"><div class="stack" style="gap:6px"><span class="eyebrow">Notes</span><h1>My notes</h1></div>
         <a class="btn primary" href="#/note/new">+ New note</a></div>
       <p class="muted">Write down anything you want to remember: new words, rules, phrases from work, questions for your teacher.</p>
@@ -1967,6 +2019,38 @@ Start now by saying your first line in character.`;
       setTimeout(() => { if (del.isConnected) { delete del.dataset.sure; del.textContent = 'Delete'; del.classList.remove('confirm'); } }, 3000);
     };
     if (!n.title && !n.body) setTimeout(() => title.focus({ preventScroll: true }), 50);
+  }
+
+  /* ================= Unit steps: Words, Speak, Story ================= */
+  function renderWordsStep(u, box) {
+    const d = (U(u.id).steps || {}).words;
+    box.innerHTML = `<div class="card flat stack"><b>${u.words.length} words in this unit</b>
+      <p class="small muted">Listen to each word and read the example. Then practice them as flashcards. After that, they come back in your daily word review so you don't forget them.</p>
+      <div class="row"><button class="btn primary" id="w-go">${d ? 'Practice the words again' : 'Practice these words'}</button>${d ? nextStepButton(u, 'words') : ''}</div></div>
+      <div>${u.words.map(w => `<div class="word-row"><b>${esc(w.w)}</b>${speakBtn(w.w)}
+        ${S.settings.arabic && w.ar ? `<div class="ar" lang="ar">${esc(w.ar)}</div>` : ''}
+        <div class="d">${md(w.d)}</div>${w.ex ? `<div class="e">“${esc(w.ex)}”</div>` : ''}</div>`).join('')}</div>`;
+    box.querySelector('#w-go').onclick = () => {
+      u.words.forEach(w => { if (!S.cards[w.w]) S.cards[w.w] = { box: 0, due: today() }; });
+      save();
+      reviewSession({ words: shuffle(u.words.map(w => w.w)), back: `#/unit/${u.id}/words`, title: u.title, onDone: (b, n) => {
+        markUnitStep(u, 'words');
+        b.innerHTML = `<div class="card stack" style="text-align:center;align-items:center"><h2>Words practiced</h2><p>You practiced ${n} words. They will come back in your daily review.</p><p class="ar" lang="ar">شاطرة! الكلمات دي هترجعلك في المراجعة اليومية.</p><div class="row" style="justify-content:center">${nextStepButton(u, 'words')}</div></div>`;
+      } });
+    };
+  }
+  function renderSpeakStep(u, box) {
+    const lines = unitSpeakLines(u);
+    const d = (U(u.id).steps || {}).speak;
+    box.innerHTML = `<div class="card flat stack"><b>Say it out loud</b>
+      <p class="small muted">For each sentence: tap <b>Listen and repeat</b>, then <b>Record</b> it. Your recordings go to your son to grade. You can also check your reading or practice with Claude.</p></div>
+      <div id="spk"></div>
+      <div class="card flat stack"><div class="row"><button class="btn primary" id="spk-done">${d ? 'Done speaking' : 'I said all the sentences'}</button></div></div>`;
+    renderSpeakList(u, box.querySelector('#spk'), lines);
+    box.querySelector('#spk-done').onclick = () => {
+      markUnitStep(u, 'speak');
+      box.querySelector('#spk-done').parentElement.innerHTML = `<span class="chip good">Speaking done</span>${nextStepButton(u, 'speak')}`;
+    };
   }
 
   /* ================= Daily session ================= */

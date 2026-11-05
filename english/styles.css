@@ -248,7 +248,7 @@ textarea.input { min-height: 180px; font-family: var(--f-read); line-height: 1.6
 .tabs {
   position: fixed; left: 0; right: 0; bottom: 0; z-index: 20;
   background: var(--card); border-top: 1px solid var(--line);
-  display: grid; grid-template-columns: repeat(5, 1fr);
+  display: grid; grid-template-columns: repeat(2, 1fr);
   padding-left: max(8px, env(safe-area-inset-left, 0px));
   padding-right: max(8px, env(safe-area-inset-right, 0px));
   padding-bottom: env(safe-area-inset-bottom, 0px);
@@ -359,3 +359,9 @@ details.more > summary { cursor: pointer; list-style: none; }
 details.more > summary::-webkit-details-marker { display: none; }
 details.more[open] > summary { margin-bottom: 12px; }
 details.more > .stack + .stack { margin-top: 18px; }
+
+.stepbar { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 4px; background: var(--nile-soft); padding: 4px; border-radius: 14px; }
+.stepbar a { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 2px; border-radius: 10px; text-decoration: none; color: var(--nile); font-weight: 700; font-size: .78rem; min-width: 0; }
+.stepbar a .n { width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; background: var(--card); color: var(--nile); font-size: .78rem; border: 1.5px solid var(--nile); }
+.stepbar a.done .n { background: var(--nile); color: var(--nile-ink); }
+.stepbar a.on { background: var(--card); color: var(--ink); box-shadow: var(--shadow); }
