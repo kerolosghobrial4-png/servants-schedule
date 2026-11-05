@@ -167,8 +167,8 @@
     else if (a === 'words') { tab = 'me'; if (b === 'review') reviewSession(); else viewWords(b); }
     else if (a === 'voice') { tab = 'me'; viewVoice(); }
     else if (a === 'me') { tab = 'me'; viewMe(); }
-    else if (a === 'notes') { tab = 'me'; viewNotes(); }
-    else if (a === 'note') { tab = 'me'; viewNote(b || 'new'); }
+    else if (a === 'notes') { tab = 'notes'; viewNotes(); }
+    else if (a === 'note') { tab = 'notes'; viewNote(b || 'new'); }
     else if (a === 'cert' && LEVEL[b]) { tab = 'me'; viewCert(LEVEL[b]); }
     else viewHome();
     setTab(tab);
@@ -1182,7 +1182,7 @@ Please:
     app.innerHTML = `${brand()}
       <div class="stack" style="gap:6px"><span class="eyebrow">Profile</span><h1>${esc(S.name || 'Me')}</h1></div>
       <div class="quick">
-        <a href="#/notes" class="qk"><b>My notes</b><span>${noteList().filter(n => (n.title || '').trim() || (n.body || '').trim()).length} notes</span></a>
+        <a href="#/writing" class="qk"><b>My writing</b><span>Essays and emails</span></a>
         <a href="#/words" class="qk"><b>My words</b><span>${Object.keys(S.cards).length} words saved</span></a>
         <a href="#/voice" class="qk"><b>My recordings</b><span>Speaking tools and grades</span></a>
         <a href="#/stories" class="qk"><b>Story library</b><span>${STORIES.length} stories</span></a>
@@ -1197,7 +1197,6 @@ Please:
       <div class="card stack"><div class="spread"><h3>This week</h3><span class="small muted">points per day</span></div>
         <div class="week">${days.map(([d, v]) => `<div><i style="height:${Math.max(3, v / max * 70)}px" title="${v} points"></i><span>${new Date(d + 'T12:00:00').toLocaleDateString(undefined, { weekday: 'short' })}</span></div>`).join('')}</div></div>
       <a class="card flat spread" href="#/placement" style="text-decoration:none;color:inherit"><div><b>Check my level again</b><div class="small muted">${S.placement ? 'Last check: ' + esc(new Date(S.placement.date + 'T12:00:00').toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' })) + '. Good to redo every few months.' : '18 questions to find your level'}</div></div><span class="chip">Start</span></a>
-      <a class="card flat spread" href="#/writing" style="text-decoration:none;color:inherit"><div><b>My writing</b><div class="small muted">${(n => n === 1 ? '1 piece saved' : n + ' pieces saved')(Object.values(S.writing).filter(t => t && t.trim()).length)}</div></div><span class="chip">Open</span></a>
       <a class="card flat spread" href="#/method" style="text-decoration:none;color:inherit"><div><b>How Sekka teaches, and how family can help</b><div class="small muted">The learning methods behind the app</div></div><span class="chip">Read</span></a>
       <div class="card stack"><h3>Weekly report for family</h3>
         <p class="small muted">A short summary of this week to send to your son or whoever helps you study.</p>
@@ -1928,7 +1927,7 @@ Start now by saying your first line in character.`;
   function viewNotes() {
     S.notes = noteList().filter(n => (n.title || '').trim() || (n.body || '').trim()); save();
     const sort = S.settings.noteSort || 'new';
-    app.innerHTML = `<a class="back" href="#/me">${I.back} Me</a>
+    app.innerHTML = `${brand()}
       <div class="spread"><div class="stack" style="gap:6px"><span class="eyebrow">Notes</span><h1>My notes</h1></div>
         <a class="btn primary" href="#/note/new">+ New note</a></div>
       <p class="muted">Write down anything you want to remember: new words, rules, phrases from work, questions for your teacher.</p>

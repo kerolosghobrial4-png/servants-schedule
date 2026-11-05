@@ -248,7 +248,7 @@ textarea.input { min-height: 180px; font-family: var(--f-read); line-height: 1.6
 .tabs {
   position: fixed; left: 0; right: 0; bottom: 0; z-index: 20;
   background: var(--card); border-top: 1px solid var(--line);
-  display: grid; grid-template-columns: repeat(2, 1fr);
+  display: grid; grid-template-columns: repeat(3, 1fr);
   padding-left: max(8px, env(safe-area-inset-left, 0px));
   padding-right: max(8px, env(safe-area-inset-right, 0px));
   padding-bottom: env(safe-area-inset-bottom, 0px);
