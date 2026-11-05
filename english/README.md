@@ -8,8 +8,10 @@ An installable web app (PWA) that takes an Egyptian-Arabic-speaking adult from a
 - **Where her data lives:** progress, words, and writing are saved in the browser on her phone. Recordings are saved there too. Nothing is uploaded anywhere.
 - **Backups:** once a month, open **Me → Backup → Copy backup code** and send it to yourself. Use **Restore from code** on a new phone. Recordings are not included in the backup.
 - **Don't clear the browser data** for the site, or progress is lost (unless you have a backup code).
-- **Weekly:** ask her to tap **Me → Send weekly report**, listen to her recordings on the **Voice** tab, and give stars plus one tip.
+- **Weekly:** ask her to tap **Me → Send weekly report**, listen to her recordings in **Me → My recordings**, and give stars plus one tip.
 - **Updates:** when a new version is published, the app shows "A new version of Sekka is ready". Tap it to refresh.
+
+The bottom bar has just **Path** and **Me**. Everything she studies is on the path; her notes, words, recordings, stories, grammar guide, and progress are in **Me**.
 
 ## What's inside
 
@@ -34,7 +36,7 @@ An installable web app (PWA) that takes an Egyptian-Arabic-speaking adult from a
 - **Explicit L1 contrast:** Egyptian Arabic notes explain *why* each mistake happens; they can be turned off as she advances.
 - A **How you can help** guide for family (recasts, teach-back, a daily 10 minutes of English).
 
-Every unit has a **Lesson** (with Egyptian Arabic notes), unlimited **Practice** with explanations, and a **Quiz** (80% to pass). Each level ends with a **20-question test** (80% to pass), which earns a printable certificate. There's also an 18-question **placement check**, a **spaced-repetition word deck**, and a **Voice** tab.
+Every unit is a short series of steps: **Learn** (lesson with Egyptian Arabic notes) → **Words** (flashcards; the words then return in daily review) → **Speak** (listen-and-repeat and recordings for family to grade) → **Story** (one of the level's stories) → **Quiz** (80% to pass, with unlimited Practice first). The Continue button walks her through every step. Each level ends with a **20-question test** (80% to pass), which earns a printable certificate. There's also an 18-question **placement check**, a **spaced-repetition word deck**, and a **Voice** tab.
 
 ## More practice tools
 
@@ -67,7 +69,7 @@ Each level has a conversation unit: ready-made work phrases, politeness and cult
 ## Grading speech
 
 - **Automatic:** "Check my reading" uses the browser's speech recognition (Chrome on Android or a computer) and colors each word green or red.
-- **You:** "Record for grading" saves audio on her phone. Open the **Voice** tab to listen, give 1–5 stars, and leave a note. "Send" shares the audio file (WhatsApp, etc.).
+- **You:** "Record for grading" saves audio on her phone. Open **Me → My recordings** to listen, give 1–5 stars, and leave a note. "Send" shares the audio file (WhatsApp, etc.).
 - **Claude voice:** "Claude voice coach" copies a ready-made prompt. Paste it into the Claude app, switch to voice mode, and read aloud.
 - **Writing:** "Copy for Claude to grade" builds a full grading prompt (scores, corrections, explanations in English and Egyptian Arabic).
 
