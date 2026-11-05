@@ -241,24 +241,12 @@
       ${brand()}
       ${S.toured ? '' : tourCard()}
       ${welcomeBack()}
-      <div class="hero">
-        <span class="eyebrow">${greet}, ${esc(S.name)} · <span lang="ar">${greetAr}</span></span>
-        <h2>Today's session</h2>
-        <p>${stepsDone()} of 4 steps done · about 20 minutes</p>
-        <div class="row"><a class="btn" href="#/today">${stepsDone() ? 'Continue today\'s session' : 'Start today\'s session'}</a></div>
-        ${next ? `<p class="small">Next lesson: ${esc(next.title)} · ${esc(next.sub)}</p>` : '<p class="small">You finished every level. Keep reviewing to keep it strong.</p>'}
-        <div class="stack" style="gap:6px"><div class="spread small"><span>Today's goal</span><span>${Math.min(xpToday, goal)} / ${goal} points</span></div>
-        <div class="bar"><i style="width:${Math.min(100, xpToday / goal * 100)}%"></i></div></div>
-      </div>
-      <div class="stats">
-        <div class="stat"><b>${S.xp}</b><span>Points</span></div>
-        <a class="stat" href="#/words" style="text-decoration:none;color:inherit"><b>${due}</b><span>Words to review</span></a>
-        <div class="stat"><b>${Object.keys(S.units).filter(unitDone).length}</b><span>Units passed</span></div>
-      </div>
+      ${homeHero(greet, greetAr, next)}
       ${homeCards()}
       <div class="stack">
-        <div class="spread"><h2>Your path</h2><span class="small"><a href="#/stories">Story library</a> · <a href="#/grammar">Grammar guide</a></span></div>
+        <h2>Your path</h2>
         <div>${LEVELS.map(levelBlock).join('')}</div>
+        <p class="small muted">More: <a href="#/stories">Story library</a> · <a href="#/grammar">Grammar guide</a> · <a href="#/progress">My progress</a></p>
       </div>`;
   }
   function arabicNudge() {
@@ -274,14 +262,42 @@
     if (e.target.id === 'arn-off') { S.settings.arabic = false; S.arNudged = true; save(); toast('Arabic notes are off. You can do it!'); route(); }
     if (e.target.id === 'arn-keep') { S.arNudged = true; save(); const c = document.getElementById('arn'); if (c) c.remove(); }
   });
+  function nextTodayHref() {
+    const x = sess(); const n = nextStep();
+    if (!x.warm) return { href: '#/today/warm', label: 'Warm-up review' };
+    if (!x.learn && n) return { href: n.href, label: n.title };
+    if (!x.words) return { href: '#/words/review', label: 'Word review' };
+    if (!x.speak) return { href: '#/today/speak', label: 'Listen and repeat' };
+    return null;
+  }
+  function homeHero(greet, greetAr, next) {
+    const done = stepsDone();
+    const step = nextTodayHref();
+    const segs = [0, 1, 2, 3].map(k => `<i class="${k < done ? 'on' : ''}"></i>`).join('');
+    if (step) {
+      return `<div class="hero">
+        <span class="eyebrow">${greet}, ${esc(S.name)} · <span lang="ar">${greetAr}</span></span>
+        <h2>${['warm', 'learn', 'words', 'speak'].some(k => sess()[k] === true) ? 'Keep going' : 'Start today\'s 20 minutes'}</h2>
+        <div class="steps4" aria-label="${done} of 4 steps done">${segs}</div>
+        <p>Next: <b>${esc(step.label)}</b></p>
+        <div class="row"><a class="btn" href="${step.href}">Continue</a><a class="small" href="#/today" style="color:inherit">See today's steps</a></div>
+      </div>`;
+    }
+    return `<div class="hero">
+      <span class="eyebrow">${greet}, ${esc(S.name)} · <span lang="ar">${greetAr}</span></span>
+      <h2>Today's 20 minutes are done!</h2>
+      <div class="steps4">${segs}</div>
+      ${next ? `<p>Have more time? Keep going on your path.</p><div class="row"><a class="btn" href="${next.href}">Next: ${esc(next.title)}</a></div>` : '<p>You finished every level. Keep reviewing to stay strong.</p>'}
+    </div>`;
+  }
   function homeCards() {
     const nudges = [
-      !S.placement ? `<a class="card flat spread" href="#/placement" style="text-decoration:none;color:inherit"><div><b>Find my level</b><div class="small muted">18 questions · about 10 minutes</div></div><span class="chip">Start</span></a>` : '',
       dueMisses().length >= 8 ? `<a class="card flat spread" href="#/today/warm" style="text-decoration:none;color:inherit;border-color:var(--sun)"><div><b>${dueMisses().length} old mistakes are ready to fix</b><div class="small muted">A few minutes now turns mistakes into things you know.</div>${S.settings.arabic ? '<div class="ar small muted" lang="ar">دقايق قليلة تحوّل الغلط لحاجة انتي عارفاها.</div>' : ''}</div><span class="chip gold">Fix them</span></a>` : '',
+      !S.placement && S.xp < 100 ? `<a class="card flat spread" href="#/placement" style="text-decoration:none;color:inherit"><div><b>Find my level</b><div class="small muted">18 questions · about 10 minutes</div></div><span class="chip">Start</span></a>` : '',
       arabicNudge(),
       backupNudge()
-    ].filter(Boolean).slice(0, 2);
-    return nudges.join('') + storyCard() + (nudges.length < 2 ? homeTip() : '');
+    ].filter(Boolean).slice(0, 1);
+    return nudges.join('');
   }
   function welcomeBack() {
     const d = today();
@@ -325,11 +341,11 @@
     return `<div class="level ${passed ? 'done' : (cur ? 'on' : '')}">
       <div class="rail"><div class="node">${L.n}</div></div>
       <div class="body">
-        <div class="spread"><div><span class="eyebrow">${esc(L.grade)} · ${esc(L.cefr)}</span><h3>${esc(L.title)}</h3><div class="ar small muted" lang="ar">${esc(L.ar)}</div></div>
-          ${rec ? '<span class="chip gold">Your start</span>' : ''}</div>
-        ${L.cando ? `<p class="small"><b>After this level:</b> ${esc(L.cando)}</p>` : ''}
+        <div class="spread"><div>${cur ? `<span class="eyebrow">${esc(L.grade)}</span>` : ''}<h3>${esc(L.title)}</h3></div>
+          ${cur ? '<span class="chip gold">You are here</span>' : passed ? '<span class="chip good">Done</span>' : ''}</div>
+        ${cur && L.cando ? `<p class="small muted">After this level: ${esc(L.cando)}</p>` : ''}
         <div class="bar"><i style="width:${Math.round(p * 100)}%"></i></div>
-        <details class="units-wrap" ${cur || rec ? 'open' : ''}><summary class="small muted">${L.units.length} units and a test · ${Math.round(p * 100)}% done</summary>
+        <details class="units-wrap" ${cur ? 'open' : ''}><summary class="small muted">${cur ? 'Hide units' : `Show units · ${Math.round(p * 100)}% done`}</summary>
         <div class="units">
           ${L.units.map(unitLink).join('')}
           <a class="unit-link" href="#/test/${L.id}"><span class="k">${I.test}</span><span class="t"><b>Level ${L.n} Test</b><span>20 questions · pass with ${PASS_TEST}%</span></span>
@@ -388,11 +404,13 @@
     }
     box.innerHTML = `<div class="lesson">${blocks}${words}${passages}</div>
       <div id="dialoguebox" class="stack"></div>
-      <div id="roleplaybox" class="stack"></div>
-      <div id="fluencybox" class="stack"></div>
       <div id="speakbox" class="stack"></div>
-      <div id="writebox" class="stack"></div>
       <div id="checkbox" class="stack"></div>
+      <details class="card flat more" id="morebox"><summary><b>More practice</b> <span class="small muted" id="morewhat">optional</span></summary>
+        <div id="roleplaybox" class="stack"></div>
+        <div id="fluencybox" class="stack"></div>
+        <div id="writebox" class="stack"></div>
+      </details>
       <div class="card flat stack">
         ${s.lesson ? '<p><b>Lesson finished.</b> Practice as much as you like, then take the quiz.</p>' : '<p>When you have read everything above, mark the lesson as finished.</p>'}
         <div class="row">
@@ -414,6 +432,11 @@
     if (u.speak && u.speak.length) renderSpeakList(u, document.getElementById('speakbox'));
     if (u.write && u.write.length) renderWrite(u, document.getElementById('writebox'));
     renderCheck(u, document.getElementById('checkbox'));
+    const mb = document.getElementById('morebox');
+    if (mb) {
+      const have = [['roleplaybox', 'role-plays with Claude'], ['fluencybox', 'timed reading'], ['writebox', 'writing']].filter(([id]) => document.getElementById(id).innerHTML.trim()).map(x => x[1]);
+      if (!have.length) mb.remove(); else document.getElementById('morewhat').textContent = have.join(', ');
+    }
   }
 
   function blockHTML(b) {
@@ -1032,7 +1055,7 @@ Please:
         <a href="#/unit/${(() => { const L = LEVELS[Math.max(0, curLevelN() - 1)]; const t = L.units.find(u => u.kind === 'conversation'); return t ? t.id : LEVELS[0].units[1].id; })()}/lesson" class="qk"><b>Talk at Work</b><span>Your level's conversation</span></a>
       </div>
       <div class="card stack" id="chbox"></div>
-      <div class="card stack" id="jobbox"></div>
+      <details class="card flat more"><summary><b>Practice for my job</b> <span class="small muted">role-plays with Claude</span></summary><div class="stack" id="jobbox"></div></details>
       <div class="stack" style="gap:8px"><h2>Read out loud</h2><div id="free"></div></div>
       <details class="card flat"><summary><b>How to practice with Claude voice</b></summary>
         <ol class="steps" style="margin-top:10px"><li>Tap a <b>Copy</b> button or <b>Claude voice coach</b>. It copies a message.</li><li>Open the Claude app and paste the message.</li><li>Tap the voice button and talk.</li><li>Claude plays the other person and gives you feedback at the end.</li></ol>
@@ -1667,8 +1690,7 @@ Start now by saying your first line in character.`;
     if (!box || !JOBS.length) return;
     const cur = JOBS.find(x => x.id === S.settings.jobPick) || guessJob() || JOBS[0];
     const L = S.placement ? LEVELS[Math.max(0, curLevelN() - 1)] : LEVELS[0];
-    box.innerHTML = `<h3>Practice for my job</h3>
-      <p class="small muted">Real situations from your kind of work. Tap one to copy it, paste it into the Claude app, and talk in voice mode.</p>
+    box.innerHTML = `<p class="small muted">Real situations from your kind of work. Tap one to copy it, paste it into the Claude app, and talk in voice mode.</p>
       <label class="small" for="job-sel">My kind of work</label>
       <select class="input" id="job-sel">${JOBS.map(j => `<option value="${j.id}" ${j.id === cur.id ? 'selected' : ''}>${esc(j.name)}</option>`).join('')}</select>
       <div class="units">${cur.scenes.map((sc, k) => `<button class="unit-link" data-sc="${k}" style="text-align:left;cursor:pointer;font:inherit"><span class="k">${I.speaking}</span><span class="t"><b>${esc(sc.title)}</b><span>${esc(sc.goal)}</span></span><span class="chip">Copy</span></button>`).join('')}</div>`;
@@ -2021,17 +2043,18 @@ Start now by saying your first line in character.`;
       ${x[key] === 'auto' ? '<span class="chip plain">Nothing due</span>' : x[key] ? '<span class="chip good">Done</span>' : `<a class="btn small primary" href="${href}">${label}</a>`}</div>`;
     app.innerHTML = `<a class="back" href="#/">${I.back} Home</a>
       <div class="stack" style="gap:6px"><span class="eyebrow">${new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}</span><h1>Today's session</h1>
-      <p class="muted">Four short steps, about 20 minutes. Doing a little every day works much better than a lot once a week.</p>
-      <p class="ar small muted" lang="ar">٢٠ دقيقة كل يوم أحسن بكتير من ساعتين مرة في الأسبوع.</p></div>
+      <p class="muted">Four short steps, about 20 minutes. Then keep going if you have time.</p></div>
       <div class="units">
         ${step('warm', 1, 'Warm-up review', misses ? `${misses} old mistake${misses === 1 ? '' : 's'} to fix + earlier lessons` : 'Questions from earlier lessons', '#/today/warm', 'Start', 3)}
         ${step('learn', 2, next ? esc(next.title) : 'Review any level', next ? esc(next.sub) : 'You finished the path', next ? next.href : '#/', 'Open', 10)}
         ${step('words', 3, 'Word review', due ? `${due} word${due === 1 ? '' : 's'} ready` : 'No words due today', due ? '#/words/review' : '#/words', due ? 'Review' : 'Open', 4)}
         ${step('speak', 4, 'Listen and repeat', '3 sentences, out loud', '#/today/speak', 'Start', 3)}
       </div>
-      <div class="stack" style="gap:6px"><span class="eyebrow">Bonus</span>${storyCard()}
-        <a class="card flat spread" href="#/numbers" style="text-decoration:none;color:inherit"><div><b>Numbers and spelling</b><div class="small muted">Phone numbers, times, prices · 3 min</div></div><span class="chip">Practice</span></a></div>
-      ${stepsDone() === 4 ? `<div class="hero"><h2>All done for today!</h2>${milestone()}<p>Come back tomorrow. Sleep helps your brain store what you learned.</p><p class="ar" lang="ar">برافو! النوم بيساعد المخ يحفظ اللي اتعلمتيه. نكمّل بكرة.</p></div>` : ''}
+      <div class="stack" style="gap:6px"><span class="eyebrow">Extra practice</span>${storyCard()}
+        <a class="card flat spread" href="#/numbers" style="text-decoration:none;color:inherit"><div><b>Numbers and spelling</b><div class="small muted">Phone numbers, times, prices · 3 min</div></div><span class="chip">Practice</span></a>
+        ${homeTip()}</div>
+      ${stepsDone() === 4 ? `<div class="hero"><h2>Today's 20 minutes are done!</h2>${milestone()}
+        ${next ? `<p>Have more time? 20 minutes is the minimum, not the limit. Keep going on your path.</p><p class="ar small" lang="ar">لو عندك وقت، كمّلي! ٢٠ دقيقة هي أقل حاجة، مش الحد.</p><div class="row"><a class="btn" href="${next.href}">Next: ${esc(next.title)}</a></div>` : '<p>Come back tomorrow.</p>'}</div>` : ''}
       <a class="small" href="#/method">Why it works this way</a>`;
   }
 

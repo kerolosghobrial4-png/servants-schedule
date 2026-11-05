@@ -351,3 +351,11 @@ details.wl[open] > summary { padding-bottom: 4px; border-bottom: 1px solid var(-
 .note-prev { display: block; font-size: .85rem; color: var(--muted); margin-top: 2px; overflow-wrap: anywhere; }
 .note-title { font-family: var(--f-read); font-size: 1.2rem; font-weight: 600; }
 .tabs a { padding-inline: 2px; }
+
+.steps4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.steps4 i { height: 8px; border-radius: 999px; background: rgba(255,255,255,.3); }
+.steps4 i.on { background: var(--nile-ink); }
+details.more > summary { cursor: pointer; list-style: none; }
+details.more > summary::-webkit-details-marker { display: none; }
+details.more[open] > summary { margin-bottom: 12px; }
+details.more > .stack + .stack { margin-top: 18px; }
