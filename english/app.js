@@ -58,7 +58,49 @@
   let S;
   try { S = Object.assign(fresh(), JSON.parse(localStorage.getItem(KEY) || '{}')); } catch (e) { S = fresh(); }
   S.settings = Object.assign(fresh().settings, S.settings || {});
-  const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} };
+  /* ----- people: everyone types their name; progress is saved under that name ----- */
+  const PKEY = 'sekka.profiles';
+  const keyOf = (name) => String(name || '').trim().toLowerCase().replace(/\s+/g, ' ');
+  let P = { current: '', list: [] };
+  try { P = Object.assign(P, JSON.parse(localStorage.getItem(PKEY) || '{}')); } catch (e) {}
+  if (!Array.isArray(P.list)) P.list = [];
+  if (S.name && !P.list.some(x => x.k === keyOf(S.name))) { P.list.push({ k: keyOf(S.name), name: S.name }); }
+  if (S.name) P.current = keyOf(S.name);
+  const savePeople = () => { try { localStorage.setItem(PKEY, JSON.stringify(P)); } catch (e) {} };
+  savePeople();
+  const save = () => {
+    try {
+      const raw = JSON.stringify(S);
+      localStorage.setItem(KEY, raw);
+      if (S.name) {
+        const k = keyOf(S.name);
+        localStorage.setItem('sekka.p.' + k, raw);
+        const ent = P.list.find(x => x.k === k);
+        if (ent) ent.name = S.name; else P.list.push({ k, name: S.name });
+        P.current = k; savePeople();
+      }
+    } catch (e) {}
+  };
+  function loadPerson(k) {
+    let obj = null;
+    try { obj = JSON.parse(localStorage.getItem('sekka.p.' + k) || 'null'); } catch (e) {}
+    S = Object.assign(fresh(), obj || {});
+    S.settings = Object.assign(fresh().settings, (obj && obj.settings) || {});
+    P.current = obj ? k : ''; savePeople();
+    try { if (obj) localStorage.setItem(KEY, JSON.stringify(S)); else localStorage.removeItem(KEY); } catch (e) {}
+  }
+  function switchPerson(k) {
+    save(); loadPerson(k);
+    try { sessionStorage.setItem('sekka.picked', '1'); } catch (e) {}
+    applySettings(); location.hash = '#/'; route();
+  }
+  function addPerson() {
+    save(); S = fresh(); P.current = ''; savePeople();
+    try { localStorage.removeItem(KEY); sessionStorage.setItem('sekka.picked', '1'); } catch (e) {}
+    applySettings(); location.hash = '#/'; route();
+  }
+  const whoKey = () => P.current || keyOf(S.name);
+  const mine = (r) => r.who ? r.who === whoKey() : (P.list.length <= 1 || (P.list[0] && P.list[0].k === whoKey()));
 
   function addXP(n) {
     const d = today();
@@ -148,7 +190,10 @@
     const parts = (location.hash.replace(/^#\/?/, '') || '').split('/').filter(Boolean);
     const [a, b, c] = parts;
     let tab = 'home';
-    if (!S.name && a !== 'me') { viewWelcome(); setTab('home'); return; }
+    let picked = false; try { picked = !!sessionStorage.getItem('sekka.picked'); } catch (e) { picked = true; }
+    if (P.list.length > 1 && !picked && a !== 'me') { viewWho(); setTab('home'); return; }
+    if (!S.name && a !== 'me') { if (P.list.length && a === 'who') { viewWho(); return; } viewWelcome(); setTab('home'); return; }
+    if (a === 'who') { viewWho(); setTab('me'); return; }
     if (!a) viewHome();
     else if (a === 'level' && LEVEL[b]) viewLevel(LEVEL[b]);
     else if (a === 'unit' && UNIT[b]) viewUnit(UNIT[b], c || 'lesson');
@@ -188,7 +233,7 @@
         <p class="ar" lang="ar">ست مستويات، من إنجليزي كل يوم لحد إنك تتكلمي بثقة في الشغل وتقري وتكتبي بمستوى الجامعة. كل درس فيه شرح بالعربي.</p>
       </div>
       <div class="card stack">
-        <label class="field" for="nm">What should we call you?<span class="ar small muted" lang="ar">نناديكي إيه؟</span>
+        <label class="field" for="nm">What is your name?<span class="small muted">Your progress is saved under your name. If you already started, type the same name.</span><span class="ar small muted" lang="ar">اسمك إيه؟ تقدّمك بيتحفظ باسمك. لو بدأتي قبل كده اكتبي نفس الاسم.</span>
           <input id="nm" class="input" autocomplete="given-name" placeholder="Mama">
         </label>
         <label class="field" for="jb">What is your job? (optional)<span class="ar small muted" lang="ar">شغلك إيه؟ عشان التدريب على المحادثة يبقى عن شغلك</span>
@@ -196,7 +241,18 @@
         </label>
         <button class="btn primary block" id="go">Start</button>
       </div>`;
-    const go = () => { S.name = document.getElementById('nm').value.trim() || 'Mama'; S.settings.job = document.getElementById('jb').value.trim(); save(); location.hash = '#/placement-intro'; };
+    const go = () => {
+      const name = document.getElementById('nm').value.trim() || 'Mama';
+      const k = keyOf(name);
+      if (P.list.some(x => x.k === k) && localStorage.getItem('sekka.p.' + k)) {
+        loadPerson(k); applySettings(); toast('Welcome back, ' + S.name + '!');
+        try { sessionStorage.setItem('sekka.picked', '1'); } catch (e) {}
+        location.hash = '#/'; route(); return;
+      }
+      S.name = name; S.settings.job = document.getElementById('jb').value.trim(); save();
+      try { sessionStorage.setItem('sekka.picked', '1'); } catch (e) {}
+      location.hash = '#/placement-intro';
+    };
     document.getElementById('go').onclick = go;
     document.getElementById('nm').onkeydown = (e) => { if (e.key === 'Enter') go(); };
   }
@@ -807,7 +863,7 @@ ${heard !== undefined ? `Speech recognition heard: "${heard || '(nothing)'}"\nWo
       if (recorder) {
         const blob = await recorder.stop(); recorder = null;
         rb.classList.remove('mic-on'); rb.innerHTML = `${I.rec} Record again`;
-        await Speech.saveRec({ id: 'r' + Date.now(), at: Date.now(), unitId: unitId || '', text, blob, score: last ? last.score : null, transcript: last ? last.heard : '', grade: null });
+        await Speech.saveRec({ id: 'r' + Date.now(), who: whoKey(), at: Date.now(), unitId: unitId || '', text, blob, score: last ? last.score : null, transcript: last ? last.heard : '', grade: null });
         status.innerHTML = 'Saved to the <a href="#/voice">Voice tab</a> for grading.';
         addXP(3);
         return;
@@ -1124,7 +1180,7 @@ Please:
       document.getElementById('useown').onclick = () => { const v = document.getElementById('own').value.trim(); if (v) { drawFree(v); c.remove(); free.after(extra); } };
     };
     let list = [];
-    try { list = await Speech.allRecs(); } catch (e) { document.getElementById('recs').innerHTML = '<p class="muted">Recordings cannot be saved in this browser.</p>'; return; }
+    try { list = (await Speech.allRecs()).filter(mine); } catch (e) { document.getElementById('recs').innerHTML = '<p class="muted">Recordings cannot be saved in this browser.</p>'; return; }
     const box = document.getElementById('recs');
     if (!box) return;
     if (!list.length) { box.innerHTML = '<p class="muted">No recordings yet. Tap <b>Record for grading</b> under any sentence.</p>'; return; }
@@ -1180,7 +1236,8 @@ Please:
     const voices = Speech.voices();
     const installed = !!(window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true;
     app.innerHTML = `${brand()}
-      <div class="stack" style="gap:6px"><span class="eyebrow">Profile</span><h1>${esc(S.name || 'Me')}</h1></div>
+      <div class="spread"><div class="stack" style="gap:6px"><span class="eyebrow">Profile</span><h1>${esc(S.name || 'Me')}</h1></div>
+        <a class="btn small" href="#/who">${P.list.length > 1 ? 'Switch person' : 'Add a person'}</a></div>
       <div class="quick">
         <a href="#/writing" class="qk"><b>My writing</b><span>Essays and emails</span></a>
         <a href="#/words" class="qk"><b>My words</b><span>${Object.keys(S.cards).length} words saved</span></a>
@@ -1234,7 +1291,13 @@ Please:
       if (navigator.share) { try { await navigator.share({ title: 'Sekka English weekly report', text }); return; } catch (e) { if (e && e.name === 'AbortError') return; } }
       copy(text, 'Report copied. Paste it in a message.');
     };
-    document.getElementById('s-name').onchange = (e) => { S.name = e.target.value.trim() || S.name; save(); };
+    document.getElementById('s-name').onchange = (e) => {
+      const nn = e.target.value.trim(); if (!nn || nn === S.name) return;
+      const oldK = keyOf(S.name), newK = keyOf(nn);
+      if (newK !== oldK && P.list.some(x => x.k === newK)) { toast('Someone named ' + nn + ' already has progress on this phone.'); e.target.value = S.name; return; }
+      try { localStorage.removeItem('sekka.p.' + oldK); } catch (err) {}
+      P.list = P.list.filter(x => x.k !== oldK); S.name = nn; save(); toast('Name changed.');
+    };
     document.getElementById('s-job').onchange = (e) => set('job', e.target.value.trim());
     document.getElementById('s-size').onchange = (e) => set('size', e.target.value);
     document.getElementById('s-ar').onchange = (e) => set('arabic', e.target.checked);
@@ -1257,7 +1320,12 @@ Please:
     };
     const rs = document.getElementById('reset');
     rs.onclick = () => {
-      if (rs.dataset.sure) { localStorage.removeItem(KEY); S = fresh(); save(); location.hash = '#/'; route(); return; }
+      if (rs.dataset.sure) {
+        const k = keyOf(S.name);
+        try { localStorage.removeItem(KEY); localStorage.removeItem('sekka.p.' + k); } catch (err) {}
+        P.list = P.list.filter(x => x.k !== k); P.current = ''; savePeople(); S = fresh();
+        location.hash = P.list.length ? '#/who' : '#/'; route(); return;
+      }
       rs.dataset.sure = '1'; rs.textContent = 'Tap again to erase everything'; rs.classList.add('confirm');
       setTimeout(() => { if (rs.isConnected) { delete rs.dataset.sure; rs.textContent = 'Erase all progress'; rs.classList.remove('confirm'); } }, 4000);
     };
@@ -1517,7 +1585,7 @@ Start now by saying your first line in character.`;
     const flu = Object.values(S.fluency).map(h => h.filter(x => x.d >= days[0])).filter(h => h.length);
     let ungraded = 0, challenges = 0;
     try {
-      const recs = await Speech.allRecs();
+      const recs = (await Speech.allRecs()).filter(mine);
       ungraded = recs.filter(r => !r.grade || !r.grade.stars).length;
       const since = new Date(days[0] + 'T00:00:00').getTime();
       challenges = recs.filter(r => r.unitId === 'challenge' && r.at >= since).length;
@@ -1903,7 +1971,7 @@ Start now by saying your first line in character.`;
         clearInterval(timer);
         const blob = await rec.stop(); rec = null;
         rb.classList.remove('mic-on'); rb.innerHTML = `${I.rec} Record again`;
-        await Speech.saveRec({ id: 'r' + Date.now(), at: Date.now(), unitId: 'challenge', text: 'Challenge: ' + ch.text, blob, score: null, transcript: '', grade: null });
+        await Speech.saveRec({ id: 'r' + Date.now(), who: whoKey(), at: Date.now(), unitId: 'challenge', text: 'Challenge: ' + ch.text, blob, score: null, transcript: '', grade: null });
         st.innerHTML = 'Saved. It is in <b>My recordings</b> below for your son to grade.';
         addXP(10); markStep('speak');
         return;
@@ -2050,6 +2118,18 @@ Start now by saying your first line in character.`;
       markUnitStep(u, 'speak');
       box.querySelector('#spk-done').parentElement.innerHTML = `<span class="chip good">Speaking done</span>${nextStepButton(u, 'speak')}`;
     };
+  }
+
+  /* ================= Who's learning? ================= */
+  function viewWho() {
+    const people = P.list.filter(x => localStorage.getItem('sekka.p.' + x.k));
+    app.innerHTML = `${brand().replace(/<span class="chip gold"[^>]*>.*?<\/span>/, '')}
+      <div class="stack" style="gap:6px"><h1>Who's learning?</h1><p class="ar muted" lang="ar">مين بيتعلم دلوقتي؟</p></div>
+      <div class="units">${people.map(x => `<button class="unit-link" data-who="${esc(x.k)}" style="text-align:left;cursor:pointer;font:inherit;grid-template-columns:44px 1fr auto">
+        <span class="k avatar">${esc((x.name || '?').trim().charAt(0).toUpperCase())}</span><span class="t"><b>${esc(x.name)}</b><span>${x.k === P.current ? 'Last used on this phone' : 'Tap to continue'}</span></span><span class="chip">Open</span></button>`).join('')}</div>
+      <button class="btn block" id="who-add">+ Add a person</button>`;
+    app.querySelectorAll('[data-who]').forEach(b => b.onclick = () => switchPerson(b.dataset.who));
+    document.getElementById('who-add').onclick = addPerson;
   }
 
   /* ================= Daily session ================= */
